@@ -1,0 +1,124 @@
+<!-- src/app/core/login/login.component.html -->
+<div class="login-container">
+  <div class="login-card">
+    <mat-card>
+      <mat-card-title>
+        <span *ngIf="!isSignUpMode">Login</span>
+        <span *ngIf="isSignUpMode">Sign Up</span>
+      </mat-card-title>
+
+      <mat-card-content>
+        <form
+          *ngIf="!isSignUpMode"
+          [formGroup]="loginForm"
+          (ngSubmit)="onLogin()">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Username or Email</mat-label>
+            <input matInput formControlName="usernameOrEmail" required />
+            <mat-error *ngIf="loginForm.get('usernameOrEmail')?.invalid">
+              Please enter a valid username or email.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Password</mat-label>
+            <input
+              matInput
+              [type]="hide ? 'password' : 'text'"
+              formControlName="password"
+              required />
+            <button
+              mat-icon-button
+              matSuffix
+              (click)="hide = !hide"
+              type="button">
+              <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error *ngIf="loginForm.get('password')?.invalid">
+              Please enter a valid password.
+            </mat-error>
+          </mat-form-field>
+
+          <div class="button-group">
+            <button
+              mat-raised-button
+              color="primary"
+              type="submit"
+              [disabled]="loginForm.invalid">
+              Login
+            </button>
+            <button mat-button color="accent" (click)="toggleMode()">
+              Sign Up
+            </button>
+          </div>
+        </form>
+
+        <!-- Signup Form -->
+        <form
+          *ngIf="isSignUpMode"
+          [formGroup]="signUpForm"
+          (ngSubmit)="onSignUp()">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" required />
+            <mat-error *ngIf="signUpForm.get('email')?.invalid">
+              Please enter a valid email.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username" required />
+            <mat-error *ngIf="signUpForm.get('username')?.invalid">
+              Please enter a valid username.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Password</mat-label>
+            <input
+              matInput
+              [type]="hide ? 'password' : 'text'"
+              formControlName="password"
+              required />
+            <button
+              mat-icon-button
+              matSuffix
+              (click)="hide = !hide"
+              type="button">
+              <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error *ngIf="signUpForm.get('password')?.invalid">
+              Please enter a valid password.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Confirm Password</mat-label>
+            <input
+              matInput
+              [type]="hide ? 'password' : 'text'"
+              formControlName="confirmPassword"
+              required />
+            <mat-error *ngIf="signUpForm.get('confirmPassword')?.invalid">
+              Passwords do not match.
+            </mat-error>
+          </mat-form-field>
+
+          <div class="button-group">
+            <button
+              mat-raised-button
+              color="primary"
+              type="submit"
+              [disabled]="signUpForm.invalid">
+              Sign Up
+            </button>
+            <button mat-button color="accent" (click)="toggleMode()">
+              Login
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

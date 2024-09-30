@@ -1,17 +1,21 @@
 import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { BrowserModule } from '@angular/platform-browser';
-import { AuthenticationModule } from './core/authentication/authentication/authentication.module';
+import { AuthenticationModule } from './core/authentication/authentication.module';
+import { AppRoutingModule } from './core/app-routing/app-routing.module';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { MypetpalModule } from './mypetpal/mypetpal.module';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
-  declarations: [AppComponent,],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
-    AuthenticationModule
-
-
+    AuthenticationModule,
+    AppRoutingModule,
+    MypetpalModule
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  providers: [provideAnimationsAsync()]
 })
-
-export class AppModule { }
+export class AppModule {}
