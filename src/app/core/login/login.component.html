@@ -1,13 +1,9 @@
-<!-- src/app/core/login/login.component.html -->
 <div class="login-container">
-  <div class="login-card">
+  <mat-spinner class="loading-centre" *ngIf="loading"></mat-spinner>
+  <div class="login-card" *ngIf="!loading">
     <mat-card>
-      <mat-card-title>
-        <span *ngIf="!isSignUpMode">Login</span>
-        <span *ngIf="isSignUpMode">Sign Up</span>
-      </mat-card-title>
-
       <mat-card-content>
+        <!-- Login Form -->
         <form
           *ngIf="!isSignUpMode"
           [formGroup]="loginForm"
@@ -24,21 +20,26 @@
             <mat-label>Password</mat-label>
             <input
               matInput
-              [type]="hide ? 'password' : 'text'"
+              [type]="hidePassword ? 'password' : 'text'"
               formControlName="password"
               required />
             <button
               mat-icon-button
               matSuffix
-              (click)="hide = !hide"
+              (click)="hidePassword = !hidePassword"
               type="button">
-              <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+              <mat-icon>{{
+                hidePassword ? 'visibility_off' : 'visibility'
+              }}</mat-icon>
             </button>
             <mat-error *ngIf="loginForm.get('password')?.invalid">
               Please enter a valid password.
             </mat-error>
           </mat-form-field>
 
+          <mat-error *ngIf="loginFailed">
+            Login failed. Check your username or password
+          </mat-error>
           <div class="button-group">
             <button
               mat-raised-button
@@ -70,7 +71,7 @@
             <mat-label>Username</mat-label>
             <input matInput formControlName="username" required />
             <mat-error *ngIf="signUpForm.get('username')?.invalid">
-              Please enter a valid username.
+              Username should be atleast 5 characters.
             </mat-error>
           </mat-form-field>
 
@@ -78,18 +79,20 @@
             <mat-label>Password</mat-label>
             <input
               matInput
-              [type]="hide ? 'password' : 'text'"
+              [type]="hidePassword ? 'password' : 'text'"
               formControlName="password"
               required />
             <button
               mat-icon-button
               matSuffix
-              (click)="hide = !hide"
+              (click)="hidePassword = !hidePassword"
               type="button">
-              <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+              <mat-icon>{{
+                hidePassword ? 'visibility_off' : 'visibility'
+              }}</mat-icon>
             </button>
             <mat-error *ngIf="signUpForm.get('password')?.invalid">
-              Please enter a valid password.
+              Password should be atleast 8 characters long.
             </mat-error>
           </mat-form-field>
 
@@ -97,13 +100,16 @@
             <mat-label>Confirm Password</mat-label>
             <input
               matInput
-              [type]="hide ? 'password' : 'text'"
+              [type]="hidePassword ? 'password' : 'text'"
               formControlName="confirmPassword"
               required />
-            <mat-error *ngIf="signUpForm.get('confirmPassword')?.invalid">
-              Passwords do not match.
-            </mat-error>
           </mat-form-field>
+          <mat-error *ngIf="signUpForm.errors?.['passwordMismatch']"
+            >Passwords do not match</mat-error
+          >
+          <mat-error *ngIf="signUpFailed">
+            Username or email already exists.
+          </mat-error>
 
           <div class="button-group">
             <button
