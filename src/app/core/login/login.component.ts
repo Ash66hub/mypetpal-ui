@@ -5,6 +5,7 @@ import { LoginStreamService } from './login-service/login-stream.service';
 import { confirmPasswordValidator } from '../../shared/validators/custom-validators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SnackbarService } from '../../shared/snackbar/snackbar.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -24,7 +25,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private loginStreamService: LoginStreamService,
-    private snackbarService: SnackbarService
+    private snackbarService: SnackbarService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -62,6 +64,8 @@ export class LoginComponent implements OnInit {
 
       try {
         await this.loginStreamService.loginUser(user);
+
+        this.router.navigate(['/game']);
       } catch (error) {
         this.loginFailed = true;
       } finally {

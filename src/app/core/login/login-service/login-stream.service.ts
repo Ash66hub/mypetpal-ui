@@ -12,7 +12,11 @@ export class LoginStreamService {
     const response = await this.loginService.authenticateUser(user);
 
     if (response) {
-      this.storeTokensInSessionStorage(response.token, response.refreshToken);
+      this.storeTokensInSessionStorage(
+        response.token,
+        response.refreshToken,
+        response.userId
+      );
     }
   }
 
@@ -22,10 +26,12 @@ export class LoginStreamService {
 
   private storeTokensInSessionStorage(
     token: string,
-    refreshToken: string
+    refreshToken: string,
+    userId: string
   ): void {
     sessionStorage.setItem('token', token);
     sessionStorage.setItem('refreshToken', refreshToken);
+    sessionStorage.setItem('userId', userId);
 
     const expiresIn = 60 * 60 * 1000;
     const expirationTime = Date.now() + expiresIn;
