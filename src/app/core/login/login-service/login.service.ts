@@ -8,6 +8,7 @@ import { User } from '../../../shared/user/user';
 export interface AuthResponse {
   token: string;
   refreshToken: string;
+  userId: string;
 }
 
 @Injectable()
@@ -24,5 +25,16 @@ export class LoginService {
 
   public createNewUser(user: User): Promise<User> {
     return lastValueFrom(this.http.post(this.apiUrl + 'Users', user));
+  }
+
+  public getToken(userId: string, refreshToken: string): Promise<string> {
+    const body = {
+      userId: userId,
+      token: refreshToken
+    };
+
+    return lastValueFrom(
+      this.http.post<string>(this.apiUrl + 'Authentication/refreshToken', body)
+    );
   }
 }
