@@ -4,9 +4,10 @@ import { LoginComponent } from '../core/login/login.component';
 
 import { SharedModule } from '../shared/shared.module';
 import { LoginService } from '../core/login/login-service/login.service';
+import { GameComponent } from './game/game.component';
 
 @NgModule({
-  declarations: [LoginComponent],
+  declarations: [LoginComponent, GameComponent],
   imports: [CommonModule, SharedModule],
   schemas: [],
   providers: [LoginService]
