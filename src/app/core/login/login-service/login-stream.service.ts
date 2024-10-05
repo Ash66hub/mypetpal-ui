@@ -12,7 +12,7 @@ export class LoginStreamService {
     const response = await this.loginService.authenticateUser(user);
 
     if (response) {
-      this.storeTokensInSessionStorage(
+      this.storeTokensInlocalStorage(
         response.token,
         response.refreshToken,
         response.userId
@@ -24,30 +24,30 @@ export class LoginStreamService {
     return this.loginService.createNewUser(user);
   }
 
-  private storeTokensInSessionStorage(
+  private storeTokensInlocalStorage(
     token: string,
     refreshToken: string,
     userId: string
   ): void {
-    sessionStorage.setItem('token', token);
-    sessionStorage.setItem('refreshToken', refreshToken);
-    sessionStorage.setItem('userId', userId);
+    localStorage.setItem('token', token);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('userId', userId);
 
     const expiresIn = 60 * 60 * 1000;
     const expirationTime = Date.now() + expiresIn;
-    sessionStorage.setItem('tokenExpiration', expirationTime.toString());
+    localStorage.setItem('tokenExpiration', expirationTime.toString());
   }
 
   public getToken(): string | null {
-    return sessionStorage.getItem('token');
+    return localStorage.getItem('token');
   }
 
   public getRefreshToken(): string | null {
-    return sessionStorage.getItem('refreshToken');
+    return localStorage.getItem('refreshToken');
   }
 
   public isTokenExpired(): boolean {
-    const expirationTime = sessionStorage.getItem('tokenExpiration');
+    const expirationTime = localStorage.getItem('tokenExpiration');
     if (expirationTime) {
       const expTime = parseInt(expirationTime, 10);
 

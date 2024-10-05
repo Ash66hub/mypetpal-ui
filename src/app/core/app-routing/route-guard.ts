@@ -13,9 +13,9 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   canActivate(): Observable<boolean> | boolean {
-    const refreshToken = sessionStorage.getItem('refreshToken');
-    const userId = sessionStorage.getItem('userId');
-    const accessToken = sessionStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refreshToken');
+    const userId = localStorage.getItem('userId');
+    const accessToken = localStorage.getItem('token');
 
     if (refreshToken && userId && accessToken) {
       return true;
