@@ -25,7 +25,7 @@ jobs:
 
       - name: Copy web.config to dist/browser
         run: |
-          cp ./web.config ./dist/browser/
+          Copy-Item -Path ./web.config -Destination ./dist/browser/ -Force
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
