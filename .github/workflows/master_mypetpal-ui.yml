@@ -22,6 +22,10 @@ jobs:
         run: |
           npm install
           npm run build --if-present
+
+      - name: Copy web.config to dist/browser
+        run: |
+          cp ./path/to/your/web.config ./dist/browser/
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
