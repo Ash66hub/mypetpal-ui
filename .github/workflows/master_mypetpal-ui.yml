@@ -23,6 +23,11 @@ jobs:
           npm install
           npm run build --if-present
 
+      - name: List files in dist directory
+        run: | 
+          dir ./dist
+
+
       - name: Copy web.config to dist/browser
         run: |
           Copy-Item -Path ./web.config -Destination ./dist/browser/ -Force
