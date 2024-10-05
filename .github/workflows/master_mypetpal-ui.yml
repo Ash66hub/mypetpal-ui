@@ -46,6 +46,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+
+      - name: Check extracted files
+        run: ls -R
       
       - name: Login to Azure
         uses: azure/login@v2
