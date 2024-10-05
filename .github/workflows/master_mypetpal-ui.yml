@@ -25,12 +25,9 @@ jobs:
 
       - name: Copy web.config to dist/mypetpal-ui
         run: |
-          $destinationPath = "$(System.DefaultWorkingDirectory)\dist\mypetpal-ui"
+          $destinationPath = "$env:GITHUB_WORKSPACE\dist\mypetpal-ui"
           Copy-Item -Path ./web.config -Destination $destinationPath -Force
 
-      - name: Copy web.config to dist/browser
-        run: |
-          Copy-Item -Path ./web.config -Destination ./dist/browser/ -Force
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
