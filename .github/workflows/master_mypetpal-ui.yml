@@ -63,6 +63,6 @@ jobs:
         with:
           app-name: 'mypetpal-ui'
           slot-name: 'Production'
-          package: ./dist/mypetpal-ui
+          package: ./browser
           
           
