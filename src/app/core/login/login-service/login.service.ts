@@ -27,6 +27,15 @@ export class LoginService {
     return lastValueFrom(this.http.post(this.apiUrl + 'Users', user));
   }
 
+  public getUser(userId: string): Promise<User> {
+    const url = `${this.apiUrl}Users/${userId}`;
+
+    return lastValueFrom(this.http.get<User>(url)).catch(error => {
+      console.error(`Error fetching user with ID: ${userId}`, error);
+      throw error;
+    });
+  }
+
   public getToken(userId: string, refreshToken: string): Promise<string> {
     const body = {
       userId: userId,
