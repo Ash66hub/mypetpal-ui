@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { LoginService } from './login.service';
 import { User } from '../../../shared/user/user';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoginStreamService {
+  public currentUserStream = new BehaviorSubject<User>({});
+
   constructor(private loginService: LoginService) {}
 
   public async loginUser(user: User): Promise<void> {
@@ -55,5 +58,9 @@ export class LoginStreamService {
       return Date.now() > expTime - 300000; // 300,000 ms = 5 minutes
     }
     return true; // Token is expired if no expiration time is found
+  }
+
+  public async getCurrentUser(userId: string) {
+    this.currentUserStream.next(await this.loginService.getUser(userId));
   }
 }
