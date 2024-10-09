@@ -12,6 +12,7 @@ import {
   MatProgressSpinner,
   MatSpinner
 } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
 
 @NgModule({
   declarations: [UserComponent],
@@ -24,7 +25,8 @@ import {
     MatTabsModule,
     MatIconModule,
     MatToolbarModule,
-    MatProgressSpinner
+    MatProgressSpinner,
+    MatMenuModule
   ],
   exports: [
     ReactiveFormsModule,
@@ -35,7 +37,8 @@ import {
     MatTabsModule,
     MatIconModule,
     MatToolbarModule,
-    MatProgressSpinner
+    MatProgressSpinner,
+    MatMenuModule
   ]
 })
 export class SharedModule {}
