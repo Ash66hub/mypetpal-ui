@@ -1,0 +1,21 @@
+<mat-toolbar color="primary">
+  <span class="app-name">My Pet Pal</span>
+
+  <!-- Spacer to push the user icon to the right -->
+  <span class="spacer"></span>
+
+  <!-- User Icon with menu -->
+  <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+  <mat-menu #userMenu="matMenu">
+    <button mat-menu-item>
+      <mat-icon>person</mat-icon>
+      <span>Profile</span>
+    </button>
+    <button mat-menu-item (click)="logoutUser()">
+      <mat-icon>exit_to_app</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>

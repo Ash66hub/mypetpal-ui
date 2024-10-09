@@ -1,0 +1,35 @@
+.spacer {
+    flex: 1 1 auto;
+}
+
+.app-name {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Styles for the menu container */
+.menu-container {
+    position: relative;
+}
+
+/* Styles for the arrow */
+.menu-arrow {
+    position: absolute;
+    top: 40px;
+    /* Adjust based on your button size */
+    right: 10px;
+    /* Adjust to match the button's position */
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid white;
+    /* Color of the arrow */
+    z-index: 1;
+}
+
+/* Adjust the position of the mat-menu to account for the arrow */
+.mat-menu-panel {
+    margin-top: 12px !important;
+    /* Increase the gap between the menu and the button */
+}
