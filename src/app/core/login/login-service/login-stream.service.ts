@@ -63,4 +63,10 @@ export class LoginStreamService {
   public async getCurrentUser(userId: string) {
     this.currentUserStream.next(await this.loginService.getUser(userId));
   }
+
+  public logout() {
+    this.storeTokensInlocalStorage('', '', '');
+
+    this.currentUserStream.next({});
+  }
 }
