@@ -6,6 +6,7 @@ import { confirmPasswordValidator } from '../../shared/validators/custom-validat
 import { HttpErrorResponse } from '@angular/common/http';
 import { SnackbarService } from '../../shared/snackbar/snackbar.service';
 import { Router } from '@angular/router';
+import { PetStreamService } from '../../mypetpal/pet/pet-service/pet-stream.service';
 
 @Component({
   selector: 'app-login',
@@ -25,6 +26,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private loginStreamService: LoginStreamService,
+    private petStreamService: PetStreamService,
     private snackbarService: SnackbarService,
     private router: Router
   ) {}
@@ -64,6 +66,12 @@ export class LoginComponent implements OnInit {
 
       try {
         await this.loginStreamService.loginUser(user);
+
+        const currentUser =
+          this.loginStreamService.currentUserStream.getValue();
+        if (currentUser.userId) {
+          this.petStreamService.getUserPets(currentUser.userId);
+        }
 
         this.router.navigate(['/game']);
       } catch (error) {

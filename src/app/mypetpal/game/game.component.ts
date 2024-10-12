@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import Phaser from 'phaser';
+import { PetStreamService } from '../pet/pet-service/pet-stream.service';
 
 @Component({
   selector: 'app-game',
@@ -11,10 +12,11 @@ export class GameComponent implements OnInit {
   private targetX: number = 300;
   private targetY: number = 300;
 
-  constructor() {}
+  constructor(private petStreamService: PetStreamService) {}
 
   ngOnInit(): void {
     this.initializeGame();
+    console.log('pet', this.petStreamService.currentPetStream.getValue());
   }
 
   private initializeGame(): void {
