@@ -12,13 +12,22 @@ export class PetService {
 
   constructor(private http: HttpClient) {}
 
-  public getUserPet(userId: string): Promise<Pet> {
+  public async getUserPet(userId: string): Promise<Pet | null> {
     const url = `${this.apiUrl}Pets?userId=${userId}`;
 
-    return lastValueFrom(this.http.get<Pet>(url)).catch(error => {
+    try {
+      const result = await lastValueFrom(this.http.get<Pet | Pet[]>(url));
+      if (Array.isArray(result)) {
+        return result.length > 0 ? result[0] : null;
+      }
+      return result || null;
+    } catch (error: any) {
+      if (error && error.name === 'EmptyError') {
+        return null;
+      }
       console.error(`Error fetching pet for UserID: ${userId}`, error);
       throw error;
-    });
+    }
   }
 
   public createPet(pet: Pet, userId: string): Promise<Pet> {

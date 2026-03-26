@@ -1,2 +1,9 @@
-<!-- src/app/game/game.component.html -->
-<div id="game-container"></div>
+<div class="game-wrapper" oncontextmenu="return false;">
+    <div id="game-container"></div>
+
+    <!-- Zoom Controls -->
+    <div class="zoom-controls">
+        <button (click)="zoomIn()" title="Zoom In">+</button>
+        <button (click)="zoomOut()" title="Zoom Out">-</button>
+    </div>
+</div>
