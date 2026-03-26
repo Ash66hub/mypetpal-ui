@@ -39,7 +39,7 @@ export class LoginService {
   public getToken(userId: string, refreshToken: string): Promise<string> {
     const body = {
       userId: userId,
-      token: refreshToken
+      refreshToken: refreshToken
     };
 
     return lastValueFrom(

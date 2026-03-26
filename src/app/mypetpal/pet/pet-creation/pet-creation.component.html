@@ -1,0 +1,49 @@
+<div class="pet-creation-container">
+  <div class="pet-card">
+    <mat-card>
+      <mat-card-content>
+        <h3>Create Pet Profile</h3>
+        <form [formGroup]="petForm" (ngSubmit)="onSubmit()">
+          <!-- Pet Name -->
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Pet Name</mat-label>
+            <input
+              matInput
+              formControlName="name"
+              placeholder="Enter pet name"
+              required />
+            <mat-error *ngIf="petForm.get('name')?.hasError('required')">
+              Pet name is required
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Pet Type Dropdown -->
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Pet Type</mat-label>
+            <mat-select formControlName="petType" required>
+              <mat-option *ngFor="let type of petTypes" [value]="type">{{
+                type
+              }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="petForm.get('petType')?.hasError('required')">
+              Pet type is required
+            </mat-error>
+          </mat-form-field>
+
+          <!-- TODO: Pet Avatar Upload -->
+
+          <!-- Button Group -->
+          <div class="button-group">
+            <button
+              mat-raised-button
+              color="primary"
+              type="submit"
+              [disabled]="petForm.invalid">
+              Create Pet
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

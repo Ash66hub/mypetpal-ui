@@ -18,4 +18,8 @@ export class PetStreamService {
       this.currentPetStream.next(pet);
     });
   }
+
+  public async createUserPet(userId: string, pet: Pet){
+
+  }
 }

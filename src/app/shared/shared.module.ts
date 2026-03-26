@@ -13,6 +13,8 @@ import {
   MatSpinner
 } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatOption } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
 
 @NgModule({
   declarations: [UserComponent],
@@ -21,12 +23,14 @@ import { MatMenuModule } from '@angular/material/menu';
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
+    MatOption,
     MatInputModule,
     MatTabsModule,
     MatIconModule,
     MatToolbarModule,
     MatProgressSpinner,
-    MatMenuModule
+    MatMenuModule,
+    MatSelectModule
   ],
   exports: [
     ReactiveFormsModule,
@@ -34,11 +38,13 @@ import { MatMenuModule } from '@angular/material/menu';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    MatOption,
     MatTabsModule,
     MatIconModule,
     MatToolbarModule,
     MatProgressSpinner,
-    MatMenuModule
+    MatMenuModule,
+    MatSelectModule
   ]
 })
 export class SharedModule {}

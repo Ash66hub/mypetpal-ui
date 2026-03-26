@@ -34,7 +34,7 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
         }),
         catchError(() => {
           router.navigate(['/login']);
-          return next(req);
+          return from([]);
         })
       );
     } else {

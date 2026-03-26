@@ -20,7 +20,7 @@ export class LoginComponent implements OnInit {
   public isSignUpMode = false;
 
   public loginFailed = false;
-  public signUpFailed = false;
+  public signUpFailedDueToDuplicate = false;
   public loading = false;
 
   constructor(
@@ -69,11 +69,18 @@ export class LoginComponent implements OnInit {
 
         const currentUser =
           this.loginStreamService.currentUserStream.getValue();
-        if (currentUser.userId) {
-          this.petStreamService.getUserPets(currentUser.userId);
-        }
 
-        this.router.navigate(['/game']);
+        if (currentUser.userId) {
+          const currentUserPet =
+            this.petStreamService.currentPetStream.getValue();
+
+          this.petStreamService.getUserPets(currentUser.userId);
+          if (currentUserPet.petid) {
+            this.router.navigate(['/game']);
+          } else {
+            this.router.navigate(['/petCreation']);
+          }
+        }
       } catch (error) {
         this.loginFailed = true;
       } finally {
@@ -83,7 +90,7 @@ export class LoginComponent implements OnInit {
   }
 
   public async onSignUp(): Promise<void> {
-    this.signUpFailed = false;
+    this.signUpFailedDueToDuplicate = false;
 
     if (this.signUpForm.valid && this.checkPasswordsMatch()) {
       let user = new User();
@@ -99,16 +106,20 @@ export class LoginComponent implements OnInit {
         await this.loginStreamService.signUpUser(user);
 
         this.snackbarService.openSnackbarWithAction(
-          'Sign in successful! Use the credentials to log in'
+          'Sign up successful! Use the credentials to log in'
         );
       } catch (error) {
         const httpError = error as HttpErrorResponse;
 
         if (httpError.status === 409) {
-          this.signUpFailed = true;
+          this.signUpFailedDueToDuplicate = true;
+        } else {
+          this.snackbarService.openSnackbarWithAction(
+            'Sign up failed. Try again?'
+          );
         }
       } finally {
-        if (!this.signUpFailed) {
+        if (!this.signUpFailedDueToDuplicate) {
           this.toggleMode();
         }
         this.loading = false;

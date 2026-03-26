@@ -7,9 +7,10 @@ import { LoginService } from '../core/login/login-service/login.service';
 import { GameComponent } from './game/game.component';
 import { TopBarComponent } from './top-bar/top-bar.component';
 import { PetComponent } from './pet/pet.component';
+import { PetCreationComponent } from './pet/pet-creation/pet-creation.component';
 
 @NgModule({
-  declarations: [LoginComponent, GameComponent, TopBarComponent, PetComponent],
+  declarations: [LoginComponent, GameComponent, TopBarComponent, PetComponent, PetCreationComponent],
   imports: [CommonModule, SharedModule],
   exports: [TopBarComponent],
   schemas: [],

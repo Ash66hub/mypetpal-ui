@@ -20,6 +20,8 @@ export class LoginStreamService {
         response.refreshToken,
         response.userId
       );
+
+      this.currentUserStream.next(response);
     }
   }
 

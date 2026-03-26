@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import Phaser from 'phaser';
 import { PetStreamService } from '../pet/pet-service/pet-stream.service';
+import { Route, Router } from '@angular/router';
 
 @Component({
   selector: 'app-game',
@@ -12,11 +13,22 @@ export class GameComponent implements OnInit {
   private targetX: number = 300;
   private targetY: number = 300;
 
-  constructor(private petStreamService: PetStreamService) {}
+  constructor(
+    private petStreamService: PetStreamService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
+    this.getPetDetails();
     this.initializeGame();
     console.log('pet', this.petStreamService.currentPetStream.getValue());
+  }
+
+  private getPetDetails() {
+    const pet = this.petStreamService.currentPetStream.getValue();
+    if (!pet.petid) {
+      this.router.navigate(['/petCreation']);
+    }
   }
 
   private initializeGame(): void {
