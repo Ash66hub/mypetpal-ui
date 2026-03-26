@@ -27,7 +27,7 @@ export class GameComponent implements OnInit {
 
   private getPetDetails() {
     const pet = this.petStreamService.currentPetStream.getValue();
-    if (!pet.petid) {
+    if (!pet.petId) {
       this.router.navigate(['/petCreation']);
     }
   }

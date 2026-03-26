@@ -11,7 +11,7 @@ export enum PetStatus {
 }
 
 export class Pet {
-  public petid?: string;
+  public petId?: string;
   public petName: string;
   public petType: PetType;
   public petLevel: number;

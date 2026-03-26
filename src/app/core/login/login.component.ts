@@ -72,11 +72,10 @@ export class LoginComponent implements OnInit {
           this.loginStreamService.currentUserStream.getValue();
 
         if (currentUser.userId) {
-          const currentUserPet =
-            this.petStreamService.currentPetStream.getValue();
+          await this.petStreamService.getUserPets(currentUser.userId);
+          const currentUserPet = this.petStreamService.currentPetStream.getValue();
 
-          this.petStreamService.getUserPets(currentUser.userId);
-          if (currentUserPet.petid) {
+          if (currentUserPet && currentUserPet.petId) {
             this.router.navigate(['/game']);
           } else {
             this.router.navigate(['/petCreation']);

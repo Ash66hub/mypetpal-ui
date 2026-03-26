@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Pet, PetStatus, PetType } from '../pet';
 import { PetStreamService } from '../pet-service/pet-stream.service';
+import { Router } from '@angular/router';
 @Component({
     selector: 'app-pet-creation',
     templateUrl: './pet-creation.component.html',
@@ -14,7 +15,8 @@ export class PetCreationComponent {
 
   constructor(
     private fb: FormBuilder,
-    private petStream: PetStreamService
+    private petStream: PetStreamService,
+    private router: Router
   ) {
     this.petForm = this.fb.group({
       name: ['', Validators.required],
@@ -27,25 +29,32 @@ export class PetCreationComponent {
     this.petForm.patchValue({ avatar: file });
   }
 
-  public onSubmit() {
+  public async onSubmit() {
     if (this.petForm.valid) {
-      let pet = new Pet();
-
-      pet = {
+      const pet: Pet = {
         petName: this.petForm.get('name')?.value,
-        petLevel: 0,
-        petStatus: PetStatus.NEUTRAL,
         petType: this.petForm.get('petType')?.value,
+        petLevel: 1,
+        petStatus: PetStatus.NEUTRAL,
         age: 0,
         xp: 0,
-        happiness: 0,
+        happiness: 100,
         health: 100
       };
 
-      console.log('pet', pet);
-      // this.petStream.createPet(formData).subscribe(response => {
-      //   console.log('Pet created successfully!', response);
-      // });
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        try {
+          await this.petStream.createUserPet(userId, pet);
+          console.log('Pet created successfully!');
+          this.router.navigate(['/game']);
+        } catch (error) {
+          console.error('Error creating pet:', error);
+        }
+      } else {
+        console.error('User ID not found in localStorage');
+        this.router.navigate(['/login']);
+      }
     }
   }
 }

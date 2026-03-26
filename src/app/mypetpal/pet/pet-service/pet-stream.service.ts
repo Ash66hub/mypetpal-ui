@@ -14,12 +14,16 @@ export class PetStreamService {
   constructor(private petService: PetService) {}
 
   public async getUserPets(userId: string) {
-    await this.petService.getUserPet(userId).then(pet => {
-      this.currentPetStream.next(pet);
+    await this.petService.getUserPet(userId).then(pets => {
+      const pet = Array.isArray(pets) ? pets[0] : pets;
+      if (pet) {
+        this.currentPetStream.next(pet);
+      }
     });
   }
 
-  public async createUserPet(userId: string, pet: Pet){
-
+  public async createUserPet(userId: string, pet: Pet) {
+    const newPet = await this.petService.createPet(pet, userId);
+    this.currentPetStream.next(newPet);
   }
 }
