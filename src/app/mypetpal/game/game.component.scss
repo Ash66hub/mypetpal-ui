@@ -3,15 +3,40 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background: #1313158c; // Atmospheric room background
+
+    &::before {
+        content: "";
+        position: absolute; // Fix: use absolute to stay within game-wrapper container 
+        inset: -20px;
+        background: url('/assets/room-isometric.png') center center / cover no-repeat;
+        filter: blur(18px) brightness(0.85) saturate(1.2); // Brightened base image
+        transform: scale(1.1);
+        z-index: 0;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        // Intensified sun lighting from the 1 o'clock direction
+        background:
+            radial-gradient(circle at 78% 12%, rgba(255, 245, 180, 0.5) 0%, transparent 80%),
+            linear-gradient(160deg, rgba(20, 15, 45, 06) 0%, rgba(50, 30, 90, 0.35) 100%);
+        z-index: 1;
+    }
 }
 
 #game-container {
+    position: relative;
+    z-index: 5; // Ensure Phaser is clearly above the bg layers
     width: 100%;
     height: 100%;
     overflow: hidden;
 
     canvas {
         display: block;
+        margin: 0 auto;
     }
 }
 
@@ -28,11 +53,12 @@
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        border: none;
+        border: 1px solid rgba(0, 0, 0, 0.1);
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(8px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        color: #333;
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        color: #444;
         font-size: 24px;
         font-weight: bold;
         cursor: pointer;
@@ -43,12 +69,95 @@
 
         &:hover {
             transform: scale(1.1);
-            background: #fff;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            background: #ffffff;
+            color: #7c3aed;
+            border-color: rgba(124, 58, 237, 0.3);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
 
         &:active {
             transform: scale(0.95);
+        }
+    }
+}
+
+.chat-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 440px;
+    z-index: 100;
+    pointer-events: auto;
+
+    .chat-input-wrapper {
+        display: flex;
+        gap: 8px;
+        padding: 6px;
+        align-items: center;
+        background: rgba(18, 14, 38, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+
+        &:focus-within {
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.25);
+            transform: translateY(-2px);
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 20px;
+            color: #fff;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+
+            &::placeholder {
+                color: rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        .char-counter {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Monaco', 'Courier New', monospace;
+            padding: 0 4px;
+            white-space: nowrap;
+            letter-spacing: -0.5px;
+        }
+
+        button {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            border: none;
+            border-radius: 30px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+            white-space: nowrap;
+
+            &:hover {
+                transform: scale(1.05);
+                filter: brightness(1.1);
+                box-shadow: 0 6px 15px rgba(124, 58, 237, 0.4);
+            }
+
+            &:active {
+                transform: scale(0.98);
+            }
         }
     }
 }

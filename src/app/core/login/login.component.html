@@ -1,131 +1,109 @@
 <div class="login-container">
+
+  <!-- Blurred room background -->
+  <div class="bg-room"></div>
+  <div class="bg-overlay"></div>
+
   @if (loading) {
     <mat-spinner class="loading-centre"></mat-spinner>
   }
+
   @if (!loading) {
     <div class="login-card">
+
+      <!-- Logo -->
+      <div class="logo-wrapper">
+        <img src="/assets/logo-with-text.png" alt="MyPetPal Logo" class="logo" />
+        <p class="tagline">Your virtual pet awaits 🐾</p>
+      </div>
+
       <mat-card>
         <mat-card-content>
+
           <!-- Login Form -->
           @if (!isSignUpMode) {
+            <h2 class="form-title">Welcome back!</h2>
             <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
-              <mat-form-field appearance="fill" class="full-width">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Username or Email</mat-label>
                 <input matInput formControlName="usernameOrEmail" required />
                 @if (loginForm.get('usernameOrEmail')?.invalid) {
-                  <mat-error>
-                    Please enter a valid username or email.
-                  </mat-error>
+                  <mat-error>Please enter a valid username or email.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="fill" class="full-width">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Password</mat-label>
-                <input
-                  matInput
-                  [type]="hidePassword ? 'password' : 'text'"
-                  formControlName="password"
-                  required />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  (click)="hidePassword = !hidePassword"
-                  type="button">
-                  <mat-icon>{{
-                    hidePassword ? 'visibility_off' : 'visibility'
-                  }}</mat-icon>
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
+                <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
                 @if (loginForm.get('password')?.invalid) {
-                  <mat-error> Please enter a valid password. </mat-error>
+                  <mat-error>Please enter a valid password.</mat-error>
                 }
               </mat-form-field>
               @if (loginFailed) {
-                <mat-error>
-                  Login failed. Check your username or password
-                </mat-error>
+                <mat-error class="form-error">Login failed. Check your username or password.</mat-error>
               }
               <div class="button-group">
-                <button
-                  mat-raised-button
-                  color="primary"
-                  type="submit"
-                  [disabled]="loginForm.invalid">
+                <button mat-raised-button class="primary-btn" type="submit" [disabled]="loginForm.invalid">
                   Login
                 </button>
-                <button mat-button color="accent" (click)="toggleMode()">
-                  Sign Up
+                <button mat-button class="link-btn" (click)="toggleMode()">
+                  Create Account
                 </button>
               </div>
             </form>
           }
+
           <!-- Signup Form -->
           @if (isSignUpMode) {
+            <h2 class="form-title">Create your account</h2>
             <form [formGroup]="signUpForm" (ngSubmit)="onSignUp()">
-              <mat-form-field appearance="fill" class="full-width">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Email</mat-label>
                 <input matInput formControlName="email" required />
                 @if (signUpForm.get('email')?.invalid) {
-                  <mat-error> Please enter a valid email. </mat-error>
+                  <mat-error>Please enter a valid email.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="fill" class="full-width">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Username</mat-label>
                 <input matInput formControlName="username" required />
                 @if (signUpForm.get('username')?.invalid) {
-                  <mat-error>
-                    Username should be atleast 5 characters.
-                  </mat-error>
+                  <mat-error>Username should be at least 5 characters.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="fill" class="full-width">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Password</mat-label>
-                <input
-                  matInput
-                  [type]="hidePassword ? 'password' : 'text'"
-                  formControlName="password"
-                  required />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  (click)="hidePassword = !hidePassword"
-                  type="button">
-                  <mat-icon>{{
-                    hidePassword ? 'visibility_off' : 'visibility'
-                  }}</mat-icon>
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
+                <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
                 @if (signUpForm.get('password')?.invalid) {
-                  <mat-error>
-                    Password should be atleast 8 characters long.
-                  </mat-error>
+                  <mat-error>Password should be at least 8 characters.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="fill" class="full-width">
+              <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Confirm Password</mat-label>
-                <input
-                  matInput
-                  [type]="hidePassword ? 'password' : 'text'"
-                  formControlName="confirmPassword"
-                  required />
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="confirmPassword" required />
               </mat-form-field>
               @if (signUpForm.errors?.['passwordMismatch']) {
-                <mat-error>Passwords do not match</mat-error>
+                <mat-error class="form-error">Passwords do not match.</mat-error>
               }
               @if (signUpFailedDueToDuplicate) {
-                <mat-error> Username or email already exists. </mat-error>
+                <mat-error class="form-error">Username or email already exists.</mat-error>
               }
               <div class="button-group">
-                <button
-                  mat-raised-button
-                  color="primary"
-                  type="submit"
-                  [disabled]="signUpForm.invalid">
+                <button mat-raised-button class="primary-btn" type="submit" [disabled]="signUpForm.invalid">
                   Sign Up
                 </button>
-                <button mat-button color="accent" (click)="toggleMode()">
-                  Login
+                <button mat-button class="link-btn" (click)="toggleMode()">
+                  Back to Login
                 </button>
               </div>
             </form>
           }
+
         </mat-card-content>
       </mat-card>
     </div>

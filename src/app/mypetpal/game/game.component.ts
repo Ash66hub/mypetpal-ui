@@ -1,7 +1,8 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import Phaser from 'phaser';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import * as Phaser from 'phaser';
 import { PetStreamService } from '../pet/pet-service/pet-stream.service';
-import { Route, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-game',
@@ -9,15 +10,18 @@ import { Route, Router } from '@angular/router';
     styleUrls: ['./game.component.scss'],
     standalone: false
 })
-export class GameComponent implements OnInit, AfterViewInit {
-  private game: Phaser.Game;
+export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('chatInput') chatInput!: ElementRef;
+  private game!: Phaser.Game;
   private dog: any;
   private currentZoom: number = 1.0;
   private moveDirection: string | null = null;
   private moveSpeed: number = 120;
   private arrowGroup: Phaser.GameObjects.Group | null = null;
   private arrowsVisible: boolean = false;
+  private isMoving: boolean = false; // Prevent overlapping steps
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
+  private chatBubbles: Phaser.GameObjects.Container[] = [];
 
   constructor(
     private petStreamService: PetStreamService,
@@ -28,6 +32,12 @@ export class GameComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.initialize();
+  }
+
+  ngOnDestroy(): void {
+    if (this.game) {
+      this.game.destroy(true);
+    }
   }
 
   private async initialize() {
@@ -83,16 +93,169 @@ export class GameComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // === D-Pad Movement Controls (called from Phaser arrows) ===
-  public startMove(direction: string) {
-    this.moveDirection = direction;
+  // === D-Pad Discrete Movement Controls ===
+  public moveStep(direction: string) {
+    if (this.isMoving || !this.dog) return;
+
+    let targetX = this.dog.x;
+    let targetY = this.dog.y;
+    const stepDist = 22; // Half step (was 45)
+
+    switch (direction) {
+      case 'up':    targetY -= stepDist; break;
+      case 'down':  targetY += stepDist; break;
+      case 'left':  targetX -= stepDist; break;
+      case 'right': targetX += stepDist; break;
+    }
+
+    // Check boundary before moving
+    if (this.isInsideFloor(targetX, targetY)) {
+      this.isMoving = true;
+      const scene = this.game.scene.scenes[0];
+      scene.tweens.add({
+        targets: this.dog,
+        x: targetX,
+        y: targetY,
+        duration: 150, // Quicker for smaller steps
+        ease: 'Cubic.easeOut',
+        onComplete: () => {
+          this.isMoving = false;
+        }
+      });
+    }
+  }
+
+  // === Chat System ===
+  public talk(text: string) {
+    if (!text || !this.dog || !this.game?.scene?.scenes[0]) return;
+    
+    // Limits
+    const charLimit = 100;
+    let filteredText = text.substring(0, charLimit);
+    
+    // Force break long words to prevent horizontal overflow (like in screenshot)
+    const words = filteredText.split(' ');
+    filteredText = words.map(word => {
+      if (word.length > 20) {
+        // Insert a space every 20 chars for long continuous strings
+        return word.match(/.{1,20}/g)?.join(' ') || word;
+      }
+      return word;
+    }).join(' ');
+
+    if (text.length > charLimit) filteredText += '...';
+
+    const scene = this.game.scene.scenes[0];
+    const paddingX = 10;
+    const paddingY = 6;
+    const maxBubbleWidth = 220;
+
+    // Hide pointers on existing bubbles
+    this.chatBubbles.forEach(b => {
+      const pointer = b.getByName('pointer');
+      if (pointer) (pointer as any).alpha = 0;
+    });
+
+    const txt = scene.add.text(0, 0, filteredText, {
+      fontFamily: "'Nunito', sans-serif",
+      fontSize: '14px',
+      color: '#1a1a2e',
+      align: 'center',
+      resolution: window.devicePixelRatio || 2,
+      wordWrap: { width: maxBubbleWidth - (paddingX * 2) }
+    }).setOrigin(0.5);
+
+    const bubbleWidth = Math.max(50, Math.min(txt.width + (paddingX * 2), maxBubbleWidth));
+    const bubbleHeight = txt.height + (paddingY * 2);
+    
+    // Bubble Background
+    const bg = scene.add.graphics();
+    bg.fillStyle(0xffffff, 0.75);
+    bg.fillRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 10);
+    bg.lineStyle(1.2, 0xffffff, 0.9); 
+    bg.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 10);
+    
+    // Pointer (separate object)
+    const pointer = scene.add.graphics();
+    pointer.setName('pointer'); // Correct way to set name
+    const pointerSize = 6;
+    pointer.fillStyle(0xffffff, 0.75);
+    pointer.beginPath();
+    pointer.moveTo(-pointerSize, bubbleHeight/2 - 1); 
+    pointer.lineTo(0, bubbleHeight/2 + pointerSize);
+    pointer.lineTo(pointerSize, bubbleHeight/2 - 1);
+    pointer.closePath();
+    pointer.fillPath();
+
+    pointer.lineStyle(1.2, 0xffffff, 0.9);
+    pointer.beginPath();
+    pointer.moveTo(-pointerSize, bubbleHeight/2 - 1);
+    pointer.lineTo(0, bubbleHeight/2 + pointerSize);
+    pointer.lineTo(pointerSize, bubbleHeight/2 - 1);
+    pointer.strokePath();
+
+    const container = scene.add.container(this.dog.x, this.dog.y - 40, [pointer, bg, txt]);
+    container.setDepth(20);
+    container.setAlpha(0);
+    (container as any).originalHeight = bubbleHeight;
+
+    // Slide in animation
+    scene.tweens.add({
+      targets: container,
+      alpha: 1,
+      duration: 200,
+      ease: 'Power1'
+    });
+
+    this.chatBubbles.push(container);
+
+    // Auto-fade after 5 seconds
+    scene.time.delayedCall(5000, () => {
+      scene.tweens.add({
+        targets: container,
+        alpha: 0,
+        y: container.y - 20,
+        duration: 400,
+        onComplete: () => {
+          this.chatBubbles = this.chatBubbles.filter(b => b !== container);
+          container.destroy();
+        }
+      });
+    });
+  }
+
+  // === Chat Input Handling ===
+  // Prevents Phaser from stealing keys (like SPACE) while typing
+  public onInputFocus() {
+    const scene = this.game?.scene?.scenes[0];
+    if (scene && scene.input.keyboard) {
+      scene.input.keyboard.enabled = false;
+    }
+  }
+
+  public onInputBlur() {
+    const scene = this.game?.scene?.scenes[0];
+    if (scene && scene.input.keyboard) {
+      scene.input.keyboard.enabled = true;
+    }
+  }
+
+  @HostListener('window:mousedown', ['$event'])
+  onWindowClick(event: MouseEvent) {
+    if (!this.chatInput) return;
+    
+    // If clicking outside the input box, blur it to restore pet control
+    const clickedInside = this.chatInput.nativeElement.contains(event.target);
+    const isButton = (event.target as HTMLElement).tagName === 'BUTTON';
+    
+    if (!clickedInside && !isButton) {
+      this.chatInput.nativeElement.blur();
+    }
   }
 
   public stopMove() {
-    this.moveDirection = null;
-    if (this.dog) {
-      this.dog.body.setVelocity(0, 0);
-    }
+      // Discrete movement doesn't need stopMove velocity reset, 
+      // but let's keep it for state safety
   }
 
   // === Game Initialization ===
@@ -106,7 +269,7 @@ export class GameComponent implements OnInit, AfterViewInit {
       type: Phaser.AUTO,
       width: width,
       height: height,
-      backgroundColor: '#f0f2f5',
+      transparent: true,
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
@@ -123,6 +286,11 @@ export class GameComponent implements OnInit, AfterViewInit {
         arcade: {
           gravity: { x: 0, y: 0 },
           debug: false
+        }
+      },
+      input: {
+        keyboard: {
+          capture: [] // Disable Phaser capturing keys globally (allows Space in HTML inputs)
         }
       }
     };
@@ -168,7 +336,7 @@ export class GameComponent implements OnInit, AfterViewInit {
     (scene as any).centerY = centerY;
 
     // === Phaser Arrow Controls (appear around pet on hover) ===
-    const arrowOffset = 32;
+    const arrowOffset = 26; // Brought closer
     let hoverCount = 0; // track how many interactive elements the pointer is over
 
     const showArrows = () => {
@@ -187,32 +355,53 @@ export class GameComponent implements OnInit, AfterViewInit {
       });
     };
 
-    const makeArrow = (label: string, ox: number, oy: number, dir: string) => {
-      const txt = scene.add.text(0, 0, label, {
-        fontSize: '26px',
-        color: '#ffffff',
-        stroke: '#555555',
-        strokeThickness: 2,
-      })
-        .setOrigin(0.5)
-        .setAlpha(0)
-        .setDepth(10)
-        .setInteractive({ useHandCursor: true });
+    const makeArrow = (dir: string, ox: number, oy: number, angle: number) => {
+      // Use Phaser Graphics for high-res vector arrows
+      const graphics = scene.add.graphics();
+      const radius = 9; 
+      
+      // Draw a triangle
+      graphics.fillStyle(0xffffff, 1);
+      graphics.beginPath();
+      graphics.moveTo(-radius, radius * 0.7);
+      graphics.lineTo(radius, radius * 0.7);
+      graphics.lineTo(0, -radius);
+      graphics.closePath();
+      graphics.fillPath();
 
-      (txt as any).offsetX = ox;
-      (txt as any).offsetY = oy;
+      // Wrap in a container for easier interaction and centering
+      const container = scene.add.container(0, 0, [graphics]);
+      container.setAngle(angle);
+      container.setAlpha(0);
+      container.setDepth(15);
+      
+      // Make hit area for the container
+      const hitArea = new Phaser.Geom.Circle(0, 0, 18);
+      container.setInteractive(hitArea, Phaser.Geom.Circle.Contains);
+      container.setInteractive({ useHandCursor: true });
 
-      txt.on('pointerover', () => { hoverCount++; showArrows(); });
-      txt.on('pointerout',  () => { hoverCount = Math.max(0, hoverCount - 1); this.stopMove(); if (hoverCount === 0) hideArrows(); });
-      txt.on('pointerdown', () => this.startMove(dir));
-      txt.on('pointerup',   () => this.stopMove());
-      return txt;
+      (container as any).offsetX = ox;
+      (container as any).offsetY = oy;
+
+      container.on('pointerover', () => { 
+        hoverCount++; 
+        showArrows(); 
+        scene.tweens.add({ targets: container, scale: 1.25, alpha: 0.8, duration: 150 });
+      });
+      container.on('pointerout',  () => { 
+        hoverCount = Math.max(0, hoverCount - 1); 
+        scene.tweens.add({ targets: container, scale: 1.0, alpha: 0.45, duration: 150 });
+        if (hoverCount === 0) hideArrows(); 
+      });
+      container.on('pointerdown', () => this.moveStep(dir));
+      
+      return container;
     };
 
-    const arrowUp    = makeArrow('▲', 0,           -arrowOffset, 'up');
-    const arrowDown  = makeArrow('▼', 0,            arrowOffset, 'down');
-    const arrowLeft  = makeArrow('◀', -arrowOffset, 0,           'left');
-    const arrowRight = makeArrow('▶',  arrowOffset, 0,           'right');
+    const arrowUp    = makeArrow('up',    0,           -arrowOffset, 0);
+    const arrowDown  = makeArrow('down',  0,            arrowOffset, 180);
+    const arrowLeft  = makeArrow('left',  -arrowOffset, 0,           270);
+    const arrowRight = makeArrow('right',  arrowOffset, 0,           90);
 
     this.arrowGroup = scene.add.group([arrowUp, arrowDown, arrowLeft, arrowRight]);
 
@@ -229,7 +418,18 @@ export class GameComponent implements OnInit, AfterViewInit {
     });
     (this as any)._hoverZone = hoverZone;
 
-    // === Keyboard Arrow Keys ===
+    // === Keyboard Arrow Keys (Discrete Step) ===
+    scene.input.keyboard!.on('keydown', (event: KeyboardEvent) => {
+      if (event.repeat) return; // Prevent continuous movement when holding down
+      
+      switch (event.key) {
+        case 'ArrowUp':    this.moveStep('up');    break;
+        case 'ArrowDown':  this.moveStep('down');  break;
+        case 'ArrowLeft':  this.moveStep('left');  break;
+        case 'ArrowRight': this.moveStep('right'); break;
+      }
+    });
+
     this.cursors = scene.input.keyboard!.createCursorKeys();
 
     // === Mouse Drag Panning (all mouse drags pan the camera) ===
@@ -288,7 +488,7 @@ export class GameComponent implements OnInit, AfterViewInit {
       }
     }
 
-    // Position arrows and hover zone around the pet every frame
+    // Position arrows, hover zone and chat bubbles around the pet every frame
     if (this.arrowGroup) {
       this.arrowGroup.getChildren().forEach((child: any) => {
         child.x = this.dog.x + child.offsetX;
@@ -301,27 +501,18 @@ export class GameComponent implements OnInit, AfterViewInit {
       hz.y = this.dog.y;
     }
 
-    // Apply movement only if next step is inside the floor
-    if (this.moveDirection) {
-      let vx = 0;
-      let vy = 0;
-      switch (this.moveDirection) {
-        case 'up':    vy = -this.moveSpeed; break;
-        case 'down':  vy =  this.moveSpeed; break;
-        case 'left':  vx = -this.moveSpeed; break;
-        case 'right': vx =  this.moveSpeed; break;
-      }
-      const nextX = this.dog.x + vx * (1 / 60);
-      const nextY = this.dog.y + vy * (1 / 60);
-
-      if (this.isInsideFloor(nextX, nextY)) {
-        this.dog.body.setVelocity(vx, vy);
-      } else {
-        // Hard stop at boundary — zero velocity AND zero acceleration residuals
-        this.dog.body.setVelocity(0, 0);
-        this.dog.body.reset(this.dog.x, this.dog.y);
-      }
+    // Stack chat bubbles above pet (Newest at bottom)
+    let stackY = -40; // Even closer
+    for (let i = this.chatBubbles.length - 1; i >= 0; i--) {
+        const bubble = this.chatBubbles[i];
+        bubble.x = this.dog.x;
+        // Ease bubbles into their stacked positions
+        const targetY = this.dog.y + stackY - ((bubble as any).originalHeight / 2);
+        bubble.y += (targetY - bubble.y) * 0.25; 
+        stackY -= ((bubble as any).originalHeight + 6); // Very tight spacing
     }
+
+    // Apply movement logic was removed here, replaced by moveStep() transitions
 
     // Safety: push back if somehow outside the diamond
     if (!this.isInsideFloor(this.dog.x, this.dog.y)) {

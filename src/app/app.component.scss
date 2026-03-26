@@ -21,9 +21,16 @@ app-top-bar{
     z-index: 1000;
 }
 
-.app-body{
+.app-body {
     height: calc(100vh - 64px);
     width: 100%;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
+    background: #f8f9fa;
+
+    &.full-screen {
+        height: 100vh;
+        background: linear-gradient(135deg, #0f0c1a 0%, #1a1a2e 100%);
+    }
 }

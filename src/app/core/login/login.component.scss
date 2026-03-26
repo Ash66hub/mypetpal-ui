@@ -1,25 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+// ===== BACKGROUND =====
 .login-container {
+    position: relative;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100%;
+    min-height: 100%;
     width: 100%;
-    background: url('/assets/background.jpg') no-repeat center center fixed; // TODO: Add later
-    background-size: cover;
-    backdrop-filter: blur(10px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-family: 'Nunito', sans-serif;
+    background: #0f0c1a;
 }
 
+.bg-room {
+    position: fixed;
+    inset: -20px;
+    background: url('/assets/room-isometric.png') center center / cover no-repeat;
+    filter: blur(8px) brightness(0.4) saturate(0.7);
+    transform: scale(1.15);
+    z-index: 0;
+}
+
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(30, 15, 60, 0.75) 0%, rgba(10, 20, 50, 0.85) 100%);
+    z-index: 1;
+}
+
+// ===== LOGO =====
+.logo-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+
+    .logo {
+        max-width: 220px;
+        width: 100%;
+        filter: drop-shadow(0 4px 20px rgba(180, 130, 255, 0.5));
+    }
+
+    .tagline {
+        margin: 8px 0 0;
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+}
+
+// ===== CARD =====
 .login-card {
-    width: 400px;
-    margin: 20px;
+    position: relative;
+    z-index: 10;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+
+    mat-card {
+        background: rgba(255, 255, 255, 0.07) !important;
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px !important;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+        padding: 28px 32px 20px !important;
+    }
+
+    mat-card-content {
+        padding: 0 !important;
+    }
 }
 
+.form-title {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+}
+
+// ===== FORM FIELDS =====
 .full-width {
     width: 100%;
+    margin-bottom: 4px;
+
+    // outline field color overrides for dark theme
+    ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-radius: 10px;
+        }
+
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        &.mat-focused .mdc-notched-outline__leading,
+        &.mat-focused .mdc-notched-outline__notch,
+        &.mat-focused .mdc-notched-outline__trailing {
+            border-color: rgba(180, 130, 255, 0.8) !important;
+        }
+
+        .mat-mdc-input-element,
+        .mat-mdc-select-value-text {
+            color: #fff !important;
+        }
+
+        .mat-mdc-floating-label,
+        label {
+            color: rgba(255, 255, 255, 0.55) !important;
+        }
+
+        .mat-mdc-form-field-icon-suffix .mat-icon {
+            color: rgba(255, 255, 255, 0.5);
+        }
+    }
 }
 
+// ===== ERRORS =====
+.form-error {
+    display: block;
+    color: #ff7b7b;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+// ===== BUTTONS =====
 .button-group {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     margin-top: 20px;
+    gap: 12px;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 0 28px !important;
+    font-size: 15px !important;
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 28px rgba(124, 58, 237, 0.6) !important;
+    }
+
+    &:disabled {
+        opacity: 0.45 !important;
+    }
+}
+
+.link-btn {
+    color: rgba(180, 130, 255, 0.9) !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+// ===== SPINNER =====
+.loading-centre {
+    position: absolute;
+    z-index: 20;
 }

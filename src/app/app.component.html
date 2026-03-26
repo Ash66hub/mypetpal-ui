@@ -1,4 +1,6 @@
-<app-top-bar></app-top-bar>
-<div class="app-body">
+@if (isLoggedIn) {
+  <app-top-bar></app-top-bar>
+}
+<div class="app-body" [class.full-screen]="!isLoggedIn">
   <router-outlet></router-outlet>
 </div>

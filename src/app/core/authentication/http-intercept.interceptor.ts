@@ -12,6 +12,15 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
   const loginService = inject(LoginService);
   const router = inject(Router);
 
+  // Skip token injection only for endpoints that don't require auth; `GET Users/:id` must receive Authorization so UI login state stays consistent on reload.
+  const isAuthenticationRequest = req.url.includes('Authentication');
+  const isUserSignupRequest = req.url.includes('Users') && req.method === 'POST';
+  const isAuthRequest = isAuthenticationRequest || isUserSignupRequest;
+
+  if (isAuthRequest) {
+    return next(req);
+  }
+
   let token = loginStreamService.getToken();
 
   if (!token || loginStreamService.isTokenExpired()) {
@@ -32,13 +41,13 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
 
           return next(clonedReq);
         }),
-        catchError(() => {
+        catchError((error) => {
+          loginStreamService.logout();
           router.navigate(['/login']);
           return from([]);
         })
       );
     } else {
-      router.navigate(['/login']);
       return next(req);
     }
   }

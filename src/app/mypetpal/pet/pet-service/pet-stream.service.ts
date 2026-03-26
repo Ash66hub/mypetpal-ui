@@ -14,12 +14,20 @@ export class PetStreamService {
   constructor(private petService: PetService) {}
 
   public async getUserPets(userId: string) {
-    await this.petService.getUserPet(userId).then(pets => {
+    console.log('PetStreamService: Fetching pets for user...', userId);
+    try {
+      const pets = await this.petService.getUserPet(userId);
+      console.log('PetStreamService: Pets fetched successfully', pets);
+      
       const pet = Array.isArray(pets) ? pets[0] : pets;
       if (pet) {
         this.currentPetStream.next(pet);
       }
-    });
+    } catch (error) {
+      console.error('PetStreamService: Error fetching pets', error);
+      // Re-throw so LoginComponent knows it failed
+      throw error;
+    }
   }
 
   public async createUserPet(userId: string, pet: Pet) {

@@ -6,4 +6,20 @@
         <button (click)="zoomIn()" title="Zoom In">+</button>
         <button (click)="zoomOut()" title="Zoom Out">-</button>
     </div>
+
+    <!-- Chat Controls -->
+    <div class="chat-controls">
+        <div class="chat-input-wrapper">
+            <input #chatInput 
+                   type="text" 
+                   maxlength="100"
+                   placeholder="Speak to the room..." 
+                   (focus)="onInputFocus()"
+                   (blur)="onInputBlur()"
+                   (keydown)="$event.stopPropagation()"
+                   (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
+            <span class="char-counter">{{ chatInput.value.length }}/100</span>
+            <button (click)="talk(chatInput.value); chatInput.value = ''">Talk</button>
+        </div>
+    </div>
 </div>

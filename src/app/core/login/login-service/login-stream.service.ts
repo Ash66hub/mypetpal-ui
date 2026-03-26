@@ -12,16 +12,26 @@ export class LoginStreamService {
   constructor(private loginService: LoginService) {}
 
   public async loginUser(user: User): Promise<void> {
-    const response = await this.loginService.authenticateUser(user);
+    console.log('LoginStreamService: Starting login for user...', user.username);
+    try {
+      const response = await this.loginService.authenticateUser(user);
+      console.log('LoginStreamService: Authentication successful');
 
-    if (response) {
-      this.storeTokensInlocalStorage(
-        response.token,
-        response.refreshToken,
-        response.userId
-      );
+      if (response) {
+        this.storeTokensInlocalStorage(
+          response.token,
+          response.refreshToken,
+          response.userId
+        );
+        console.log('LoginStreamService: Tokens stored in localStorage');
 
-      this.currentUserStream.next(response);
+        this.currentUserStream.next(response);
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    } catch (error) {
+      console.error('LoginStreamService: Login failed', error);
+      throw error;
     }
   }
 
@@ -56,14 +66,22 @@ export class LoginStreamService {
     if (expirationTime) {
       const expTime = parseInt(expirationTime, 10);
 
-      // Check if the current time is within 5 minutes before the expiration time
-      return Date.now() > expTime - 300000; // 300,000 ms = 5 minutes
+      return Date.now() > expTime - 300000;
     }
-    return true; // Token is expired if no expiration time is found
+    return true;
   }
 
   public async getCurrentUser(userId: string) {
-    this.currentUserStream.next(await this.loginService.getUser(userId));
+    try {
+      const user = await this.loginService.getUser(userId);
+      this.currentUserStream.next({
+        ...(user || {}),
+        userId: (user as any)?.userId ?? userId
+      });
+    } catch (error) {
+      this.currentUserStream.next({ userId });
+      console.error('LoginStreamService: Failed to fetch current user', error);
+    }
   }
 
   public logout() {
