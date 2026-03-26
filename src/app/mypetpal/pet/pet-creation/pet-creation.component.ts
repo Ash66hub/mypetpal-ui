@@ -3,9 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Pet, PetStatus, PetType } from '../pet';
 import { PetStreamService } from '../pet-service/pet-stream.service';
 @Component({
-  selector: 'app-pet-creation',
-  templateUrl: './pet-creation.component.html',
-  styleUrls: ['./pet-creation.component.scss']
+    selector: 'app-pet-creation',
+    templateUrl: './pet-creation.component.html',
+    styleUrls: ['./pet-creation.component.scss'],
+    standalone: false
 })
 export class PetCreationComponent {
   petForm: FormGroup;

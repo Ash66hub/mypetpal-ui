@@ -4,9 +4,10 @@ import { PetStreamService } from '../pet/pet-service/pet-stream.service';
 import { Route, Router } from '@angular/router';
 
 @Component({
-  selector: 'app-game',
-  templateUrl: './game.component.html',
-  styleUrls: ['./game.component.scss']
+    selector: 'app-game',
+    templateUrl: './game.component.html',
+    styleUrls: ['./game.component.scss'],
+    standalone: false
 })
 export class GameComponent implements OnInit {
   private game: Phaser.Game;

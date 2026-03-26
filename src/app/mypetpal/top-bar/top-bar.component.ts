@@ -3,9 +3,10 @@ import { LoginStreamService } from '../../core/login/login-service/login-stream.
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-top-bar',
-  templateUrl: './top-bar.component.html',
-  styleUrls: ['./top-bar.component.scss']
+    selector: 'app-top-bar',
+    templateUrl: './top-bar.component.html',
+    styleUrls: ['./top-bar.component.scss'],
+    standalone: false
 })
 export class TopBarComponent {
   constructor(
