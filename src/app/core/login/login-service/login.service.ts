@@ -51,4 +51,16 @@ export class LoginService {
       this.http.post<RefreshResponse>(this.apiUrl + 'Authentication/refreshToken', body)
     );
   }
+
+  public deleteAccount(userId: number): Promise<any> {
+    return lastValueFrom(
+      this.http.delete(`${this.apiUrl}Authentication/delete-account/${userId}`)
+    );
+  }
+
+  public changePassword(requestData: any): Promise<any> {
+    return lastValueFrom(
+      this.http.post(`${this.apiUrl}Authentication/change-password`, requestData)
+    );
+  }
 }

@@ -45,6 +45,10 @@ export class FriendService {
   public newRequestNotification = signal<string | null>(null);
   public searchResults = signal<UserSearchResult[]>([]);
 
+  // UI State for Social Panel & Profile
+  public activeTab = signal<'friends' | 'requests' | 'search' | 'profile'>('friends');
+  public isCollapsed = signal<boolean>(false);
+
   constructor(private http: HttpClient) {
     this.refreshSocialData();
   }

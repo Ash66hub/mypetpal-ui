@@ -14,14 +14,18 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatOptionModule } from '@angular/material/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 
 import { UserComponent } from './user/user.component';
 import { ConfirmDialogComponent } from './dialogs/confirm-dialog.component';
+import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.component';
 
 @NgModule({
   declarations: [
     UserComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    PawSpinnerComponent
   ],
   imports: [
     CommonModule,
@@ -39,7 +43,9 @@ import { ConfirmDialogComponent } from './dialogs/confirm-dialog.component';
     MatSelectModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatOptionModule
+    MatOptionModule,
+    MatTooltipModule,
+    MatDividerModule
   ],
   exports: [
     CommonModule,
@@ -58,7 +64,10 @@ import { ConfirmDialogComponent } from './dialogs/confirm-dialog.component';
     MatDialogModule,
     MatSnackBarModule,
     MatOptionModule,
-    ConfirmDialogComponent
+    MatTooltipModule,
+    MatDividerModule,
+    ConfirmDialogComponent,
+    PawSpinnerComponent
   ]
 })
 export class SharedModule {}

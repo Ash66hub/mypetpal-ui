@@ -5,6 +5,10 @@ import { SnackbarService } from '../../shared/snackbar/snackbar.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
+import { LoginStreamService } from '../../core/login/login-service/login-stream.service';
+import { PetStreamService } from '../pet/pet-service/pet-stream.service';
+import { User } from '../../shared/user/user';
+import { Pet } from '../pet/pet';
 
 @Component({
   selector: 'app-social-panel',
@@ -13,18 +17,24 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./social-panel.component.scss']
 })
 export class SocialPanelComponent implements OnInit {
-  public activeTab: 'friends' | 'requests' | 'search' = 'friends';
+  get activeTab() { return this.friendService.activeTab(); }
+  get isCollapsed() { return this.friendService.isCollapsed(); }
+
   public searchQuery: string = '';
   public currentUserId: number = 0;
   
-  public isCollapsed: boolean = false;
+  public currentUser: User | null = null;
+  public currentPet: Pet | null = null;
+
   public isSearching: boolean = false;
   public isSearchPerformed: boolean = false;
 
   constructor(
     public friendService: FriendService,
     private snackbarService: SnackbarService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private loginStreamService: LoginStreamService,
+    private petStreamService: PetStreamService
   ) {}
 
   ngOnInit(): void {
@@ -35,19 +45,30 @@ export class SocialPanelComponent implements OnInit {
     }
 
     this.friendService.refreshSocialData();
+
+    // Bind current user and pet streams
+    this.loginStreamService.currentUserStream.subscribe(user => {
+      this.currentUser = user;
+    });
+
+    this.petStreamService.currentPetStream.subscribe(pet => {
+      this.currentPet = pet;
+    });
   }
 
 
   public toggleCollapse() {
-    this.isCollapsed = !this.isCollapsed;
+    this.friendService.isCollapsed.update(v => !v);
     if (!this.isCollapsed) {
       this.friendService.refreshSocialData();
     }
   }
 
-  public setTab(tab: 'friends' | 'requests' | 'search') {
-    this.activeTab = tab;
-    this.friendService.refreshSocialData();
+  public setTab(tab: 'friends' | 'requests' | 'search' | 'profile') {
+    this.friendService.activeTab.set(tab);
+    if (tab !== 'profile') {
+      this.friendService.refreshSocialData();
+    }
     if (tab === 'requests') {
       this.friendService.clearNotification();
     }

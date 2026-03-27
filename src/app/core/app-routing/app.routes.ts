@@ -4,6 +4,7 @@ import { GameComponent } from '../../mypetpal/game/game.component';
 import { AuthGuard } from './route-guard';
 import { PetGuard } from './pet-guard';
 import { PetCreationComponent } from '../../mypetpal/pet/pet-creation/pet-creation.component';
+import { ProfileComponent } from '../../mypetpal/profile/profile.component';
 
 export const routes: Routes = [
   {
@@ -16,6 +17,11 @@ export const routes: Routes = [
     path: 'petCreation',
     component: PetCreationComponent,
     canActivate: [PetGuard]
+  },
+  {
+    path: 'profile',
+    component: ProfileComponent,
+    canActivate: [AuthGuard]
   }
 ];
 

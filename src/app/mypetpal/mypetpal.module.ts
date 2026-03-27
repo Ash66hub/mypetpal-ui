@@ -9,6 +9,7 @@ import { TopBarComponent } from './top-bar/top-bar.component';
 import { PetComponent } from './pet/pet.component';
 import { PetCreationComponent } from './pet/pet-creation/pet-creation.component';
 import { SocialPanelComponent } from './social-panel/social-panel.component';
+import { ProfileComponent } from './profile/profile.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { SocialPanelComponent } from './social-panel/social-panel.component';
     TopBarComponent,
     PetComponent,
     PetCreationComponent,
-    SocialPanelComponent
+    SocialPanelComponent,
+    ProfileComponent
   ],
   imports: [CommonModule, SharedModule],
   exports: [TopBarComponent],

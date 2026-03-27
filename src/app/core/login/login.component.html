@@ -5,7 +5,9 @@
   <div class="bg-overlay"></div>
 
   @if (loading) {
-    <mat-spinner class="loading-centre"></mat-spinner>
+    <div class="loading-centre">
+        <app-paw-spinner [diameter]="80"></app-paw-spinner>
+    </div>
   }
 
   @if (!loading) {

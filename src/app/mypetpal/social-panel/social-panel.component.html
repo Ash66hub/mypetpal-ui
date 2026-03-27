@@ -50,9 +50,13 @@
                 </div>
                 <div class="pal-actions">
                     <!-- Action: Invite -->
-                    <button class="icon-btn" title="Invite to Room" disabled>
-                        <i class="action-icon">🏠</i>
-                    </button>
+                    <span [matTooltip]="friend.isOnline ? 'Invite to Room' : 'Cannot invite, pal is offline'" 
+                          matTooltipShowDelay="0">
+                        <button class="icon-btn" [disabled]="!friend.isOnline" 
+                                [style.pointer-events]="friend.isOnline ? 'auto' : 'none'">
+                            <i class="action-icon">🏠</i>
+                        </button>
+                    </span>
                     <!-- Action: More -->
                     <button class="icon-btn" [matMenuTriggerFor]="friendMenu">
                         <i class="action-icon">⋮</i>
@@ -112,7 +116,7 @@
             
             <!-- Loader -->
             <div class="search-loader" *ngIf="isSearching">
-                <mat-spinner diameter="24"></mat-spinner>
+                <app-paw-spinner [diameter]="24" color="#a855f7"></app-paw-spinner>
                 <span>Scenting for pals...</span>
             </div>
 
@@ -144,5 +148,6 @@
             </div>
             </ng-container>
         </div>
+
     </div>
 </div>

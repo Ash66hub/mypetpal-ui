@@ -531,3 +531,163 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
 }
+
+// Profile Pane Styling
+.profile-pane {
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .avatar-lg {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        font-size: 36px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        
+        &.bg-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+            color: #fff;
+        }
+    }
+
+    h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #fff;
+    }
+}
+
+.profile-stats {
+    display: flex;
+    gap: 12px;
+
+    .stat-box {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: #a78bfa;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    }
+}
+
+.pet-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 16px;
+    
+    .pet-header h3 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pet-info-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        .pet-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pet-details {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+
+            .pet-name {
+                font-weight: 600;
+                font-size: 16px;
+                color: #fff;
+            }
+
+            .pet-type {
+                font-size: 11px;
+                color: #10b981;
+                font-weight: 600;
+                margin-top: 2px;
+            }
+
+            .pet-progress-bar {
+                height: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 2px;
+                margin-top: 8px;
+                overflow: hidden;
+
+                .progress {
+                    height: 100%;
+                    background: linear-gradient(90deg, #10b981, #34d399);
+                    border-radius: 2px;
+                }
+            }
+        }
+    }
+}
+
+.btn-close-profile {
+    margin-top: auto;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+    }
+}

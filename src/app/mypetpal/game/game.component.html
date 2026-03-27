@@ -1,10 +1,13 @@
 <div class="game-wrapper" oncontextmenu="return false;">
     <div id="game-container"></div>
+    
+    <div class="game-loading-overlay" *ngIf="isGameLoading">
+        <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
+    </div>
 
-    <!-- Social Sidebar -->
+    <!-- Neighborhood Sidebar -->
     <app-social-panel></app-social-panel>
 
-    <!-- Zoom Controls -->
     <div class="zoom-controls">
         <button (click)="zoomIn()" title="Zoom In">+</button>
         <button (click)="zoomOut()" title="Zoom Out">-</button>
@@ -21,8 +24,17 @@
                    (blur)="onInputBlur()"
                    (keydown)="$event.stopPropagation()"
                    (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
+            <div class="emoji-selector-wrapper">
+                <button class="emoji-toggle-btn" (click)="$event.stopPropagation(); toggleEmojiPicker()" title="Add Emoji">🐾</button>
+                <div class="emoji-dropdown" *ngIf="isEmojiPickerOpen" (click)="$event.stopPropagation()">
+                    <button class="emoji-btn" *ngFor="let emoji of emojis" (click)="addEmoji(emoji)" 
+                            [title]="'Add ' + emoji">
+                        {{emoji}}
+                    </button>
+                </div>
+            </div>
             <span class="char-counter">{{ chatInput.value.length }}/100</span>
-            <button (click)="talk(chatInput.value); chatInput.value = ''">Talk</button>
-        </div>
+            <button class="talk-btn" (click)="talk(chatInput.value); chatInput.value = ''">Talk</button>
+        </div>  
     </div>
 </div>

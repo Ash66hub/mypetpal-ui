@@ -23,6 +23,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private chatBubbles: Phaser.GameObjects.Container[] = [];
 
+  public isEmojiPickerOpen: boolean = false;
+  public isGameLoading: boolean = true;
+  public readonly emojis: string[] = ['😂','❤️','😍','👍','😊','🐾','🐶','🐱','✨','🎮','🔥','🎉','😎','🤔','👏','🌟','🎵','😴','😭','😡','🥺','🥳','🙌','👀'];
+
   constructor(
     private petStreamService: PetStreamService,
     private router: Router
@@ -37,6 +41,35 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.game) {
       this.game.destroy(true);
+    }
+  }
+
+  // Handle outside click to close emoji picker
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.emoji-selector-wrapper')) {
+      this.isEmojiPickerOpen = false;
+    }
+  }
+
+  public toggleEmojiPicker(): void {
+    this.isEmojiPickerOpen = !this.isEmojiPickerOpen;
+  }
+
+  public addEmoji(emoji: string): void {
+    if (this.chatInput && this.chatInput.nativeElement) {
+      const el = this.chatInput.nativeElement;
+      const start = el.selectionStart || 0;
+      const end = el.selectionEnd || 0;
+      const val = el.value;
+
+      // Ensure we don't exceed max length
+      if (val.length + emoji.length <= 100) {
+        el.value = val.substring(0, start) + emoji + val.substring(end);
+        el.selectionStart = el.selectionEnd = start + emoji.length;
+        el.focus();
+      }
     }
   }
 
@@ -457,6 +490,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       (scene as any).centerY = newCenterY;
       room.setPosition(newCenterX, newCenterY);
     });
+
+    // Mark as fully booted & hide paw spinner
+    setTimeout(() => {
+        this.isGameLoading = false;
+    }, 400); // 400ms buffer prevents harsh snapping of the canvas layer
   }
 
   private isInsideFloor(x: number, y: number): boolean {
