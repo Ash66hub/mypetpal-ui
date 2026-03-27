@@ -1,11 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { from } from 'rxjs';
+import { from, throwError } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import { HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { LoginStreamService } from '../login/login-service/login-stream.service';
-import { LoginService } from '../login/login-service/login.service';
+import { LoginService, RefreshResponse } from '../login/login-service/login.service';
 
 export const httpInterceptor: HttpInterceptorFn = (req, next) => {
   const loginStreamService = inject(LoginStreamService);
@@ -29,14 +29,16 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
 
     if (refreshToken && userId) {
       return from(loginService.getToken(userId, refreshToken)).pipe(
-        switchMap((newToken: string) => {
-          token = newToken;
-          localStorage.setItem('token', token);
+        switchMap((response: RefreshResponse) => {
+          // Store both the new access token AND the rotated refresh token
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('refreshToken', response.refreshToken);
+          // Update expiration
+          const expiresIn = 60 * 60 * 1000;
+          localStorage.setItem('tokenExpiration', (Date.now() + expiresIn).toString());
 
           const clonedReq = req.clone({
-            setHeaders: {
-              Authorization: `Bearer ${token}`
-            }
+            setHeaders: { Authorization: `Bearer ${response.token}` }
           });
 
           return next(clonedReq);
@@ -48,7 +50,10 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
         })
       );
     } else {
-      return next(req);
+      // No refresh token available — redirect to login
+      loginStreamService.logout();
+      router.navigate(['/login']);
+      return from([]);
     }
   }
 

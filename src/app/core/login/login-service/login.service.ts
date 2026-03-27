@@ -11,6 +11,11 @@ export interface AuthResponse {
   userId: string;
 }
 
+export interface RefreshResponse {
+  token: string;
+  refreshToken: string;
+}
+
 @Injectable()
 export class LoginService {
   private apiUrl = environment.apiUrl;
@@ -36,14 +41,14 @@ export class LoginService {
     });
   }
 
-  public getToken(userId: string, refreshToken: string): Promise<string> {
+  public getToken(userId: string, refreshToken: string): Promise<RefreshResponse> {
     const body = {
       userId: userId,
       refreshToken: refreshToken
     };
 
     return lastValueFrom(
-      this.http.post<string>(this.apiUrl + 'Authentication/refreshToken', body)
+      this.http.post<RefreshResponse>(this.apiUrl + 'Authentication/refreshToken', body)
     );
   }
 }

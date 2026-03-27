@@ -18,14 +18,14 @@ app-top-bar{
     height: 64px;
     width: 100%;
     overflow: hidden;
+    position: relative;
     z-index: 1000;
 }
 
 .app-body {
     height: calc(100vh - 64px);
     width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     position: relative;
     background: #f8f9fa;
 

@@ -65,10 +65,9 @@ export class LoginStreamService {
     const expirationTime = localStorage.getItem('tokenExpiration');
     if (expirationTime) {
       const expTime = parseInt(expirationTime, 10);
-
-      return Date.now() > expTime - 300000;
+      return Date.now() > expTime - 300000; // 5-min buffer before actual expiry
     }
-    return true;
+    return false; // No expiration stored means no token — not "expired"
   }
 
   public async getCurrentUser(userId: string) {
@@ -85,8 +84,10 @@ export class LoginStreamService {
   }
 
   public logout() {
-    this.storeTokensInlocalStorage('', '', '');
-
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('tokenExpiration');
     this.currentUserStream.next({});
   }
 }

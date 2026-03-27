@@ -3,6 +3,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    display: flex;
+    justify-content: flex-start; // Flip to start so container grows from left
     background: #1313158c; // Atmospheric room background
 
     &::before {
@@ -30,14 +32,20 @@
 #game-container {
     position: relative;
     z-index: 5; // Ensure Phaser is clearly above the bg layers
-    width: 100%;
+    width: calc(100% - 320px);
     height: 100%;
     overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     canvas {
         display: block;
         margin: 0 auto;
     }
+}
+
+// When social panel is collapsed, expand game to full 100%
+.game-wrapper:has(app-social-panel.collapsed) #game-container {
+    width: 100% !important;
 }
 
 .zoom-controls {

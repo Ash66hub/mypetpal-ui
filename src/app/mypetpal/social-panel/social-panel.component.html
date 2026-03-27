@@ -1,0 +1,148 @@
+<div class="social-panel-container" [class.collapsed]="isCollapsed">
+    <!-- Main Toggle Button -->
+    <button class="toggle-btn" (click)="toggleCollapse()" [title]="isCollapsed ? 'Expand' : 'Collapse'">
+        {{ isCollapsed ? '◀' : '▶' }}
+    </button>
+    <!-- Action Dot for new notifications -->
+    <div class="notification-dot" *ngIf="friendService.newRequestNotification()"></div>
+
+    <div class="social-panel">
+        <!-- Header -->
+        <div class="panel-header">
+            <h3>Neighborhood</h3>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-item" [class.active]="activeTab === 'friends'" (click)="setTab('friends')">
+                Pals
+            </button>
+            <button class="tab-item" [class.active]="activeTab === 'requests'" (click)="setTab('requests')">
+                Requests
+                <span class="count-badge" *ngIf="friendService.incomingRequests().length > 0">
+                    {{ friendService.incomingRequests().length }}
+                </span>
+            </button>
+            <button class="tab-item" [class.active]="activeTab === 'search'" (click)="setTab('search')">
+                Search
+            </button>
+        </div>
+
+        <!-- Friends Tab -->
+        <div *ngIf="activeTab === 'friends'" class="tab-pane">
+            <p *ngIf="friendService.friends().length === 0" class="empty-msg">
+                Every <span class="accent-pet">Pet</span> needs a <span class="accent-pal">Pal</span>!
+                <br>
+                <i>Invite them over to see your place or head out to hang at theirs!</i>
+            </p>
+            <div *ngFor="let friend of friendService.friends()" class="social-item">
+                <div class="user-info">
+                   <div class="avatar-sm">
+                       {{ friend.username[0] | uppercase }}
+                       <div class="online-indicator" [class.online]="friend.isOnline"></div>
+                   </div>
+                   <div class="user-details">
+                       <span class="username">{{ friend.username }}</span>
+                       <span class="status-badge" [class.online]="friend.isOnline">
+                           {{ friend.isOnline ? 'Online' : 'Offline' }}
+                       </span>
+                   </div>
+                </div>
+                <div class="pal-actions">
+                    <!-- Action: Invite -->
+                    <button class="icon-btn" title="Invite to Room" disabled>
+                        <i class="action-icon">🏠</i>
+                    </button>
+                    <!-- Action: More -->
+                    <button class="icon-btn" [matMenuTriggerFor]="friendMenu">
+                        <i class="action-icon">⋮</i>
+                    </button>
+                    <mat-menu #friendMenu="matMenu">
+                        <button mat-menu-item (click)="removeFriend(friend)">
+                            <mat-icon color="warn">person_remove</mat-icon>
+                            <span>Remove Pal</span>
+                        </button>
+                    </mat-menu>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Tab -->
+        <div *ngIf="activeTab === 'requests'" class="tab-pane">
+            <p *ngIf="friendService.incomingRequests().length === 0" class="empty-msg">No pending requests.</p>
+            <div *ngFor="let req of friendService.incomingRequests()" class="social-item">
+                <div class="user-info">
+                   <div class="avatar-sm r-avatar">{{ req.senderUsername[0] | uppercase }}</div>
+                   <span class="username">{{ req.senderUsername }}</span>
+                </div>
+                <div class="actions">
+                    <button class="btn-sm btn-accept" (click)="respond(req.id, true)">Accept</button>
+                    <button class="btn-sm btn-decline" (click)="respond(req.id, false)">Decline</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div *ngIf="activeTab === 'search'" class="tab-pane search-pane">
+            <div *ngIf="friendService.friends().length >= 25" class="limit-overlay">
+                <div class="limit-message">
+                    <span class="limit-icon">🐾</span>
+                    <p>Every pet only has room for 25 <span class="accent-pal">Pals</span>. You've reached your limit!</p>
+                </div>
+            </div>
+
+            <ng-container *ngIf="friendService.friends().length < 25">
+                <div class="search-box-wrapper">
+                <input 
+                    #searchInput 
+                    type="text" 
+                    [value]="searchQuery"
+                    (input)="onSearchChange($any($event.target).value)" 
+                    (keyup.enter)="performSearch()"
+                    placeholder="Search for fellow pet pals..." />
+                
+                <!-- Clear Button -->
+                <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()">×</button>
+                
+                <!-- Search Button -->
+                <button class="search-btn" [disabled]="!searchQuery.trim()" (click)="performSearch()">
+                    <i class="search-icon">🔍</i>
+                </button>
+            </div>
+            
+            <!-- Loader -->
+            <div class="search-loader" *ngIf="isSearching">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span>Scenting for pals...</span>
+            </div>
+
+            <!-- No Results -->
+            <p *ngIf="!isSearching && isSearchPerformed && friendService.searchResults().length === 0" class="empty-msg">
+                No results found.
+            </p>
+
+            <div class="search-results-list" *ngIf="!isSearching">
+                <div *ngFor="let res of friendService.searchResults()" class="social-item search-item">
+                    <div class="user-info">
+                       <div class="avatar-sm s-avatar">
+                           {{ res.username[0] | uppercase }}
+                           <!-- Only show presence dot for confirmed friends -->
+                           <div *ngIf="res.isFriend" class="online-indicator" [class.online]="res.isOnline"></div>
+                       </div>
+                       <div class="user-details">
+                           <span class="username">{{ res.username }}</span>
+                           <span class="status-badge friend" *ngIf="res.isFriend" [class.online]="res.isOnline">
+                               Pal &bull; {{ res.isOnline ? 'Online' : 'Offline' }}
+                           </span>
+                           <span class="status-badge" *ngIf="res.isPending">Pending</span>
+                       </div>
+                    </div>
+                    <div class="actions">
+                        <button *ngIf="!res.isFriend && !res.isPending" class="btn-sm btn-add" (click)="sendRequest(res.userId)">Add</button>
+                    </div>
+                </div>
+            </div>
+            </ng-container>
+        </div>
+    </div>
+</div>
