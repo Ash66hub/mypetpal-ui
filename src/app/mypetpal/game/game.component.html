@@ -1,11 +1,21 @@
 <div class="game-wrapper" oncontextmenu="return false;">
-    <div id="game-container"></div>
+    <div id="game-container" (dragover)="onDragOver($event)" (drop)="onDrop($event)"></div>
     
     <div class="game-loading-overlay" *ngIf="isGameLoading">
         <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
     </div>
 
-    <!-- Neighborhood Sidebar -->
+    <div class="save-status" *ngIf="isSavingRoom">
+        <app-paw-spinner [diameter]="60" color="#7c3aed" icon="💾"></app-paw-spinner>
+    </div>
+
+    <div class="toast-notification" *ngIf="toastMessage">
+        <span class="warning-icon">⚠️</span>
+        {{ toastMessage }}
+    </div>
+
+    <!-- Neighborhood Sidebars -->
+    <app-decor-panel></app-decor-panel>
     <app-social-panel></app-social-panel>
 
     <div class="zoom-controls">
@@ -36,5 +46,5 @@
             <span class="char-counter">{{ chatInput.value.length }}/100</span>
             <button class="talk-btn" (click)="talk(chatInput.value); chatInput.value = ''">Talk</button>
         </div>  
-    </div>
+        </div>
 </div>

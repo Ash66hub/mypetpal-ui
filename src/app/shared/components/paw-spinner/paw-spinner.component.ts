@@ -9,4 +9,5 @@ import { Component, Input } from '@angular/core';
 export class PawSpinnerComponent {
   @Input() diameter: number = 40;
   @Input() color: string = '#7c3aed';
+  @Input() icon: string = '🐾';
 }

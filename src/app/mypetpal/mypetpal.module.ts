@@ -10,6 +10,7 @@ import { PetComponent } from './pet/pet.component';
 import { PetCreationComponent } from './pet/pet-creation/pet-creation.component';
 import { SocialPanelComponent } from './social-panel/social-panel.component';
 import { ProfileComponent } from './profile/profile.component';
+import { DecorPanelComponent } from './decor-panel/decor-panel.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { ProfileComponent } from './profile/profile.component';
     PetComponent,
     PetCreationComponent,
     SocialPanelComponent,
-    ProfileComponent
+    ProfileComponent,
+    DecorPanelComponent
   ],
   imports: [CommonModule, SharedModule],
   exports: [TopBarComponent],

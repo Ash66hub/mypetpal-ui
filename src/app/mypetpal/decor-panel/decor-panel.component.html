@@ -1,0 +1,65 @@
+<div class="decor-panel-container" [class.collapsed]="isCollapsed">
+    <!-- Toggle Button (Hammer) -->
+    <div class="drawer-handle" (click)="togglePanel()" title="Decorate Room">
+        <div class="hammer-icon">🔨</div>
+    </div>
+
+    <div class="panel-content">
+        <div class="panel-header">
+            <h3>Decor</h3>
+        </div>
+
+        <!-- Category Sidebar/Tabs -->
+        <div class="category-tabs">
+            <button [class.active]="activeCategory === 'furniture'" (click)="setCategory('furniture')">
+                <span class="icon">🪑</span>
+                <span class="label">Decor</span>
+            </button>
+            <button [class.active]="activeCategory === 'plant'" (click)="setCategory('plant')">
+                <span class="icon">🪴</span>
+                <span class="label">Plants</span>
+            </button>
+            <button [class.active]="activeCategory === 'wall'" (click)="setCategory('wall')">
+                <span class="icon">🧱</span>
+                <span class="label">Walls</span>
+            </button>
+        </div>
+
+        <!-- Asset Grid -->
+        <div class="asset-grid-viewport custom-scrollbar">
+            <!-- Loading state -->
+            <div class="panel-loader" *ngIf="!decorService.isRoomLoaded()">
+                <app-paw-spinner [diameter]="48" color="#a78bfa"></app-paw-spinner>
+                <p>Establishing room...</p>
+            </div>
+
+            <div class="asset-grid" *ngIf="decorService.isRoomLoaded()">
+                <div *ngFor="let item of filteredItems" 
+                     class="asset-tile" 
+                     [class.locked]="isLocked(item)"
+                     [class.draggable]="!isLocked(item)"
+                     [draggable]="!isLocked(item)"
+                     (dragstart)="onDragStart($event, item)"
+                     [title]="isLocked(item) ? 'Unlock at Level ' + item.levelRequired : item.name">
+                    
+                    <div class="tile-card">
+                        <img [src]="item.imagePath" [alt]="item.name" class="asset-thumb" />
+                        
+                        <!-- Count Badge -->
+                        <div class="count-badge" *ngIf="!isLocked(item)" [class.zero]="getRemaining(item) === 0">
+                            {{ getRemaining(item) }}
+                        </div>
+                        
+                        <!-- Lock Overlay -->
+                        <div class="lock-overlay" *ngIf="isLocked(item)">
+                            <div class="lock-icon">🔒</div>
+                            <span class="lvl-req">Lv. {{ item.levelRequired }}</span>
+                        </div>
+                    </div>
+                    
+                    <span class="asset-name">{{ item.name }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

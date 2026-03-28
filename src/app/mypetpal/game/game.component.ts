@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import * as Phaser from 'phaser';
 import { PetStreamService } from '../pet/pet-service/pet-stream.service';
 import { Router } from '@angular/router';
+import { DecorItem, DecorService, DecorInstance } from '../../core/decor/decor.service';
+import { UserSettingsService, UserSettings } from '../../core/user-settings/user-settings.service';
 
 @Component({
     selector: 'app-game',
@@ -22,14 +24,26 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private isMoving: boolean = false; // Prevent overlapping steps
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private chatBubbles: Phaser.GameObjects.Container[] = [];
+  private decorSprites: Phaser.GameObjects.Group | null = null;
+  private selectedDecor: Phaser.GameObjects.Sprite | null = null;
+  private decorToolbox: Phaser.GameObjects.Container | null = null;
+  private selectionBorder: Phaser.GameObjects.Graphics | null = null;
+  private isDraggingDecor: boolean = false;
+  public isSavingRoom: boolean = false;
+  public toastMessage: string | null = null;
+  private toastTimeout: any;
+  private settingsSaveTimeout: any;
 
   public isEmojiPickerOpen: boolean = false;
   public isGameLoading: boolean = true;
+  private settings: UserSettings | null = null;
   public readonly emojis: string[] = ['😂','❤️','😍','👍','😊','🐾','🐶','🐱','✨','🎮','🔥','🎉','😎','🤔','👏','🌟','🎵','😴','😭','😡','🥺','🥳','🙌','👀'];
 
   constructor(
     private petStreamService: PetStreamService,
-    private router: Router
+    private router: Router,
+    private decorService: DecorService,
+    private userSettingsService: UserSettingsService
   ) {}
 
   ngOnInit(): void {}
@@ -41,6 +55,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.game) {
       this.game.destroy(true);
+    }
+    if (this.settingsSaveTimeout) {
+      clearTimeout(this.settingsSaveTimeout);
     }
   }
 
@@ -76,6 +93,18 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private async initialize() {
     const success = await this.getPetDetails();
     if (success) {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        try {
+          const s = await this.userSettingsService.getSettings(parseInt(userId)).toPromise();
+          if (s) {
+            this.settings = s;
+            this.currentZoom = s.zoomLevel || 5.0;
+          }
+        } catch (e) {
+          console.warn('Settings load failed:', e);
+        }
+      }
       setTimeout(() => this.initializeGame(), 100);
     }
   }
@@ -105,12 +134,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // === Zoom Controls ===
   public zoomIn() {
-    this.currentZoom = Math.min(this.currentZoom + 0.1, 2.0);
+    this.currentZoom = Math.min(this.currentZoom + 0.5,12.0);
     this.applyZoom();
   }
 
   public zoomOut() {
-    this.currentZoom = Math.max(this.currentZoom - 0.1, 0.5);
+    this.currentZoom = Math.max(this.currentZoom - 0.5, 2);
     this.applyZoom();
   }
 
@@ -121,7 +150,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         targets: scene.cameras.main,
         zoom: this.currentZoom,
         duration: 200,
-        ease: 'Power2'
+        ease: 'Power2',
+        onComplete: () => this.saveUserSettings()
       });
     }
   }
@@ -132,7 +162,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     let targetX = this.dog.x;
     let targetY = this.dog.y;
-    const stepDist = 22; // Half step (was 45)
+    const stepDist = 4.4; // 1/5th of 22 (was 22)
 
     switch (direction) {
       case 'up':    targetY -= stepDist; break;
@@ -141,8 +171,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'right': targetX += stepDist; break;
     }
 
-    // Check boundary before moving
-    if (this.isInsideFloor(targetX, targetY)) {
+    // Check boundary AND decor collisions before moving
+    if (this.isInsideFloor(targetX, targetY) && !this.isCollidingWithDecor(targetX, targetY)) {
       this.isMoving = true;
       const scene = this.game.scene.scenes[0];
       scene.tweens.add({
@@ -153,9 +183,23 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         ease: 'Cubic.easeOut',
         onComplete: () => {
           this.isMoving = false;
+          this.saveUserSettings(); // Persist pet position
         }
       });
     }
+  }
+
+  private isCollidingWithDecor(x: number, y: number): boolean {
+    if (!this.decorSprites || !this.dog) return false;
+    
+    // Check if the dog's body at the target position would overlap
+    const scene = this.game.scene.scenes[0];
+    const body = this.dog.body as Phaser.Physics.Arcade.Body;
+    const temp = scene.add.zone(x, y, body.width, body.height);
+    scene.physics.add.existing(temp);
+    const overlapping = scene.physics.overlap(temp, this.decorSprites);
+    temp.destroy();
+    return overlapping;
   }
 
   // === Chat System ===
@@ -179,9 +223,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (text.length > charLimit) filteredText += '...';
 
     const scene = this.game.scene.scenes[0];
-    const paddingX = 10;
-    const paddingY = 6;
-    const maxBubbleWidth = 220;
+    const paddingX = 8;
+    const paddingY = 4;
+    const maxBubbleWidth = 160;
 
     // Hide pointers on existing bubbles
     this.chatBubbles.forEach(b => {
@@ -190,28 +234,33 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     const txt = scene.add.text(0, 0, filteredText, {
-      fontFamily: "'Nunito', sans-serif",
-      fontSize: '14px',
+      fontFamily: "'Quicksand', sans-serif",
+      fontStyle: 'bold',
+      fontSize: '32px', // Render at high resolution
       color: '#1a1a2e',
       align: 'center',
-      resolution: window.devicePixelRatio || 2,
-      wordWrap: { width: maxBubbleWidth - (paddingX * 2) }
+      resolution: 4, // High resolution for sharpness
+      wordWrap: { width: (maxBubbleWidth - (paddingX * 2)) * 4 } // Buffer for internal scaling
     }).setOrigin(0.5);
 
-    const bubbleWidth = Math.max(50, Math.min(txt.width + (paddingX * 2), maxBubbleWidth));
-    const bubbleHeight = txt.height + (paddingY * 2);
+    // Scale down to desired visual size (8px / 32px = 0.25)
+    txt.setScale(0.25);
+    txt.setAlpha(1.0);
+
+    const bubbleWidth = Math.max(40, Math.min((txt.width * 0.25) + (paddingX * 2), maxBubbleWidth));
+    const bubbleHeight = (txt.height * 0.25) + (paddingY * 2);
     
     // Bubble Background
     const bg = scene.add.graphics();
     bg.fillStyle(0xffffff, 0.75);
-    bg.fillRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 10);
-    bg.lineStyle(1.2, 0xffffff, 0.9); 
-    bg.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 10);
+    bg.fillRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 6);
+    bg.lineStyle(1.0, 0xffffff, 0.9); 
+    bg.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 6);
     
     // Pointer (separate object)
     const pointer = scene.add.graphics();
     pointer.setName('pointer'); // Correct way to set name
-    const pointerSize = 6;
+    const pointerSize = 4;
     pointer.fillStyle(0xffffff, 0.75);
     pointer.beginPath();
     pointer.moveTo(-pointerSize, bubbleHeight/2 - 1); 
@@ -220,14 +269,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     pointer.closePath();
     pointer.fillPath();
 
-    pointer.lineStyle(1.2, 0xffffff, 0.9);
+    pointer.lineStyle(1.0, 0xffffff, 0.9);
     pointer.beginPath();
     pointer.moveTo(-pointerSize, bubbleHeight/2 - 1);
     pointer.lineTo(0, bubbleHeight/2 + pointerSize);
     pointer.lineTo(pointerSize, bubbleHeight/2 - 1);
     pointer.strokePath();
 
-    const container = scene.add.container(this.dog.x, this.dog.y - 40, [pointer, bg, txt]);
+    const container = scene.add.container(this.dog.x, this.dog.y - 28, [pointer, bg, txt]);
     container.setDepth(20);
     container.setAlpha(0);
     (container as any).originalHeight = bubbleHeight;
@@ -279,11 +328,332 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     
     // If clicking outside the input box, blur it to restore pet control
     const clickedInside = this.chatInput.nativeElement.contains(event.target);
+    const clickedGame = document.getElementById('game-container')?.contains(event.target as Node);
     const isButton = (event.target as HTMLElement).tagName === 'BUTTON';
     
     if (!clickedInside && !isButton) {
       this.chatInput.nativeElement.blur();
+      this.deselectDecor();
     }
+  }
+
+  // === Drag and Drop Handlers ===
+  public onDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  public onDrop(event: DragEvent) {
+    event.preventDefault();
+    const data = event.dataTransfer?.getData('decorItem');
+    if (!data) return;
+
+    const item: DecorItem = JSON.parse(data);
+    const container = document.getElementById('game-container');
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const scene = this.game.scene.scenes[0];
+    
+    // Scale the DOM mouse position to our 2000x2000 internal resolution
+    const gameX = (x / container.offsetWidth) * (scene.game.config.width as number);
+    const gameY = (y / container.offsetHeight) * (scene.game.config.height as number);
+
+    const worldPoint = scene.cameras.main.getWorldPoint(gameX, gameY);
+
+    if (!this.isInsideFloor(worldPoint.x, worldPoint.y)) {
+      // RESET POINTERS before returning to prevent phantom dragging!
+      if (scene) {
+        scene.input.activePointer.isDown = false;
+        scene.input.activePointer.buttons = 0;
+        scene.input.resetPointers();
+      }
+      return;
+    }
+
+    if (!this.canAddMoreDecor(item)) {
+      this.showToast(item.category === 'wall' ? 'Max 50 walls allowed!' : `Max 10 ${item.name} allowed!`);
+      // Reset pointers even on error
+      if (scene) {
+        scene.input.resetPointers();
+      }
+      return;
+    }
+
+    this.addDecorToGame(item, worldPoint.x, worldPoint.y);
+    this.saveRoomLayout();
+
+    // Reset Phaser pointers to prevent phantom panning
+    if (scene) {
+      scene.input.activePointer.isDown = false;
+      scene.input.activePointer.buttons = 0;
+      scene.input.resetPointers();
+    }
+  }
+
+  private addDecorToGame(item: DecorItem, x: number, y: number, initialRotation: string = 'SE') {
+    if (!this.game?.scene?.scenes[0]) return;
+    const scene = this.game.scene.scenes[0];
+    
+    // Check if asset is loaded
+    const seKey = `${item.id}_SE`;
+    const swKey = `${item.id}_SW`;
+    const initialKey = `${item.id}_${initialRotation}`;
+
+    const loadAndAdd = () => {
+      if (!this.decorSprites) {
+        this.decorSprites = scene.physics.add.group();
+        scene.physics.add.collider(this.decorSprites, this.decorSprites);
+        if (this.dog) {
+          scene.physics.add.collider(this.dog, this.decorSprites);
+        }
+      }
+
+      const sprite = scene.physics.add.sprite(x, y, initialKey);
+      sprite.setScale(0.25);
+      sprite.setAngle(initialRotation === 'SW' ? -5 : 0); // Only tilt SW for isometric alignment
+      
+      // Reduce overlap threshold by 10%
+      const newWidth = sprite.width * 0.90;
+      const newHeight = sprite.height * 0.90;
+      sprite.setBodySize(newWidth, newHeight);
+      sprite.setOffset((sprite.width - newWidth) / 2, (sprite.height - newHeight) / 2);
+
+      sprite.setImmovable(true);
+      sprite.setInteractive({ draggable: true });
+      sprite.setDepth(10);
+      sprite.setData('item', item);
+      sprite.setData('rotation', initialRotation);
+
+      // Add to list
+      this.decorSprites.add(sprite);
+      
+      this.updateToolboxPosition();
+      this.refreshCounts();
+
+      // Force initial separation if dropped on top of something (manual resolver)
+      this.resolveDecorOverlap(sprite);
+
+      // Handle interactions
+      sprite.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        if (pointer.rightButtonDown()) return;
+        this.selectDecor(sprite);
+      });
+
+      scene.input.setDraggable(sprite);
+
+      sprite.on('dragstart', () => {
+        this.isDraggingDecor = true;
+        this.selectDecor(sprite);
+        sprite.setData('origX', sprite.x);
+        sprite.setData('origY', sprite.y);
+        sprite.setAlpha(0.6); // Semitransparent while dragging
+        sprite.setImmovable(false); // Enable physics separation
+      });
+
+      sprite.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+        // Enforce basic floor boundaries only
+        if (this.isInsideFloor(dragX, dragY)) {
+          sprite.setPosition(dragX, dragY);
+        }
+        this.updateToolboxPosition();
+      });
+
+      sprite.on('dragend', () => {
+        this.isDraggingDecor = false;
+        sprite.setAlpha(1.0);
+        sprite.setImmovable(true); // Lock in place
+
+        // Final resolve on release
+        this.resolveDecorOverlap(sprite);
+        this.updateToolboxPosition();
+
+        // ONLY save if moved!
+        const moved = Math.abs(sprite.x - sprite.getData('origX')) > 1 || 
+                      Math.abs(sprite.y - sprite.getData('origY')) > 1;
+        if (moved) {
+          this.saveRoomLayout();
+        }
+      });
+    };
+
+    const sePath = item.imagePath.startsWith('/') ? item.imagePath : `/${item.imagePath}`;
+
+    if (!scene.textures.exists(seKey)) {
+      scene.load.image(seKey, sePath);
+      // Construct SW path
+      const swPath = sePath.replace('_SE.png', '_SW.png');
+      scene.load.image(swKey, swPath);
+      
+      scene.load.once('complete', loadAndAdd);
+      scene.load.start();
+    } else {
+      loadAndAdd();
+    }
+  }
+
+  private selectDecor(sprite: Phaser.GameObjects.Sprite) {
+    this.deselectDecor();
+    this.selectedDecor = sprite;
+    this.showSelectionFeedback(sprite);
+    this.showDecorToolbox(sprite);
+  }
+
+  private deselectDecor() {
+    if (this.selectedDecor) {
+      this.selectedDecor.clearTint();
+      this.selectedDecor = null;
+    }
+    this.hideSelectionFeedback();
+    this.hideDecorToolbox();
+  }
+
+  private showSelectionFeedback(sprite: Phaser.GameObjects.Sprite) {
+    const scene = this.game.scene.scenes[0];
+    if (!scene) return;
+
+    if (!this.selectionBorder) {
+      this.selectionBorder = scene.add.graphics();
+      this.selectionBorder.setDepth(9); // Just below sprite or above? User said highlight.
+    }
+
+    this.selectionBorder.clear();
+    this.selectionBorder.lineStyle(0.5, 0x7c3aed, 0.8);
+    
+    // Draw relative to center
+    const bounds = sprite.getBounds();
+    this.selectionBorder.strokeRect(
+      bounds.x - 2, 
+      bounds.y - 2, 
+      bounds.width + 4, 
+      bounds.height + 4
+    );
+    this.selectionBorder.setVisible(true);
+  }
+
+  private hideSelectionFeedback() {
+    if (this.selectionBorder) {
+      this.selectionBorder.setVisible(false);
+    }
+  }
+
+  private showDecorToolbox(sprite: Phaser.GameObjects.Sprite) {
+    const scene = this.game.scene.scenes[0];
+    if (!scene) return;
+
+    if (!this.decorToolbox) {
+      const rotateIcon = scene.add.image(-12, 0, 'rotate').setOrigin(0.5).setDisplaySize(16, 16);
+      const trashIcon = scene.add.image(12, 0, 'trash').setOrigin(0.5).setDisplaySize(16, 16);
+      
+      this.decorToolbox = scene.add.container(0, 0, [rotateIcon, trashIcon]);
+      this.decorToolbox.setDepth(30);
+      this.decorToolbox.setScale(0.3); // Minimalist scale
+
+      // Rotate interaction
+      rotateIcon.setInteractive({ useHandCursor: true });
+      rotateIcon.on('pointerdown', (p: any, lx: any, ly: any, e: any) => {
+        e.stopPropagation();
+        this.toggleRotation();
+      });
+
+      // Trash interaction
+      trashIcon.setInteractive({ useHandCursor: true });
+      trashIcon.on('pointerdown', (p: any, lx: any, ly: any, e: any) => {
+        e.stopPropagation();
+        this.deleteSelectedDecor();
+      });
+    }
+
+    this.decorToolbox.setVisible(true);
+    this.updateToolboxPosition();
+  }
+
+  private hideDecorToolbox() {
+    if (this.decorToolbox) {
+      this.decorToolbox.setVisible(false);
+    }
+  }
+
+  private updateToolboxPosition() {
+    if (this.selectedDecor) {
+      const x = this.selectedDecor.x;
+      const y = this.selectedDecor.y - (this.selectedDecor.displayHeight / 2) - 8;
+
+      if (this.decorToolbox) {
+        this.decorToolbox.setPosition(x, y);
+      }
+      
+      if (this.selectionBorder) {
+        this.showSelectionFeedback(this.selectedDecor);
+      }
+    }
+  }
+
+  private deleteSelectedDecor() {
+    if (!this.selectedDecor) return;
+    
+    const sprite = this.selectedDecor;
+    if (this.decorSprites) {
+      this.decorSprites.remove(sprite);
+    }
+    this.deselectDecor();
+    sprite.destroy();
+    this.saveRoomLayout();
+  }
+
+  private toggleRotation() {
+    if (!this.selectedDecor) return;
+    
+    const currentRotation = this.selectedDecor.getData('rotation');
+    const nextRotation = currentRotation === 'SE' ? 'SW' : 'SE';
+    const item = this.selectedDecor.getData('item');
+    const nextKey = `${item.id}_${nextRotation}`;
+    
+    this.selectedDecor.setTexture(nextKey);
+    this.selectedDecor.setData('rotation', nextRotation);
+    this.selectedDecor.setAngle(nextRotation === 'SW' ? -5 : 0); // Dynamically update angle
+ 
+    // After rotation, the bounds might have changed, so re-resolve overlap
+    this.resolveDecorOverlap(this.selectedDecor);
+    this.saveRoomLayout();
+  }
+
+  private resolveDecorOverlap(sprite: Phaser.GameObjects.Sprite) {
+    if (!this.decorSprites) return;
+    
+    const scene = this.game.scene.scenes[0];
+    let attempts = 0;
+    const maxAttempts = 30; // More aggressive
+    
+    while (attempts < maxAttempts) {
+      let overlappingItem: any = null;
+      this.decorSprites.getChildren().forEach((item: any) => {
+        if (item !== sprite) {
+           // We use the physics overlap check but ensure bodies are synced
+           (sprite.body as Phaser.Physics.Arcade.Body).updateFromGameObject();
+           (item.body as Phaser.Physics.Arcade.Body).updateFromGameObject();
+           if (scene.physics.overlap(sprite, item)) {
+             overlappingItem = item;
+           }
+        }
+      });
+      
+      if (!overlappingItem) break;
+      
+      // Push out: move sprite away from overlappingItem center
+      const angle = Phaser.Math.Angle.Between(overlappingItem.x, overlappingItem.y, sprite.x, sprite.y);
+      // Small nudge but repeat to find a free spot
+      sprite.x += Math.cos(angle) * 3;
+      sprite.y += Math.sin(angle) * 3;
+      
+      attempts++;
+    }
+    this.updateToolboxPosition();
   }
 
   public stopMove() {
@@ -300,11 +670,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: width,
-      height: height,
+      width: 2000,
+      height: 2000,
       transparent: true,
       scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.ENVELOP, // Robustly fills the screen
         autoCenter: Phaser.Scale.CENTER_BOTH
       },
       scene: {
@@ -314,6 +684,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         init: function(this: any) { this.gameComponent = self; }
       },
       parent: 'game-container',
+      render: {
+        antialias: false,
+        roundPixels: true
+      },
       physics: {
         default: 'arcade',
         arcade: {
@@ -335,41 +709,62 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   preload(scene: Phaser.Scene): void {
     scene.load.image('dog', '/assets/dog.png');
     scene.load.image('room', '/assets/room-isometric.png');
+    scene.load.image('rotate', '/assets/rotate.png');
+    scene.load.image('trash', '/assets/delete.png');
   }
 
   create(scene: Phaser.Scene): void {
-    const centerX = scene.cameras.main.centerX;
-    const centerY = scene.cameras.main.centerY;
+    // Establish a fixed world origin (1000,1000) to keep all coordinates stable across devices
+    const roomCenterX = 1000;
+    const roomCenterY = 1000;
+    (scene as any).roomCenterX = roomCenterX;
+    (scene as any).roomCenterY = roomCenterY;
+    const centerX = roomCenterX;
+    const centerY = roomCenterY;
 
-    const room = scene.add.image(centerX, centerY, 'room');
-    room.setDisplaySize(600, 600); 
-    this.dog = scene.physics.add.sprite(centerX, centerY + 65, 'dog').setScale(0.07);
+    // Place the floor
+    const room = scene.add.image(roomCenterX, roomCenterY, 'room');
+    room.displayWidth = 600;
+    room.scaleY = room.scaleX; // Uniform scale
+
+    // Initial position from settings or default
+    const startX = this.settings?.lastPetX || roomCenterX;
+    const startY = this.settings?.lastPetY || (roomCenterY + 27);
+
+    this.dog = scene.physics.add.sprite(startX, startY, 'dog').setScale(0.028);
+    // Pet stays at 0 default
     this.dog.setCollideWorldBounds(true);
     this.dog.setBounce(0);
 
+    // Camera setup - restore last focus or default to room origin
+    const camX = this.settings?.lastCameraX || roomCenterX;
+    const camY = this.settings?.lastCameraY || roomCenterY;
+    scene.cameras.main.centerOn(camX, camY);
+    scene.cameras.main.zoom = this.currentZoom;
+    
+    // Enable Camera Panning (Middle click or Right click drag)
+    scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      // Only pan if we aren't dragging decor and a secondary mouse button is pressed
+      if (!pointer.isDown || this.isDraggingDecor) return; 
+      if (pointer.rightButtonDown() || pointer.middleButtonDown()) {
+        const dx = pointer.x - pointer.prevPosition.x;
+        const dy = pointer.y - pointer.prevPosition.y;
+        scene.cameras.main.scrollX -= dx / scene.cameras.main.zoom;
+        scene.cameras.main.scrollY -= dy / scene.cameras.main.zoom;
+        this.saveUserSettings(); // Save new camera focus
+      }
+    });
+
     scene.physics.world.setBounds(
-      centerX - 250, centerY - 100, 500, 330,
+      roomCenterX - 285, roomCenterY - 130, 575, 306,
       true, true, true, true
     );
-
-    // Boundary Boundary Visualizer - uncomment for debugging
-    /*
-    const graphics = scene.add.graphics();
-    graphics.lineStyle(2, 0x00ff00, 0.3); 
-    graphics.beginPath();
-    graphics.moveTo(centerX, centerY - 100); // Top
-    graphics.lineTo(centerX + 250, centerY + 65); // Right
-    graphics.lineTo(centerX, centerY + 230); // Bottom
-    graphics.lineTo(centerX - 250, centerY + 65);  // Left
-    graphics.closePath();
-    graphics.strokePath();
-    */
 
     (scene as any).centerX = centerX;
     (scene as any).centerY = centerY;
 
     // === Phaser Arrow Controls (appear around pet on hover) ===
-    const arrowOffset = 26; // Brought closer
+    const arrowOffset = 18; // Even closer
     let hoverCount = 0; // track how many interactive elements the pointer is over
 
     const showArrows = () => {
@@ -379,6 +774,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         scene.tweens.add({ targets: c, alpha: 0.45, duration: 150 });
       });
     };
+
+    // Global deselect within Phaser
+    scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer, gameObjects: any[]) => {
+      if (gameObjects.length === 0) {
+        this.deselectDecor();
+      }
+    });
 
     const hideArrows = () => {
       this.arrowsVisible = false;
@@ -391,7 +793,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const makeArrow = (dir: string, ox: number, oy: number, angle: number) => {
       // Use Phaser Graphics for high-res vector arrows
       const graphics = scene.add.graphics();
-      const radius = 9; 
+      const radius = 7; 
       
       // Draw a triangle
       graphics.fillStyle(0xffffff, 1);
@@ -467,7 +869,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // === Mouse Drag Panning (all mouse drags pan the camera) ===
     scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.isDown) {
+      if (pointer.isDown && !this.isDraggingDecor) {
         scene.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / scene.cameras.main.zoom;
         scene.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / scene.cameras.main.zoom;
       }
@@ -494,20 +896,137 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     // Mark as fully booted & hide paw spinner
     setTimeout(() => {
         this.isGameLoading = false;
+        this.loadSavedDecor();
     }, 400); // 400ms buffer prevents harsh snapping of the canvas layer
+  }
+
+  public showToast(message: string) {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastMessage = message;
+    this.toastTimeout = setTimeout(() => this.toastMessage = null, 3000);
+  }
+
+  private loadSavedDecor() {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    this.decorService.getSavedDecor(parseInt(userId)).subscribe({
+      next: (instances) => {
+        instances.forEach(instance => {
+          const item = this.decorService.items().find(i => i.id === instance.decorId);
+          if (item) {
+            // Convert coordinate system if needed, but here we use world coordinates directly
+            this.addDecorToGame(item, instance.x, instance.y, instance.rotation);
+          }
+        });
+        this.refreshCounts();
+        this.decorService.isRoomLoaded.set(true);
+      },
+      error: (err) => {
+        console.error('Failed to load decor:', err);
+        this.decorService.isRoomLoaded.set(true);
+      }
+    });
+  }
+
+  private canAddMoreDecor(item: DecorItem): boolean {
+    if (!this.decorSprites) return true;
+    
+    const children = this.decorSprites.getChildren();
+    if (item.category === 'wall') {
+      const wallCount = children.filter((c: any) => c.getData('item').category === 'wall').length;
+      return wallCount < 50;
+    } else {
+      // 10 per specific asset kind
+      const sameItemCount = children.filter((c: any) => c.getData('item').id === item.id).length;
+      return sameItemCount < 10;
+    }
+  }
+
+  private refreshCounts() {
+    if (!this.decorSprites) return;
+    const counts: Record<string, number> = {};
+    this.decorSprites.getChildren().forEach((child: any) => {
+      const id = child.getData('item').id;
+      counts[id] = (counts[id] || 0) + 1;
+    });
+    this.decorService.activeCounts.set(counts);
+  }
+
+  private saveRoomLayout() {
+    const userId = localStorage.getItem('userId');
+    if (!userId || !this.decorSprites) return;
+
+    this.refreshCounts();
+    const instances: DecorInstance[] = this.decorSprites.getChildren().map((child: any) => {
+      return {
+        userId: parseInt(userId),
+        decorId: child.getData('item').id,
+        x: child.x,
+        y: child.y,
+        rotation: child.getData('rotation')
+      };
+    });
+
+    this.isSavingRoom = true;
+    this.decorService.saveDecor(parseInt(userId), instances).subscribe({
+      next: () => {
+        setTimeout(() => this.isSavingRoom = false, 800); // Keep visible briefly for feedback
+      },
+      error: (err) => {
+        console.error('Failed to save decor:', err);
+        this.isSavingRoom = false;
+      }
+    });
   }
 
   private isInsideFloor(x: number, y: number): boolean {
     if (!this.game?.scene?.scenes[0]) return true;
-    const scene = this.game.scene.scenes[0] as any;
-    const centerX = scene.centerX || window.innerWidth / 2;
-    const centerY = (scene.centerY || window.innerHeight / 2) + 65;
-    const halfWidth = 250;
-    const halfHeight = 165;
+    
+    // Use our fixed World Center (1000, 1000) for all checks
+    const centerX = 1000;
+    const centerY = 1000;
+    
+    const lx = x - centerX;
+    const ly = y - centerY;
 
-    return (
-      Math.abs(x - centerX) / halfWidth + Math.abs(y - centerY) / halfHeight <= 1
-    );
+    // Check all 4 lines of the quadrilateral defined by the user
+    // Top-Right: 162x - 290y - 37700 = 0
+    if (162 * lx - 290 * ly - 37700 > 0) return false;
+    // Right-Bottom: 144x + 290y - 51040 = 0
+    if (144 * lx + 290 * ly - 51040 > 0) return false;
+    // Bottom-Left: -154x + 285y - 50160 = 0
+    if (-154 * lx + 285 * ly - 50160 > 0) return false;
+    // Left-Top: -152x - 285y - 37050 = 0
+    if (-152 * lx - 285 * ly - 37050 > 0) return false;
+
+    return true;
+  }
+
+  private saveUserSettings() {
+    // Debounce the save to 5 seconds
+    if (this.settingsSaveTimeout) {
+      clearTimeout(this.settingsSaveTimeout);
+    }
+
+    this.settingsSaveTimeout = setTimeout(() => {
+      const userId = localStorage.getItem('userId');
+      if (!userId || !this.dog || !this.game?.scene?.scenes[0]) return;
+      
+      const scene = this.game.scene.scenes[0];
+
+      this.userSettingsService.saveSettings({
+        userId: parseInt(userId),
+        lastPetX: this.dog.x,
+        lastPetY: this.dog.y,
+        lastCameraX: scene.cameras.main.midPoint.x,
+        lastCameraY: scene.cameras.main.midPoint.y,
+        zoomLevel: this.currentZoom,
+        isMuted: this.settings?.isMuted || false,
+        musicVolume: this.settings?.musicVolume || 0.5,
+        soundVolume: this.settings?.soundVolume || 0.5
+      }).subscribe();
+    }, 5000); // 5 second debounce
   }
 
   update(scene: Phaser.Scene): void {
@@ -557,7 +1076,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.dog.body.setVelocity(0, 0);
       const sc = scene as any;
       this.dog.x += (sc.centerX - this.dog.x) * 0.1;
-      this.dog.y += (sc.centerY + 65 - this.dog.y) * 0.1;
+      this.dog.y += (sc.centerY + 27 - this.dog.y) * 0.1;
     }
   }
 }
