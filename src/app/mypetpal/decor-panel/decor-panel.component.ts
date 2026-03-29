@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DecorService, DecorItem } from '../../core/decor/decor.service';
 
@@ -12,6 +12,8 @@ export class DecorPanelComponent implements OnInit {
   public isCollapsed: boolean = true;
   public activeCategory: 'furniture' | 'plant' | 'wall' = 'furniture';
   public filteredItems: DecorItem[] = [];
+
+  @Input() isVisiting: boolean = false;
 
   constructor(public decorService: DecorService) {}
 

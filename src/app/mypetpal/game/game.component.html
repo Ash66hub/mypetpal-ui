@@ -1,50 +1,94 @@
 <div class="game-wrapper" oncontextmenu="return false;">
-    <div id="game-container" (dragover)="onDragOver($event)" (drop)="onDrop($event)"></div>
-    
-    <div class="game-loading-overlay" *ngIf="isGameLoading">
-        <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
+  <div
+    id="game-container"
+    (dragover)="onDragOver($event)"
+    (drop)="onDrop($event)"></div>
+
+  @if (isGameLoading) {
+    <div class="game-loading-overlay">
+      <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
     </div>
+  }
 
-    <div class="save-status" *ngIf="isSavingRoom">
-        <app-paw-spinner [diameter]="60" color="#7c3aed" icon="💾"></app-paw-spinner>
+  @if (isSavingRoom) {
+    <div class="save-status">
+      <app-paw-spinner
+        [diameter]="60"
+        color="#7c3aed"
+        icon="💾"></app-paw-spinner>
     </div>
+  }
 
-    <div class="toast-notification" *ngIf="toastMessage">
-        <span class="warning-icon">⚠️</span>
-        {{ toastMessage }}
+  @if (toastMessage) {
+    <div class="toast-notification">
+      <span class="warning-icon">⚠️</span>
+      {{ toastMessage }}
     </div>
+  }
 
-    <!-- Neighborhood Sidebars -->
-    <app-decor-panel></app-decor-panel>
-    <app-social-panel></app-social-panel>
+  <!-- Neighborhood Sidebars -->
+  <app-decor-panel [isVisiting]="isVisiting"></app-decor-panel>
+  <app-social-panel
+    [isVisiting]="isVisiting"
+    [isHosting]="isHosting"
+    [visitingUsername]="visitingUsername"
+    [hostingCount]="hostingCount"
+    (onReturnHome)="returnHome()">
+  </app-social-panel>
 
-    <div class="zoom-controls">
-        <button (click)="zoomIn()" title="Zoom In">+</button>
-        <button (click)="zoomOut()" title="Zoom Out">-</button>
+  <div class="zoom-controls">
+    <button (click)="zoomIn()" title="Zoom In">+</button>
+    <button (click)="zoomOut()" title="Zoom Out">-</button>
+  </div>
+
+  <!-- Chat Controls -->
+  <div class="chat-controls">
+    @if (roomOwnerId) {
+      <button
+        class="return-home-btn"
+        (click)="returnHome()"
+        [matTooltip]="'Return home'"
+        title="Return home">
+        <span class="icon">🏠</span>
+      </button>
+    }
+    <div class="chat-input-wrapper">
+      <input
+        #chatInput
+        type="text"
+        maxlength="100"
+        placeholder="Speak to the room..."
+        (focus)="onInputFocus()"
+        (blur)="onInputBlur()"
+        (keydown)="$event.stopPropagation()"
+        (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
+      <div class="emoji-selector-wrapper">
+        <button
+          class="emoji-toggle-btn"
+          (click)="$event.stopPropagation(); toggleEmojiPicker()"
+          title="Add Emoji">
+          🐾
+        </button>
+        @if (isEmojiPickerOpen) {
+          <div
+            class="emoji-dropdown"
+            (click)="$event.stopPropagation()">
+            <button
+              class="emoji-btn"
+              *ngFor="let emoji of emojis"
+              (click)="addEmoji(emoji)"
+              [title]="'Add ' + emoji">
+              {{ emoji }}
+            </button>
+          </div>
+        }
+      </div>
+      <span class="char-counter">{{ chatInput.value.length }}/100</span>
+      <button
+        class="talk-btn"
+        (click)="talk(chatInput.value); chatInput.value = ''">
+        Talk
+      </button>
     </div>
-
-    <!-- Chat Controls -->
-    <div class="chat-controls">
-        <div class="chat-input-wrapper">
-            <input #chatInput 
-                   type="text" 
-                   maxlength="100"
-                   placeholder="Speak to the room..." 
-                   (focus)="onInputFocus()"
-                   (blur)="onInputBlur()"
-                   (keydown)="$event.stopPropagation()"
-                   (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
-            <div class="emoji-selector-wrapper">
-                <button class="emoji-toggle-btn" (click)="$event.stopPropagation(); toggleEmojiPicker()" title="Add Emoji">🐾</button>
-                <div class="emoji-dropdown" *ngIf="isEmojiPickerOpen" (click)="$event.stopPropagation()">
-                    <button class="emoji-btn" *ngFor="let emoji of emojis" (click)="addEmoji(emoji)" 
-                            [title]="'Add ' + emoji">
-                        {{emoji}}
-                    </button>
-                </div>
-            </div>
-            <span class="char-counter">{{ chatInput.value.length }}/100</span>
-            <button class="talk-btn" (click)="talk(chatInput.value); chatInput.value = ''">Talk</button>
-        </div>  
-        </div>
+  </div>
 </div>

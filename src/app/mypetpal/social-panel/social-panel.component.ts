@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FriendService, UserSearchResult, Friend, FriendRequest } from '../../core/social/friend.service';
 import { SnackbarService } from '../../shared/snackbar/snackbar.service';
@@ -9,6 +9,7 @@ import { LoginStreamService } from '../../core/login/login-service/login-stream.
 import { PetStreamService } from '../pet/pet-service/pet-stream.service';
 import { User } from '../../shared/user/user';
 import { Pet } from '../pet/pet';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-social-panel',
@@ -29,12 +30,20 @@ export class SocialPanelComponent implements OnInit {
   public isSearching: boolean = false;
   public isSearchPerformed: boolean = false;
 
+  @Input() isVisiting: boolean = false;
+  @Input() isHosting: boolean = false;
+  @Input() visitingUsername: string = '';
+  @Input() hostingCount: number = 0;
+
+  @Output() onReturnHome = new EventEmitter<void>();
+
   constructor(
     public friendService: FriendService,
     private snackbarService: SnackbarService,
     private dialog: MatDialog,
     private loginStreamService: LoginStreamService,
-    private petStreamService: PetStreamService
+    private petStreamService: PetStreamService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +80,7 @@ export class SocialPanelComponent implements OnInit {
     }
     if (tab === 'requests') {
       this.friendService.clearNotification();
+      this.friendService.clearVisitNotification();
     }
   }
 
@@ -108,6 +118,10 @@ export class SocialPanelComponent implements OnInit {
     this.isSearchPerformed = false;
   }
 
+  public returnHome() {
+    this.onReturnHome.emit();
+  }
+
   public sendRequest(targetId: number) {
     this.friendService.sendRequest(this.currentUserId, targetId).subscribe({
       next: () => {
@@ -130,6 +144,36 @@ export class SocialPanelComponent implements OnInit {
       this.friendService.refreshSocialData();
       const msg = accept ? 'Request accepted!' : 'Request declined.';
       this.snackbarService.openSnackbarWithAction(msg);
+    });
+  }
+
+  public sendVisitInvite(friendId: number) {
+    this.friendService.sendVisitInvite(this.currentUserId, friendId).subscribe({
+      next: () => {
+        this.snackbarService.openSnackbarWithAction('Visit invitation sent!');
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.snackbarService.openSnackbarWithAction('Invitation already sent');
+        } else {
+          this.snackbarService.openSnackbarWithAction('Action unavailable. Please try again later.');
+        }
+      }
+    });
+  }
+
+  public respondToVisitInvite(inviteId: number, accept: boolean, senderId?: number) {
+    this.friendService.respondToVisitInvite(inviteId, accept).subscribe(() => {
+      this.friendService.refreshSocialData();
+      if (accept && senderId != null) {
+        this.router.navigate(['/game', senderId]).then(() => {
+          // Force a full reload to tear down the old Phaser scene and load the friend's decor
+          window.location.reload();
+        });
+      } else {
+        const msg = accept ? 'Invitation accepted!' : 'Invitation declined.';
+        this.snackbarService.openSnackbarWithAction(msg);
+      }
     });
   }
 

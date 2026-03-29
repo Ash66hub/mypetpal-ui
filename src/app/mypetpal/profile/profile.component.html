@@ -27,7 +27,9 @@
                     <button mat-icon-button matSuffix (click)="hideOldPassword = !hideOldPassword" type="button">
                         <mat-icon>{{hideOldPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
                     </button>
-                    <mat-error *ngIf="passwordForm.get('oldPassword')?.hasError('required')">Required</mat-error>
+                    @if (passwordForm.get('oldPassword')?.hasError('required')) {
+                        <mat-error>Required</mat-error>
+                    }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -36,7 +38,9 @@
                     <button mat-icon-button matSuffix (click)="hideNewPassword = !hideNewPassword" type="button">
                         <mat-icon>{{hideNewPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
                     </button>
-                    <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('minlength')">Must be at least 8 characters</mat-error>
+                    @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+                        <mat-error>Must be at least 8 characters</mat-error>
+                    }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -45,12 +49,18 @@
                     <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
                         <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
                     </button>
-                    <mat-error *ngIf="passwordForm.hasError('mismatch')">Passwords do not match</mat-error>
+                    @if (passwordForm.hasError('mismatch')) {
+                        <mat-error>Passwords do not match</mat-error>
+                    }
                 </mat-form-field>
 
                 <button mat-flat-button color="primary" type="submit" [disabled]="passwordForm.invalid || isLoading" class="update-btn">
-                    <span *ngIf="!isLoading">Update Password</span>
-                    <app-paw-spinner [diameter]="20" color="#ffffff" *ngIf="isLoading"></app-paw-spinner>
+                    @if (!isLoading) {
+                        <span>Update Password</span>
+                    }
+                    @if (isLoading) {
+                        <app-paw-spinner [diameter]="20" color="#ffffff"></app-paw-spinner>
+                    }
                 </button>
             </form>
 

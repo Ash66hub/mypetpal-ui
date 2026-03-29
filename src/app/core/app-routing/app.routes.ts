@@ -13,6 +13,7 @@ export const routes: Routes = [
   },
   { path: '', redirectTo: '/game', pathMatch: 'full' },
   { path: 'game', component: GameComponent, canActivate: [AuthGuard] },
+  { path: 'game/:roomOwnerId', component: GameComponent, canActivate: [AuthGuard] },
   {
     path: 'petCreation',
     component: PetCreationComponent,

@@ -104,8 +104,44 @@
     max-width: 440px;
     z-index: 100;
     pointer-events: auto;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+
+    .return-home-btn {
+        width: 50px;
+        min-width: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(18, 14, 38, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 40px;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        transition: all 0.2s ease;
+
+        .icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        &:hover {
+            transform: scale(1.03);
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.25);
+        }
+
+        &:active {
+            transform: scale(0.98);
+        }
+    }
 
     .chat-input-wrapper {
+        flex: 1;
         display: flex;
         gap: 8px;
         padding: 6px;

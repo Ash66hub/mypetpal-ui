@@ -1,10 +1,14 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as Phaser from 'phaser';
 import { PetStreamService } from '../pet/pet-service/pet-stream.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DecorItem, DecorService, DecorInstance } from '../../core/decor/decor.service';
 import { UserSettingsService, UserSettings } from '../../core/user-settings/user-settings.service';
+import { FriendService } from '../../core/social/friend.service';
+import { Subscription } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog.component';
 
 @Component({
     selector: 'app-game',
@@ -39,11 +43,40 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private settings: UserSettings | null = null;
   public readonly emojis: string[] = ['😂','❤️','😍','👍','😊','🐾','🐶','🐱','✨','🎮','🔥','🎉','😎','🤔','👏','🌟','🎵','😴','😭','😡','🥺','🥳','🙌','👀'];
 
+  // Multiplayer / room-visit state
+  public roomOwnerId: string | null = null;  // set ONLY when visiting someone else's room
+  public activeRoomId: string | null = null; // the room we are physically in (own or visiting)
+  private remotePets: Map<string, Phaser.GameObjects.Sprite> = new Map();
+  private remoteChatBubbles: Map<string, Phaser.GameObjects.Container[]> = new Map();
+  private roomSubs: Subscription[] = [];
+
+  get isVisiting(): boolean {
+    return !!this.roomOwnerId;
+  }
+
+  get isHosting(): boolean {
+    return !this.roomOwnerId && this.remotePets.size > 0;
+  }
+
+  get visitingUsername(): string {
+    if (!this.roomOwnerId) return '';
+    const pal = this.friendService.friends().find(f => f.userId.toString() === this.roomOwnerId);
+    return pal ? pal.username : 'a Pal';
+  }
+
+  get hostingCount(): number {
+    return this.remotePets.size;
+  }
+
   constructor(
     private petStreamService: PetStreamService,
     private router: Router,
+    private route: ActivatedRoute,
     private decorService: DecorService,
-    private userSettingsService: UserSettingsService
+    private userSettingsService: UserSettingsService,
+    private friendService: FriendService,
+    private dialog: MatDialog,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {}
@@ -59,6 +92,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.settingsSaveTimeout) {
       clearTimeout(this.settingsSaveTimeout);
     }
+    // Leave the active room on destroy
+    if (this.activeRoomId) {
+      this.friendService.leaveRoom(this.activeRoomId);
+    }
+    this.roomSubs.forEach(s => s.unsubscribe());
   }
 
   // Handle outside click to close emoji picker
@@ -91,6 +129,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async initialize() {
+    // Check if we are visiting someone else's room
+    this.roomOwnerId = this.route.snapshot.paramMap.get('roomOwnerId');
+    const myId = localStorage.getItem('userId');
+    this.activeRoomId = this.roomOwnerId || myId;
+
+    if (myId) {
+      this.friendService.initHub(myId);
+    }
+
     const success = await this.getPetDetails();
     if (success) {
       const userId = localStorage.getItem('userId');
@@ -172,21 +219,42 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Check boundary AND decor collisions before moving
-    if (this.isInsideFloor(targetX, targetY) && !this.isCollidingWithDecor(targetX, targetY)) {
+    if (this.isInsideFloor(targetX, targetY) && 
+        !this.isCollidingWithDecor(targetX, targetY) && 
+        !this.isCollidingWithRemotePets(targetX, targetY)) {
       this.isMoving = true;
       const scene = this.game.scene.scenes[0];
       scene.tweens.add({
         targets: this.dog,
         x: targetX,
         y: targetY,
-        duration: 150, // Quicker for smaller steps
+        duration: 150,
         ease: 'Cubic.easeOut',
         onComplete: () => {
           this.isMoving = false;
-          this.saveUserSettings(); // Persist pet position
+          this.saveUserSettings();
+          // Broadcast new position to the room so visitors/host see it
+          const uid = localStorage.getItem('userId');
+          if (this.activeRoomId && uid) {
+            this.friendService.syncPetPosition(this.activeRoomId, targetX, targetY, uid);
+          }
         }
       });
     }
+  }
+
+  private isCollidingWithRemotePets(x: number, y: number): boolean {
+    if (!this.remotePets || this.remotePets.size === 0) return false;
+    
+    for (const remotePet of Array.from(this.remotePets.values())) {
+      // Use simple distance calculation to form a bounding circle around pets
+      const dist = Phaser.Math.Distance.Between(x, y, remotePet.x, remotePet.y);
+      // Keep collision soft enough to avoid lockups when two pets start overlapped.
+      if (dist < 4) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private isCollidingWithDecor(x: number, y: number): boolean {
@@ -206,7 +274,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   public talk(text: string) {
     if (!text || !this.dog || !this.game?.scene?.scenes[0]) return;
     
-    // Limits
+    // Broadcast via SignalR to anyone in current room (including host broadcasting to visitors)
+    const userId = localStorage.getItem('userId');
+    const username = localStorage.getItem('username') || 'You';
+    if (this.activeRoomId && userId) {
+      this.friendService.sendRoomMessage(this.activeRoomId, text, userId, username);
+    }
+
+    // Sync position on talk so others properly anchor your new chat bubble
+    if (this.activeRoomId && userId && this.dog) {
+      this.friendService.syncPetPosition(this.activeRoomId, this.dog.x, this.dog.y, userId);
+    }
+
+    this._renderChatBubble(text, this.dog, this.chatBubbles);
+  }
+
+  private _renderChatBubble(text: string, anchor: any, bubblesArr: Phaser.GameObjects.Container[]) {
     const charLimit = 100;
     let filteredText = text.substring(0, charLimit);
     
@@ -214,7 +297,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const words = filteredText.split(' ');
     filteredText = words.map(word => {
       if (word.length > 20) {
-        // Insert a space every 20 chars for long continuous strings
         return word.match(/.{1,20}/g)?.join(' ') || word;
       }
       return word;
@@ -228,7 +310,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const maxBubbleWidth = 160;
 
     // Hide pointers on existing bubbles
-    this.chatBubbles.forEach(b => {
+    bubblesArr.forEach(b => {
       const pointer = b.getByName('pointer');
       if (pointer) (pointer as any).alpha = 0;
     });
@@ -236,30 +318,27 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const txt = scene.add.text(0, 0, filteredText, {
       fontFamily: "'Quicksand', sans-serif",
       fontStyle: 'bold',
-      fontSize: '32px', // Render at high resolution
+      fontSize: '32px',
       color: '#1a1a2e',
       align: 'center',
-      resolution: 4, // High resolution for sharpness
-      wordWrap: { width: (maxBubbleWidth - (paddingX * 2)) * 4 } // Buffer for internal scaling
+      resolution: 4,
+      wordWrap: { width: (maxBubbleWidth - (paddingX * 2)) * 4 }
     }).setOrigin(0.5);
 
-    // Scale down to desired visual size (8px / 32px = 0.25)
     txt.setScale(0.25);
     txt.setAlpha(1.0);
 
     const bubbleWidth = Math.max(40, Math.min((txt.width * 0.25) + (paddingX * 2), maxBubbleWidth));
     const bubbleHeight = (txt.height * 0.25) + (paddingY * 2);
     
-    // Bubble Background
     const bg = scene.add.graphics();
     bg.fillStyle(0xffffff, 0.75);
     bg.fillRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 6);
     bg.lineStyle(1.0, 0xffffff, 0.9); 
     bg.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight/2, bubbleWidth, bubbleHeight, 6);
     
-    // Pointer (separate object)
     const pointer = scene.add.graphics();
-    pointer.setName('pointer'); // Correct way to set name
+    pointer.setName('pointer');
     const pointerSize = 4;
     pointer.fillStyle(0xffffff, 0.75);
     pointer.beginPath();
@@ -276,12 +355,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     pointer.lineTo(pointerSize, bubbleHeight/2 - 1);
     pointer.strokePath();
 
-    const container = scene.add.container(this.dog.x, this.dog.y - 28, [pointer, bg, txt]);
+    const container = scene.add.container(anchor.x, anchor.y - 28, [pointer, bg, txt]);
     container.setDepth(20);
     container.setAlpha(0);
     (container as any).originalHeight = bubbleHeight;
+    (container as any).anchorRef = anchor; // track which sprite this bubble belongs to
 
-    // Slide in animation
     scene.tweens.add({
       targets: container,
       alpha: 1,
@@ -289,9 +368,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       ease: 'Power1'
     });
 
-    this.chatBubbles.push(container);
+    bubblesArr.push(container);
 
-    // Auto-fade after 5 seconds
     scene.time.delayedCall(5000, () => {
       scene.tweens.add({
         targets: container,
@@ -299,11 +377,115 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         y: container.y - 20,
         duration: 400,
         onComplete: () => {
-          this.chatBubbles = this.chatBubbles.filter(b => b !== container);
+          const idx = bubblesArr.indexOf(container);
+          if (idx !== -1) bubblesArr.splice(idx, 1);
           container.destroy();
         }
       });
     });
+  }
+
+  // Keep old call signature working (was: full inline body)
+  private _oldTalkEnd() {}
+
+  private kickToolbox: Phaser.GameObjects.Container | null = null;
+  private selectedVisitor: string | null = null;
+  private currentlyKickingUserId: string | null = null;
+
+  public openKickToolbox(scene: Phaser.Scene, userId: string, visitorName: string, sprite: Phaser.GameObjects.Sprite) {
+    this.selectedVisitor = userId;
+    if (!this.kickToolbox) {
+      const kickText = scene.add.text(0, 0, 'Kick out', {
+          fontFamily: "'Quicksand', sans-serif",
+          fontSize: '32px',
+          color: '#ffffff',
+          backgroundColor: '#ef4444',
+          padding: { x: 8, y: 4 }
+      }).setOrigin(0.5);
+
+      this.kickToolbox = scene.add.container(0, 0, [kickText]);
+      this.kickToolbox.setDepth(30);
+      this.kickToolbox.setScale(0.25); // Minimalist scale like decorToolbox
+      
+      kickText.setInteractive({ useHandCursor: true });
+      kickText.on('pointerdown', (pointer: Phaser.Input.Pointer, lx: any, ly: any, event: any) => {
+         if (event) event.stopPropagation();
+         this.kickSelectedVisitor();
+      });
+    }
+
+    this.kickToolbox.setVisible(true);
+    this.updateKickToolboxPosition();
+  }
+
+  private kickSelectedVisitor() {
+     if (!this.selectedVisitor) return;
+     const visitorId = this.selectedVisitor;
+     const matchPal = this.friendService.friends().find(f => f.userId.toString() === visitorId);
+     const visitorName = matchPal ? matchPal.username : 'Pal';
+
+     this.ngZone.run(() => {
+         const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+            data: {
+              title: 'Kick Pal',
+              message: `Are you sure you want to kick ${visitorName} out of your room?`,
+              confirmText: 'Kick',
+              isDestructive: true
+            },
+            width: '400px',
+            panelClass: 'custom-dialog-panel'
+          });
+
+          dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+              this.currentlyKickingUserId = visitorId;
+              this.friendService.kickUser(this.activeRoomId!, visitorId);
+              this.removeRemotePet(visitorId);
+              // Reset after a short delay to allow SignalR messages to mismatch if any, 
+              // or just after the local removal.
+              setTimeout(() => {
+                if (this.currentlyKickingUserId === visitorId) this.currentlyKickingUserId = null;
+              }, 1000);
+            }
+            this.hideKickToolbox(); // hide regardless
+          });
+     });
+  }
+
+  private removeRemotePet(uid: string) {
+      if (this.selectedVisitor === uid) {
+          this.hideKickToolbox();
+      }
+      const remotePet = this.remotePets.get(uid);
+      if (remotePet) {
+          const hoverText = (remotePet as any).hoverText;
+          if (hoverText) hoverText.destroy();
+          remotePet.destroy();
+          this.remotePets.delete(uid);
+      }
+      const bubbles = this.remoteChatBubbles.get(uid);
+      if (bubbles) {
+          bubbles.forEach(b => b.destroy());
+          this.remoteChatBubbles.delete(uid);
+      }
+  }
+
+  private hideKickToolbox() {
+     if (this.kickToolbox) {
+         this.kickToolbox.setVisible(false);
+     }
+     this.selectedVisitor = null;
+  }
+
+  private updateKickToolboxPosition() {
+     if (this.selectedVisitor && this.kickToolbox) {
+         const remotePet = this.remotePets.get(this.selectedVisitor);
+         if (remotePet) {
+            this.kickToolbox.setPosition(remotePet.x, remotePet.y - 25); // slightly above pet
+         } else {
+            this.hideKickToolbox();
+         }
+     }
   }
 
   // === Chat Input Handling ===
@@ -334,6 +516,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!clickedInside && !isButton) {
       this.chatInput.nativeElement.blur();
       this.deselectDecor();
+      this.hideKickToolbox();
     }
   }
 
@@ -425,7 +608,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       sprite.setOffset((sprite.width - newWidth) / 2, (sprite.height - newHeight) / 2);
 
       sprite.setImmovable(true);
-      sprite.setInteractive({ draggable: true });
+      if (!this.isVisiting) {
+        sprite.setInteractive({ draggable: true });
+        scene.input.setDraggable(sprite);
+      }
       sprite.setDepth(10);
       sprite.setData('item', item);
       sprite.setData('rotation', initialRotation);
@@ -439,47 +625,49 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       // Force initial separation if dropped on top of something (manual resolver)
       this.resolveDecorOverlap(sprite);
 
+      this.resolveDecorOverlap(sprite);
+
       // Handle interactions
-      sprite.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-        if (pointer.rightButtonDown()) return;
-        this.selectDecor(sprite);
-      });
+      if (!this.isVisiting) {
+        sprite.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+          if (pointer.rightButtonDown()) return;
+          this.selectDecor(sprite);
+        });
 
-      scene.input.setDraggable(sprite);
+        sprite.on('dragstart', () => {
+          this.isDraggingDecor = true;
+          this.selectDecor(sprite);
+          sprite.setData('origX', sprite.x);
+          sprite.setData('origY', sprite.y);
+          sprite.setAlpha(0.6); // Semitransparent while dragging
+          sprite.setImmovable(false); // Enable physics separation
+        });
 
-      sprite.on('dragstart', () => {
-        this.isDraggingDecor = true;
-        this.selectDecor(sprite);
-        sprite.setData('origX', sprite.x);
-        sprite.setData('origY', sprite.y);
-        sprite.setAlpha(0.6); // Semitransparent while dragging
-        sprite.setImmovable(false); // Enable physics separation
-      });
+        sprite.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+          // Enforce basic floor boundaries only
+          if (this.isInsideFloor(dragX, dragY)) {
+            sprite.setPosition(dragX, dragY);
+          }
+          this.updateToolboxPosition();
+        });
 
-      sprite.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-        // Enforce basic floor boundaries only
-        if (this.isInsideFloor(dragX, dragY)) {
-          sprite.setPosition(dragX, dragY);
-        }
-        this.updateToolboxPosition();
-      });
+        sprite.on('dragend', () => {
+          this.isDraggingDecor = false;
+          sprite.setAlpha(1.0);
+          sprite.setImmovable(true); // Lock in place
 
-      sprite.on('dragend', () => {
-        this.isDraggingDecor = false;
-        sprite.setAlpha(1.0);
-        sprite.setImmovable(true); // Lock in place
+          // Final resolve on release
+          this.resolveDecorOverlap(sprite);
+          this.updateToolboxPosition();
 
-        // Final resolve on release
-        this.resolveDecorOverlap(sprite);
-        this.updateToolboxPosition();
-
-        // ONLY save if moved!
-        const moved = Math.abs(sprite.x - sprite.getData('origX')) > 1 || 
-                      Math.abs(sprite.y - sprite.getData('origY')) > 1;
-        if (moved) {
-          this.saveRoomLayout();
-        }
-      });
+          // ONLY save if moved!
+          const moved = Math.abs(sprite.x - sprite.getData('origX')) > 1 || 
+                        Math.abs(sprite.y - sprite.getData('origY')) > 1;
+          if (moved) {
+            this.saveRoomLayout();
+          }
+        });
+      }
     };
 
     const sePath = item.imagePath.startsWith('/') ? item.imagePath : `/${item.imagePath}`;
@@ -727,18 +915,27 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     room.displayWidth = 600;
     room.scaleY = room.scaleX; // Uniform scale
 
-    // Initial position from settings or default
-    const startX = this.settings?.lastPetX || roomCenterX;
-    const startY = this.settings?.lastPetY || (roomCenterY + 27);
+    // Initial position from settings (home) or center spawn when visiting
+    let startX = this.settings?.lastPetX || roomCenterX;
+    let startY = this.settings?.lastPetY || (roomCenterY + 27);
+
+    if (this.roomOwnerId) {
+      startX = roomCenterX;
+      startY = roomCenterY;
+    }
 
     this.dog = scene.physics.add.sprite(startX, startY, 'dog').setScale(0.028);
     // Pet stays at 0 default
     this.dog.setCollideWorldBounds(true);
     this.dog.setBounce(0);
 
-    // Camera setup - restore last focus or default to room origin
-    const camX = this.settings?.lastCameraX || roomCenterX;
-    const camY = this.settings?.lastCameraY || roomCenterY;
+    // Camera setup - restore home camera or default center when visiting
+    let camX = this.settings?.lastCameraX || roomCenterX;
+    let camY = this.settings?.lastCameraY || roomCenterY;
+    if (this.roomOwnerId) {
+      camX = roomCenterX;
+      camY = roomCenterY;
+    }
     scene.cameras.main.centerOn(camX, camY);
     scene.cameras.main.zoom = this.currentZoom;
     
@@ -897,7 +1094,125 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
         this.isGameLoading = false;
         this.loadSavedDecor();
-    }, 400); // 400ms buffer prevents harsh snapping of the canvas layer
+        this._initRoomMultiplayer(scene);
+    }, 400);
+  }
+
+  /** Join the room SignalR group and wire live pet/chat sync events. */
+  private _initRoomMultiplayer(scene: Phaser.Scene) {
+    if (!this.activeRoomId) return;
+
+    const userId = localStorage.getItem('userId') || '';
+
+    // Join the room group
+    this.friendService.joinRoom(this.activeRoomId, userId);
+
+    // Broadcast our initial position so anyone already here sees us
+    if (this.dog && userId) {
+        this.friendService.syncPetPosition(this.activeRoomId, this.dog.x, this.dog.y, userId);
+    }
+
+    // When someone else joins, re-broadcast our position to them
+    const joinSub = this.friendService.userJoinedRoomEvents.subscribe((joinedUserId: string) => {
+        if (joinedUserId !== userId && this.dog && this.activeRoomId) {
+            this.friendService.syncPetPosition(this.activeRoomId, this.dog.x, this.dog.y, userId);
+        }
+    });
+
+    // Position sync: render or move a remote pet
+    const moveSub = this.friendService.roomMoveEvents.subscribe(evt => {
+      if (evt.userId === userId) return; // ignore self echoes
+
+      let remotePet = this.remotePets.get(evt.userId);
+      if (!remotePet) {
+        // Spawn a new remote pet sprite at the received position
+        remotePet = scene.physics.add.sprite(evt.x, evt.y, 'dog').setScale(0.028);
+        remotePet.setTint(0xa855f7); // purple tint so guest pet is distinguishable
+        remotePet.setDepth(5);
+        remotePet.setInteractive({ useHandCursor: true });
+        
+        const matchPal = this.friendService.friends().find(f => f.userId.toString() === evt.userId);
+        const visitorName = matchPal ? matchPal.username : 'Pal';
+
+        const hoverText = scene.add.text(evt.x, evt.y - 28, visitorName, {
+             fontFamily: "'Quicksand', sans-serif",
+             fontSize: '32px',
+             color: '#ffffff',
+             backgroundColor: 'rgba(0,0,0,0.5)',
+             padding: { x: 8, y: 4 }
+        }).setOrigin(0.5).setAlpha(0).setScale(0.25).setDepth(25);
+        
+        (remotePet as any).hoverText = hoverText;
+
+        remotePet.on('pointerover', () => { hoverText.setAlpha(1); });
+        remotePet.on('pointerout', () => { hoverText.setAlpha(0); });
+
+        remotePet.on('pointerup', (pointer: Phaser.Input.Pointer, lx: any, ly: any, event: any) => {
+             if (this.isHosting) {
+                 if (event) event.stopPropagation();
+                 this.openKickToolbox(scene, evt.userId, visitorName, remotePet!);
+             }
+        });
+
+        (remotePet as any).remoteUserId = evt.userId;
+        this.remotePets.set(evt.userId, remotePet);
+        this.remoteChatBubbles.set(evt.userId, []);
+      } else {
+        scene.tweens.add({
+          targets: remotePet,
+          x: evt.x,
+          y: evt.y,
+          duration: 150,
+          ease: 'Cubic.easeOut'
+        });
+      }
+    });
+
+    // Room chat: show a bubble above the correct remote pet
+    const chatSub = this.friendService.roomMessageEvents.subscribe(evt => {
+      if (evt.userId === userId) return; // own messages shown locally
+
+      const remotePet = this.remotePets.get(evt.userId);
+      if (!remotePet) return;
+
+      const bubbles = this.remoteChatBubbles.get(evt.userId) || [];
+      this._renderChatBubble(evt.message, remotePet, bubbles);
+      this.remoteChatBubbles.set(evt.userId, bubbles);
+    });
+
+    const kickedSub = this.friendService.kickedEvents.subscribe((roomOwnerId: string) => {
+        if (this.activeRoomId === roomOwnerId) {
+            this.showToast("You were kicked from this room.");
+            setTimeout(() => this.returnHome(), 1500);
+        }
+    });
+
+    const decorSyncSub = this.friendService.roomDecorEvents.subscribe(evt => {
+      // Ignore our own echo and only apply live decor updates while visiting another room.
+      if (evt.userId === userId || !this.roomOwnerId) return;
+      this.applyDecorSnapshot(evt.instances);
+    });
+
+    const inviteAcceptedSub = this.friendService.visitAcceptedEvents.subscribe((username: string) => {
+        this.showToast(`${username} has joined your space`);
+    });
+
+    const leftSub = this.friendService.userLeftRoomEvents.subscribe((leftUserId: string) => {
+        if (leftUserId !== this.currentlyKickingUserId) {
+            const matchPal = this.friendService.friends().find(f => f.userId.toString() === leftUserId);
+            const visitorName = matchPal ? matchPal.username : 'A Pal';
+            this.showToast(`${visitorName} has left your space`);
+        }
+        this.removeRemotePet(leftUserId);
+    });
+
+    this.roomSubs.push(moveSub, chatSub, joinSub, kickedSub, leftSub, inviteAcceptedSub, decorSyncSub);
+  }
+
+  public returnHome() {
+    this.router.navigate(['/game']).then(() => {
+        window.location.reload();
+    });
   }
 
   public showToast(message: string) {
@@ -907,10 +1222,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadSavedDecor() {
-    const userId = localStorage.getItem('userId');
-    if (!userId) return;
+    const targetUserId = this.roomOwnerId || localStorage.getItem('userId');
+    if (!targetUserId) return;
 
-    this.decorService.getSavedDecor(parseInt(userId)).subscribe({
+    this.decorService.getSavedDecor(parseInt(targetUserId)).subscribe({
       next: (instances) => {
         instances.forEach(instance => {
           const item = this.decorService.items().find(i => i.id === instance.decorId);
@@ -971,6 +1286,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isSavingRoom = true;
     this.decorService.saveDecor(parseInt(userId), instances).subscribe({
       next: () => {
+        if (!this.isVisiting && this.activeRoomId) {
+          this.friendService.syncRoomDecor(this.activeRoomId, userId, instances);
+        }
         setTimeout(() => this.isSavingRoom = false, 800); // Keep visible briefly for feedback
       },
       error: (err) => {
@@ -978,6 +1296,34 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isSavingRoom = false;
       }
     });
+  }
+
+  private applyDecorSnapshot(instances: DecorInstance[]) {
+    if (!this.game?.scene?.scenes[0]) return;
+
+    this.clearAllDecor();
+
+    instances.forEach(instance => {
+      const item = this.decorService.items().find(i => i.id === instance.decorId);
+      if (item) {
+        this.addDecorToGame(item, instance.x, instance.y, instance.rotation);
+      }
+    });
+
+    this.refreshCounts();
+  }
+
+  private clearAllDecor() {
+    this.deselectDecor();
+
+    if (!this.decorSprites) {
+      this.decorService.activeCounts.set({});
+      return;
+    }
+
+    this.decorSprites.getChildren().forEach((child: any) => child.destroy());
+    this.decorSprites.clear(true, true);
+    this.decorService.activeCounts.set({});
   }
 
   private isInsideFloor(x: number, y: number): boolean {
@@ -1004,6 +1350,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private saveUserSettings() {
+    if (this.roomOwnerId) return;
+
     // Debounce the save to 5 seconds
     if (this.settingsSaveTimeout) {
       clearTimeout(this.settingsSaveTimeout);
@@ -1058,16 +1406,39 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       hz.y = this.dog.y;
     }
 
-    // Stack chat bubbles above pet (Newest at bottom)
-    let stackY = -40; // Even closer
+    // Stack local chat bubbles above own pet (Newest at bottom)
+    let stackY = -40;
     for (let i = this.chatBubbles.length - 1; i >= 0; i--) {
         const bubble = this.chatBubbles[i];
         bubble.x = this.dog.x;
-        // Ease bubbles into their stacked positions
         const targetY = this.dog.y + stackY - ((bubble as any).originalHeight / 2);
-        bubble.y += (targetY - bubble.y) * 0.25; 
-        stackY -= ((bubble as any).originalHeight + 6); // Very tight spacing
+        bubble.y += (targetY - bubble.y) * 0.25;
+        stackY -= ((bubble as any).originalHeight + 6);
     }
+
+    // Keep remote pet chat bubbles above their respective sprites
+    this.remoteChatBubbles.forEach((bubbles, uid) => {
+      const remotePet = this.remotePets.get(uid);
+      if (!remotePet) return;
+      let remoteStackY = -40;
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const bubble = bubbles[i];
+        bubble.x = remotePet.x;
+        const ty = remotePet.y + remoteStackY - ((bubble as any).originalHeight / 2);
+        bubble.y += (ty - bubble.y) * 0.25;
+        remoteStackY -= ((bubble as any).originalHeight + 6);
+      }
+    });
+
+    this.remotePets.forEach((remotePet, uid) => {
+       const hoverText = (remotePet as any).hoverText;
+       if (hoverText) {
+           hoverText.x = remotePet.x;
+           hoverText.y = remotePet.y - 28;
+       }
+    });
+
+    this.updateKickToolboxPosition();
 
     // Apply movement logic was removed here, replaced by moveStep() transitions
 
