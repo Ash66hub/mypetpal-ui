@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { LoginStreamService } from '../login/login-service/login-stream.service';
-import { PetStreamService } from '../../mypetpal/pet/pet-service/pet-stream.service';
+import { PetStreamService } from '../../mypetpal/feature/pet/pet-service/pet-stream.service';
 
 /**
  * Guards the /petCreation route.

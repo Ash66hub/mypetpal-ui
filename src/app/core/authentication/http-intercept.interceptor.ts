@@ -5,7 +5,10 @@ import { from, throwError } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import { HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { LoginStreamService } from '../login/login-service/login-stream.service';
-import { LoginService, RefreshResponse } from '../login/login-service/login.service';
+import {
+  LoginService,
+  RefreshResponse
+} from '../login/login-service/login.service';
 
 export const httpInterceptor: HttpInterceptorFn = (req, next) => {
   const loginStreamService = inject(LoginStreamService);
@@ -14,7 +17,7 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Skip token injection only for endpoints that don't require auth; `GET Users/:id` must receive Authorization so UI login state stays consistent on reload.
   const isAuthenticationRequest = req.url.includes('Authentication');
-  const isUserSignupRequest = req.url.includes('Users') && req.method === 'POST';
+  const isUserSignupRequest = req.url.includes('Users/signup');
   const isAuthRequest = isAuthenticationRequest || isUserSignupRequest;
 
   if (isAuthRequest) {
@@ -35,7 +38,10 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
           localStorage.setItem('refreshToken', response.refreshToken);
           // Update expiration
           const expiresIn = 60 * 60 * 1000;
-          localStorage.setItem('tokenExpiration', (Date.now() + expiresIn).toString());
+          localStorage.setItem(
+            'tokenExpiration',
+            (Date.now() + expiresIn).toString()
+          );
 
           const clonedReq = req.clone({
             setHeaders: { Authorization: `Bearer ${response.token}` }
@@ -43,7 +49,7 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
 
           return next(clonedReq);
         }),
-        catchError((error) => {
+        catchError(error => {
           loginStreamService.logout();
           router.navigate(['/login']);
           return from([]);

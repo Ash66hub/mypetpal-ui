@@ -6,13 +6,13 @@ import { confirmPasswordValidator } from '../../shared/validators/custom-validat
 import { HttpErrorResponse } from '@angular/common/http';
 import { SnackbarService } from '../../shared/snackbar/snackbar.service';
 import { Router } from '@angular/router';
-import { PetStreamService } from '../../mypetpal/pet/pet-service/pet-stream.service';
+import { PetStreamService } from '../../mypetpal/feature/pet/pet-service/pet-stream.service';
 
 @Component({
-    selector: 'app-login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.scss'],
-    standalone: false
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
+  standalone: false
 })
 export class LoginComponent implements OnInit {
   public loginForm: FormGroup;
@@ -73,7 +73,8 @@ export class LoginComponent implements OnInit {
 
         if (currentUser.userId) {
           await this.petStreamService.getUserPets(currentUser.userId);
-          const currentUserPet = this.petStreamService.currentPetStream.getValue();
+          const currentUserPet =
+            this.petStreamService.currentPetStream.getValue();
 
           if (currentUserPet && currentUserPet.petId) {
             this.router.navigate(['/game']);

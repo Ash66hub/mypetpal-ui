@@ -10,7 +10,7 @@ import { LoginComponent } from './login.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LoginStreamService } from './login-service/login-stream.service';
-import { PetStreamService } from '../../mypetpal/pet/pet-service/pet-stream.service';
+import { PetStreamService } from '../../mypetpal/feature/pet/pet-service/pet-stream.service';
 import { SnackbarService } from '../../shared/snackbar/snackbar.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
@@ -35,9 +35,24 @@ describe('LoginComponent', () => {
         RouterTestingModule
       ],
       providers: [
-        { provide: LoginStreamService, useValue: { currentUserStream: { getValue: () => ({}) }, loginUser: () => Promise.resolve() } },
-        { provide: PetStreamService, useValue: { currentPetStream: { getValue: () => ({}) }, getUserPets: () => Promise.resolve() } },
-        { provide: SnackbarService, useValue: { openSnackbarWithAction: () => {} } }
+        {
+          provide: LoginStreamService,
+          useValue: {
+            currentUserStream: { getValue: () => ({}) },
+            loginUser: () => Promise.resolve()
+          }
+        },
+        {
+          provide: PetStreamService,
+          useValue: {
+            currentPetStream: { getValue: () => ({}) },
+            getUserPets: () => Promise.resolve()
+          }
+        },
+        {
+          provide: SnackbarService,
+          useValue: { openSnackbarWithAction: () => {} }
+        }
       ]
     }).compileComponents();
   });

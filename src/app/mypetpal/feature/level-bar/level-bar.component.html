@@ -1,0 +1,14 @@
+<div class="level-bar-container">
+  <div class="level-bar-content">
+    <div class="level-info">
+      <span class="level-badge">Level {{ level }}</span>
+    </div>
+
+    <div class="exp-bar-wrapper">
+      <div class="exp-bar-fill" [style.width.%]="expProgressPercent"></div>
+      <span class="exp-text"
+        >{{ currentLevelExp }} / {{ expForNextLevel }} EXP</span
+      >
+    </div>
+  </div>
+</div>

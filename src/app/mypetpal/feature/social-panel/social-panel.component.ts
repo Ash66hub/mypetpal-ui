@@ -1,29 +1,39 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FriendService, UserSearchResult, Friend, FriendRequest } from '../../core/social/friend.service';
-import { SnackbarService } from '../../shared/snackbar/snackbar.service';
+import {
+  FriendService,
+  UserSearchResult,
+  Friend,
+  FriendRequest
+} from '../../../core/social/friend.service';
+import { SnackbarService } from '../../../shared/snackbar/snackbar.service';
 import { MatDialog } from '@angular/material/dialog';
-import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog.component';
+import { ConfirmDialogComponent } from '../../../shared/dialogs/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
-import { LoginStreamService } from '../../core/login/login-service/login-stream.service';
+import { LoginStreamService } from '../../../core/login/login-service/login-stream.service';
 import { PetStreamService } from '../pet/pet-service/pet-stream.service';
-import { User } from '../../shared/user/user';
+import { User } from '../../../shared/user/user';
 import { Pet } from '../pet/pet';
 import { Router } from '@angular/router';
+import { SharedModule } from '../../../shared/shared.module';
 
 @Component({
   selector: 'app-social-panel',
-  standalone: false,
+  standalone: true,
   templateUrl: './social-panel.component.html',
-  styleUrls: ['./social-panel.component.scss']
+  styleUrls: ['./social-panel.component.scss'],
+  imports: [SharedModule]
 })
 export class SocialPanelComponent implements OnInit {
-  get activeTab() { return this.friendService.activeTab(); }
-  get isCollapsed() { return this.friendService.isCollapsed(); }
+  get activeTab() {
+    return this.friendService.activeTab();
+  }
+  get isCollapsed() {
+    return this.friendService.isCollapsed();
+  }
 
   public searchQuery: string = '';
   public currentUserId: number = 0;
-  
+
   public currentUser: User | null = null;
   public currentPet: Pet | null = null;
 
@@ -64,7 +74,6 @@ export class SocialPanelComponent implements OnInit {
       this.currentPet = pet;
     });
   }
-
 
   public toggleCollapse() {
     this.friendService.isCollapsed.update(v => !v);
@@ -129,11 +138,13 @@ export class SocialPanelComponent implements OnInit {
         this.performSearch();
         this.snackbarService.openSnackbarWithAction('Friend request sent!');
       },
-      error: (err) => {
+      error: err => {
         if (err.status === 409) {
           this.snackbarService.openSnackbarWithAction('Request already sent');
         } else {
-          this.snackbarService.openSnackbarWithAction('Action unavailable. Please try again later.');
+          this.snackbarService.openSnackbarWithAction(
+            'Action unavailable. Please try again later.'
+          );
         }
       }
     });
@@ -152,17 +163,25 @@ export class SocialPanelComponent implements OnInit {
       next: () => {
         this.snackbarService.openSnackbarWithAction('Visit invitation sent!');
       },
-      error: (err) => {
+      error: err => {
         if (err.status === 409) {
-          this.snackbarService.openSnackbarWithAction('Invitation already sent');
+          this.snackbarService.openSnackbarWithAction(
+            'Invitation already sent'
+          );
         } else {
-          this.snackbarService.openSnackbarWithAction('Action unavailable. Please try again later.');
+          this.snackbarService.openSnackbarWithAction(
+            'Action unavailable. Please try again later.'
+          );
         }
       }
     });
   }
 
-  public respondToVisitInvite(inviteId: number, accept: boolean, senderId?: number) {
+  public respondToVisitInvite(
+    inviteId: number,
+    accept: boolean,
+    senderId?: number
+  ) {
     this.friendService.respondToVisitInvite(inviteId, accept).subscribe(() => {
       this.friendService.refreshSocialData();
       if (accept && senderId != null) {
@@ -191,16 +210,22 @@ export class SocialPanelComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.friendService.removeFriend(this.currentUserId, friend.userId).subscribe({
-          next: () => {
-            this.friendService.refreshSocialData();
-            this.snackbarService.openSnackbarWithAction(`${friend.username} has been removed.`);
-          },
-          error: (err) => {
-            console.error('Remove pal error:', err);
-            this.snackbarService.openSnackbarWithAction('Action unavailable. Please try again later.');
-          }
-        });
+        this.friendService
+          .removeFriend(this.currentUserId, friend.userId)
+          .subscribe({
+            next: () => {
+              this.friendService.refreshSocialData();
+              this.snackbarService.openSnackbarWithAction(
+                `${friend.username} has been removed.`
+              );
+            },
+            error: err => {
+              console.error('Remove pal error:', err);
+              this.snackbarService.openSnackbarWithAction(
+                'Action unavailable. Please try again later.'
+              );
+            }
+          });
       }
     });
   }

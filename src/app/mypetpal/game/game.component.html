@@ -1,4 +1,13 @@
 <div class="game-wrapper" oncontextmenu="return false;">
+  @if (!isGameLoading) {
+    <app-level-bar
+      [level]="currentPlayerLevel"
+      [currentLevelExp]="getCurrentLevelExp()"
+      [expForNextLevel]="getExpForNextLevel()"
+      [expProgressPercent]="getExpProgressPercent()">
+    </app-level-bar>
+  }
+
   <div
     id="game-container"
     (dragover)="onDragOver($event)"
@@ -70,9 +79,7 @@
           🐾
         </button>
         @if (isEmojiPickerOpen) {
-          <div
-            class="emoji-dropdown"
-            (click)="$event.stopPropagation()">
+          <div class="emoji-dropdown" (click)="$event.stopPropagation()">
             <button
               class="emoji-btn"
               *ngFor="let emoji of emojis"

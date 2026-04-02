@@ -57,6 +57,11 @@ export interface RoomDecorSyncEvent {
   instances: DecorInstance[];
 }
 
+export interface UserStatusChangedEvent {
+  userId: string;
+  isOnline: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -82,6 +87,7 @@ export class FriendService {
   public visitAcceptedEvents = new Subject<string>();
   public kickedEvents = new Subject<string>();
   public roomDecorEvents = new Subject<RoomDecorSyncEvent>();
+  public userStatusChangedEvents = new Subject<UserStatusChangedEvent>();
 
   // UI State for Social Panel & Profile
   public activeTab = signal<'friends' | 'requests' | 'search' | 'profile'>('friends');
@@ -122,6 +128,8 @@ export class FriendService {
 
       this.hubConnection.on('UserStatusChanged', (userId: string, isOnline: boolean) => {
         const uId = parseInt(userId);
+
+        this.userStatusChangedEvents.next({ userId, isOnline });
         
         // Update Friends signal
         this.friends.update(current => current.map(f => f.userId === uId ? { ...f, isOnline } : f));

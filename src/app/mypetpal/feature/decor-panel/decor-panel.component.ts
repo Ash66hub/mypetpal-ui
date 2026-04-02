@@ -1,12 +1,13 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { DecorService, DecorItem } from '../../core/decor/decor.service';
+import { DecorService, DecorItem } from '../../../core/decor/decor.service';
+import { SharedModule } from '../../../shared/shared.module';
 
 @Component({
   selector: 'app-decor-panel',
   templateUrl: './decor-panel.component.html',
   styleUrls: ['./decor-panel.component.scss'],
-  standalone: false
+  standalone: true,
+  imports: [SharedModule]
 })
 export class DecorPanelComponent implements OnInit {
   public isCollapsed: boolean = true;
@@ -31,7 +32,9 @@ export class DecorPanelComponent implements OnInit {
   }
 
   private updateFilteredItems(): void {
-    this.filteredItems = this.decorService.getItemsByCategory(this.activeCategory);
+    this.filteredItems = this.decorService.getItemsByCategory(
+      this.activeCategory
+    );
   }
 
   public isLocked(item: DecorItem): boolean {
@@ -43,11 +46,11 @@ export class DecorPanelComponent implements OnInit {
       event.preventDefault();
       return;
     }
-    
+
     if (event.dataTransfer) {
       event.dataTransfer.setData('decorItem', JSON.stringify(item));
       event.dataTransfer.effectAllowed = 'copy';
-      
+
       // Optional: Set drag image if needed, but default is usually fine
     }
   }
@@ -56,7 +59,10 @@ export class DecorPanelComponent implements OnInit {
     const counts = this.decorService.activeCounts();
     if (item.category === 'wall') {
       const allWalls = this.decorService.getItemsByCategory('wall');
-      const totalWallsInRoom = allWalls.reduce((sum, w) => sum + (counts[w.id] || 0), 0);
+      const totalWallsInRoom = allWalls.reduce(
+        (sum: number, w: DecorItem) => sum + (counts[w.id] || 0),
+        0
+      );
       return Math.max(0, 50 - totalWallsInRoom);
     } else {
       return Math.max(0, 10 - (counts[item.id] || 0));

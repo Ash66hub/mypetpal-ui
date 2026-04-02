@@ -29,7 +29,7 @@ export class LoginService {
   }
 
   public createNewUser(user: User): Promise<User> {
-    return lastValueFrom(this.http.post(this.apiUrl + 'Users', user));
+    return lastValueFrom(this.http.post(this.apiUrl + 'Users/signup', user));
   }
 
   public getUser(userId: string): Promise<User> {
@@ -41,14 +41,20 @@ export class LoginService {
     });
   }
 
-  public getToken(userId: string, refreshToken: string): Promise<RefreshResponse> {
+  public getToken(
+    userId: string,
+    refreshToken: string
+  ): Promise<RefreshResponse> {
     const body = {
       userId: userId,
       refreshToken: refreshToken
     };
 
     return lastValueFrom(
-      this.http.post<RefreshResponse>(this.apiUrl + 'Authentication/refreshToken', body)
+      this.http.post<RefreshResponse>(
+        this.apiUrl + 'Authentication/refreshToken',
+        body
+      )
     );
   }
 
@@ -60,7 +66,10 @@ export class LoginService {
 
   public changePassword(requestData: any): Promise<any> {
     return lastValueFrom(
-      this.http.post(`${this.apiUrl}Authentication/change-password`, requestData)
+      this.http.post(
+        `${this.apiUrl}Authentication/change-password`,
+        requestData
+      )
     );
   }
 }
