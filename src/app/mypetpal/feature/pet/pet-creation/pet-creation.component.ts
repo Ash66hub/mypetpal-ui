@@ -4,10 +4,10 @@ import { Pet, PetStatus, PetType } from '../pet';
 import { PetStreamService } from '../pet-service/pet-stream.service';
 import { Router } from '@angular/router';
 @Component({
-    selector: 'app-pet-creation',
-    templateUrl: './pet-creation.component.html',
-    styleUrls: ['./pet-creation.component.scss'],
-    standalone: false
+  selector: 'app-pet-creation',
+  templateUrl: './pet-creation.component.html',
+  styleUrls: ['./pet-creation.component.scss'],
+  standalone: false
 })
 export class PetCreationComponent {
   petForm: FormGroup;
@@ -46,7 +46,6 @@ export class PetCreationComponent {
       if (userId) {
         try {
           await this.petStream.createUserPet(userId, pet);
-          console.log('Pet created successfully!');
           this.router.navigate(['/game']);
         } catch (error) {
           console.error('Error creating pet:', error);

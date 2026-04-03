@@ -58,12 +58,7 @@ export class DecorPanelComponent implements OnInit {
   public getRemaining(item: DecorItem): number {
     const counts = this.decorService.activeCounts();
     if (item.category === 'wall') {
-      const allWalls = this.decorService.getItemsByCategory('wall');
-      const totalWallsInRoom = allWalls.reduce(
-        (sum: number, w: DecorItem) => sum + (counts[w.id] || 0),
-        0
-      );
-      return Math.max(0, 50 - totalWallsInRoom);
+      return Math.max(0, 50 - (counts[item.id] || 0));
     } else {
       return Math.max(0, 10 - (counts[item.id] || 0));
     }

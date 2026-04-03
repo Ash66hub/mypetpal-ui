@@ -183,6 +183,19 @@ export class RoomMultiplayerService {
     remotePet.setDepth(5);
     remotePet.setInteractive({ useHandCursor: true });
 
+    const shadow = scene.add.container(x - 3, y + 8).setDepth(4);
+    shadow.add(
+      scene.add
+        .ellipse(0, 0, 12, 4, 0x000000, 0.09)
+        .setBlendMode(Phaser.BlendModes.MULTIPLY)
+    );
+    shadow.add(
+      scene.add
+        .ellipse(0, 0, 6, 2, 0x000000, 0.14)
+        .setBlendMode(Phaser.BlendModes.MULTIPLY)
+    );
+    (remotePet as any).shadow = shadow;
+
     const hoverText = scene.add
       .text(x, y - 28, visitorName, {
         fontFamily: "'Quicksand', sans-serif",

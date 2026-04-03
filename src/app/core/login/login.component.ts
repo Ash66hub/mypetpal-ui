@@ -67,21 +67,7 @@ export class LoginComponent implements OnInit {
 
       try {
         await this.loginStreamService.loginUser(user);
-
-        const currentUser =
-          this.loginStreamService.currentUserStream.getValue();
-
-        if (currentUser.userId) {
-          await this.petStreamService.getUserPets(currentUser.userId);
-          const currentUserPet =
-            this.petStreamService.currentPetStream.getValue();
-
-          if (currentUserPet && currentUserPet.petId) {
-            this.router.navigate(['/game']);
-          } else {
-            this.router.navigate(['/petCreation']);
-          }
-        }
+        await this.routeAfterAuthentication();
       } catch (error) {
         this.loginFailed = true;
       } finally {
@@ -105,10 +91,13 @@ export class LoginComponent implements OnInit {
 
       try {
         await this.loginStreamService.signUpUser(user);
+        await this.loginStreamService.loginUser({
+          username: user.username,
+          password: user.password
+        });
+        await this.routeAfterAuthentication();
 
-        this.snackbarService.openSnackbarWithAction(
-          'Sign up successful! Use the credentials to log in'
-        );
+        this.snackbarService.openSnackbarWithAction('Sign up successful!');
       } catch (error) {
         const httpError = error as HttpErrorResponse;
 
@@ -120,12 +109,27 @@ export class LoginComponent implements OnInit {
           );
         }
       } finally {
-        if (!this.signUpFailedDueToDuplicate) {
-          this.toggleMode();
-        }
         this.loading = false;
       }
     }
+  }
+
+  private async routeAfterAuthentication(): Promise<void> {
+    const currentUser = this.loginStreamService.currentUserStream.getValue();
+
+    if (!currentUser.userId) {
+      return;
+    }
+
+    await this.petStreamService.getUserPets(currentUser.userId);
+    const currentUserPet = this.petStreamService.currentPetStream.getValue();
+
+    if (currentUserPet && currentUserPet.petId) {
+      this.router.navigate(['/game']);
+      return;
+    }
+
+    this.router.navigate(['/petCreation']);
   }
 
   public checkPasswordsMatch(): boolean {

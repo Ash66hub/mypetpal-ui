@@ -10,9 +10,10 @@ import {
   providedIn: 'root'
 })
 export class DecorManagerService {
-  private readonly MAX_WALLS = 50;
+  private readonly MAX_WALLS_PER_TYPE = 50;
   private readonly MAX_ITEMS_PER_TYPE = 10;
   private readonly DECOR_SCALE = 0.25;
+  private readonly DECOR_PIXEL_BLOCK_SIZE = 2;
   private readonly SELECTION_DEPTH = 9;
   private readonly TOOLBOX_DEPTH = 30;
 
@@ -26,13 +27,13 @@ export class DecorManagerService {
 
     const children = decorSprites.getChildren();
     if (item.category === 'wall') {
-      const wallCount = children.filter(
-        (c: any) => c.getData('item').category === 'wall'
+      const sameWallTypeCount = children.filter(
+        (c: any) => this.getDecorId(c) === item.id
       ).length;
-      return wallCount < this.MAX_WALLS;
+      return sameWallTypeCount < this.MAX_WALLS_PER_TYPE;
     } else {
       const sameItemCount = children.filter(
-        (c: any) => c.getData('item').id === item.id
+        (c: any) => this.getDecorId(c) === item.id
       ).length;
       return sameItemCount < this.MAX_ITEMS_PER_TYPE;
     }
@@ -51,7 +52,16 @@ export class DecorManagerService {
     const initialKey = `${item.id}_${initialRotation}`;
 
     const loadAndAdd = () => {
-      const sprite = scene.physics.add.sprite(x, y, initialKey);
+      this.applyPixelFilter(scene, seKey);
+      this.applyPixelFilter(scene, swKey);
+
+      const seRenderKey = this.ensurePixelatedTexture(scene, seKey);
+      const swRenderKey = this.ensurePixelatedTexture(scene, swKey);
+
+      const initialRenderKey =
+        initialRotation === 'SW' ? swRenderKey : seRenderKey;
+
+      const sprite = scene.physics.add.sprite(x, y, initialRenderKey);
       sprite.setScale(this.DECOR_SCALE);
       sprite.setAngle(initialRotation === 'SW' ? -5 : 0);
 
@@ -66,7 +76,11 @@ export class DecorManagerService {
       sprite.setImmovable(true);
       sprite.setDepth(10);
       sprite.setData('item', item);
+      sprite.setData('decorId', item.id);
+      sprite.setData('decorCategory', item.category);
       sprite.setData('rotation', initialRotation);
+      sprite.setData('seRenderKey', seRenderKey);
+      sprite.setData('swRenderKey', swRenderKey);
 
       if (onSpriteAdded) {
         onSpriteAdded(sprite);
@@ -87,6 +101,68 @@ export class DecorManagerService {
     } else {
       loadAndAdd();
     }
+  }
+
+  private applyPixelFilter(scene: Phaser.Scene, textureKey: string): void {
+    const texture = scene.textures.get(textureKey);
+    if (!texture) return;
+
+    texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  }
+
+  private ensurePixelatedTexture(
+    scene: Phaser.Scene,
+    textureKey: string
+  ): string {
+    const pixelKey = `${textureKey}_px`;
+    if (scene.textures.exists(pixelKey)) {
+      return pixelKey;
+    }
+
+    const texture = scene.textures.get(textureKey);
+    const sourceImage = texture?.getSourceImage() as
+      | HTMLImageElement
+      | HTMLCanvasElement
+      | undefined;
+
+    if (!sourceImage) {
+      return textureKey;
+    }
+
+    const width = sourceImage.width;
+    const height = sourceImage.height;
+    const block = this.DECOR_PIXEL_BLOCK_SIZE;
+
+    const downW = Math.max(1, Math.floor(width / block));
+    const downH = Math.max(1, Math.floor(height / block));
+
+    const tiny = document.createElement('canvas');
+    tiny.width = downW;
+    tiny.height = downH;
+    const tinyCtx = tiny.getContext('2d');
+
+    const output = document.createElement('canvas');
+    output.width = width;
+    output.height = height;
+    const outCtx = output.getContext('2d');
+
+    if (!tinyCtx || !outCtx) {
+      return textureKey;
+    }
+
+    tinyCtx.imageSmoothingEnabled = false;
+    outCtx.imageSmoothingEnabled = false;
+
+    tinyCtx.clearRect(0, 0, downW, downH);
+    tinyCtx.drawImage(sourceImage, 0, 0, downW, downH);
+
+    outCtx.clearRect(0, 0, width, height);
+    outCtx.drawImage(tiny, 0, 0, downW, downH, 0, 0, width, height);
+
+    scene.textures.addCanvas(pixelKey, output);
+    this.applyPixelFilter(scene, pixelKey);
+
+    return pixelKey;
   }
 
   selectDecor(
@@ -138,8 +214,9 @@ export class DecorManagerService {
   toggleRotation(sprite: Phaser.GameObjects.Sprite): void {
     const currentRotation = sprite.getData('rotation');
     const nextRotation = currentRotation === 'SE' ? 'SW' : 'SE';
-    const item = sprite.getData('item');
-    const nextKey = `${item.id}_${nextRotation}`;
+    const seRenderKey = sprite.getData('seRenderKey');
+    const swRenderKey = sprite.getData('swRenderKey');
+    const nextKey = nextRotation === 'SW' ? swRenderKey : seRenderKey;
 
     sprite.setTexture(nextKey);
     sprite.setData('rotation', nextRotation);
@@ -187,7 +264,8 @@ export class DecorManagerService {
 
     const counts: Record<string, number> = {};
     decorSprites.getChildren().forEach((child: any) => {
-      const id = child.getData('item').id;
+      const id = this.getDecorId(child);
+      if (!id) return;
       counts[id] = (counts[id] || 0) + 1;
     });
 
@@ -216,13 +294,37 @@ export class DecorManagerService {
   ): DecorInstance[] {
     if (!decorSprites) return [];
 
-    return decorSprites.getChildren().map((child: any) => ({
-      userId,
-      decorId: child.getData('item').id,
-      x: child.x,
-      y: child.y,
-      rotation: child.getData('rotation')
-    }));
+    return decorSprites
+      .getChildren()
+      .map((child: any) => {
+        const decorId = this.getDecorId(child);
+        if (!decorId) return null;
+
+        return {
+          userId,
+          decorId,
+          x: child.x,
+          y: child.y,
+          rotation: child.getData('rotation')
+        } as DecorInstance;
+      })
+      .filter((instance): instance is DecorInstance => instance !== null);
+  }
+
+  private getDecorId(sprite: Phaser.GameObjects.GameObject): string {
+    const textureKey = (sprite as any).texture?.key as string | undefined;
+    if (textureKey) {
+      const match = textureKey.match(/^([a-z]\d+)_/i);
+      if (match?.[1]) {
+        return match[1].toLowerCase();
+      }
+    }
+
+    const directId = (sprite as any).getData?.('decorId');
+    if (directId) return directId;
+
+    const item = (sprite as any).getData?.('item');
+    return item?.id || '';
   }
 
   restoreDecorSnapshot(

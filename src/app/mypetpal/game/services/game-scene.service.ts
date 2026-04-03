@@ -58,8 +58,11 @@ export class GameSceneService {
   }
 
   preloadAssets(scene: Phaser.Scene): void {
-    scene.load.image('dog', '/assets/dog.png');
-    scene.load.image('room', '/assets/room-isometric.png');
+    scene.load.spritesheet('dog', '/assets/GoldenRetriever_spritesheet.png', {
+      frameWidth: 32,
+      frameHeight: 32
+    });
+    scene.load.image('room', '/assets/room1.png');
     scene.load.image('rotate', '/assets/rotate.png');
     scene.load.image('trash', '/assets/delete.png');
     scene.load.image('rest', '/assets/rest.png');
@@ -83,9 +86,27 @@ export class GameSceneService {
 
     const dog = scene.physics.add
       .sprite(dogStartX, dogStartY, 'dog')
-      .setScale(0.028);
+      .setScale(0.9);
     dog.setCollideWorldBounds(true);
     dog.setBounce(0);
+
+    const shadow = scene.add
+      .container(dogStartX - 3, dogStartY + 8)
+      .setDepth(4);
+    shadow.add(
+      scene.add
+        .ellipse(0, 0, 12, 4, 0x000000, 0.09)
+        .setBlendMode(Phaser.BlendModes.MULTIPLY)
+    );
+    shadow.add(
+      scene.add
+        .ellipse(0, 0, 6, 2, 0x000000, 0.14)
+        .setBlendMode(Phaser.BlendModes.MULTIPLY)
+    );
+    (dog as any).shadow = shadow;
+
+    this.createAnimations(scene);
+    dog.play('idle');
 
     scene.cameras.main.centerOn(cameraX, cameraY);
     scene.cameras.main.zoom = cameraZoom;
@@ -97,6 +118,45 @@ export class GameSceneService {
     setTimeout(() => onSceneReady(scene), 400);
 
     return dog;
+  }
+
+  private createAnimations(scene: Phaser.Scene): void {
+    const anims = scene.anims;
+
+    // Idle animation - frames 0-3
+    if (!anims.exists('idle')) {
+      anims.create({
+        key: 'idle',
+        frames: anims.generateFrameNumbers('dog', { start: 0, end: 3 }),
+        frameRate: 8,
+        repeat: -1
+      });
+    }
+
+    const walkAnimations: Array<{ key: string; start: number; end: number }> = [
+      { key: 'walk_down', start: 32, end: 35 },
+      { key: 'walk_down_right', start: 36, end: 39 },
+      { key: 'walk_right', start: 40, end: 43 },
+      { key: 'walk_up_right', start: 44, end: 47 },
+      { key: 'walk_up', start: 48, end: 51 },
+      { key: 'walk_up_left', start: 52, end: 55 },
+      { key: 'walk_left', start: 56, end: 59 },
+      { key: 'walk_down_left', start: 60, end: 62 }
+    ];
+
+    walkAnimations.forEach(animation => {
+      if (!anims.exists(animation.key)) {
+        anims.create({
+          key: animation.key,
+          frames: anims.generateFrameNumbers('dog', {
+            start: animation.start,
+            end: animation.end
+          }),
+          frameRate: 12,
+          repeat: -1
+        });
+      }
+    });
   }
 
   private setupPhysicsWorld(
@@ -145,10 +205,7 @@ export class GameSceneService {
     onHoverStart: () => void,
     onHoverEnd: () => void
   ): Phaser.GameObjects.Zone {
-    const hoverZone = scene.add
-      .zone(0, 0, 56, 56)
-      .setDepth(9)
-      .setInteractive();
+    const hoverZone = scene.add.zone(0, 0, 56, 56).setDepth(9).setInteractive();
     (hoverZone as any).isHoverZone = true;
 
     hoverZone.on('pointerover', onHoverStart);
@@ -199,27 +256,51 @@ export class GameSceneService {
   setupKeyboardControls(
     scene: Phaser.Scene,
     onArrowKey: (key: string) => void
-  ): Phaser.Types.Input.Keyboard.CursorKeys {
-    scene.input.keyboard!.on('keydown', (event: KeyboardEvent) => {
-      if (event.repeat) return;
+  ): { keys: Set<string>; cursors: Phaser.Types.Input.Keyboard.CursorKeys } {
+    const pressedKeys = new Set<string>();
 
+    scene.input.keyboard!.on('keydown', (event: KeyboardEvent) => {
       switch (event.key) {
         case 'ArrowUp':
-          onArrowKey('up');
+          pressedKeys.add('up');
+          if (!event.repeat) onArrowKey('up');
           break;
         case 'ArrowDown':
-          onArrowKey('down');
+          pressedKeys.add('down');
+          if (!event.repeat) onArrowKey('down');
           break;
         case 'ArrowLeft':
-          onArrowKey('left');
+          pressedKeys.add('left');
+          if (!event.repeat) onArrowKey('left');
           break;
         case 'ArrowRight':
-          onArrowKey('right');
+          pressedKeys.add('right');
+          if (!event.repeat) onArrowKey('right');
           break;
       }
     });
 
-    return scene.input.keyboard!.createCursorKeys();
+    scene.input.keyboard!.on('keyup', (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowUp':
+          pressedKeys.delete('up');
+          break;
+        case 'ArrowDown':
+          pressedKeys.delete('down');
+          break;
+        case 'ArrowLeft':
+          pressedKeys.delete('left');
+          break;
+        case 'ArrowRight':
+          pressedKeys.delete('right');
+          break;
+      }
+    });
+
+    return {
+      keys: pressedKeys,
+      cursors: scene.input.keyboard!.createCursorKeys()
+    };
   }
 
   getWorldCenter(): { x: number; y: number } {

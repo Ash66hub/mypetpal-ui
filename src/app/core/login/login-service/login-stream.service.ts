@@ -12,10 +12,8 @@ export class LoginStreamService {
   constructor(private loginService: LoginService) {}
 
   public async loginUser(user: User): Promise<void> {
-    console.log('LoginStreamService: Starting login for user...', user.username);
     try {
       const response = await this.loginService.authenticateUser(user);
-      console.log('LoginStreamService: Authentication successful');
 
       if (response) {
         this.storeTokensInlocalStorage(
@@ -23,7 +21,6 @@ export class LoginStreamService {
           response.refreshToken,
           response.userId
         );
-        console.log('LoginStreamService: Tokens stored in localStorage');
 
         this.currentUserStream.next(response);
 

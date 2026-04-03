@@ -45,6 +45,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private settingsSaveTimeout: any;
   private lastActivityPingAt = 0;
   private lastLocalInteractionAt = 0;
+  private isSleeping = false;
 
   public isEmojiPickerOpen = false;
   public isGameLoading = true;
@@ -76,6 +77,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private arrowGroup: Phaser.GameObjects.Group | null = null;
   private arrowsVisible = false;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
+  private pressedArrowKeys: Set<string> = new Set();
   private arrowHoverSources = 0;
   private arrowHideTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -172,6 +174,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.localRestIcon.destroy();
       this.localRestIcon = null;
     }
+    const localShadow = (this.dog as any)?.shadow;
+    if (localShadow) {
+      localShadow.destroy();
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -223,9 +229,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   public moveStep(direction: string): void {
     if (!this.dog || !this.scene || this.isMoving) return;
 
+    this.markLocalActivity();
+
     let targetX = this.dog.x;
     let targetY = this.dog.y;
     const stepDist = 4.4;
+    const animKey = this.getMovementAnimationKey(direction);
 
     switch (direction) {
       case 'up':
@@ -239,6 +248,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
       case 'right':
         targetX += stepDist;
+        break;
+      case 'up-left':
+        targetX -= stepDist;
+        targetY -= stepDist;
+        break;
+      case 'up-right':
+        targetX += stepDist;
+        targetY -= stepDist;
+        break;
+      case 'down-left':
+        targetX -= stepDist;
+        targetY += stepDist;
+        break;
+      case 'down-right':
+        targetX += stepDist;
+        targetY += stepDist;
         break;
     }
 
@@ -258,6 +283,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       )
     ) {
       this.isMoving = true;
+
+      // Only play animation if not already playing it
+      if (
+        !this.dog.anims.isPlaying ||
+        this.dog.anims.currentAnim?.key !== animKey
+      ) {
+        this.dog.play(animKey);
+      }
+
       this.scene.tweens.add({
         targets: this.dog,
         x: targetX,
@@ -266,6 +300,29 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         ease: 'Cubic.easeOut',
         onComplete: () => this.onMoveComplete()
       });
+    }
+  }
+
+  private getMovementAnimationKey(direction: string): string {
+    switch (direction) {
+      case 'down':
+        return 'walk_down';
+      case 'down-right':
+        return 'walk_down_right';
+      case 'right':
+        return 'walk_right';
+      case 'up-right':
+        return 'walk_up_right';
+      case 'up':
+        return 'walk_up';
+      case 'up-left':
+        return 'walk_up_left';
+      case 'left':
+        return 'walk_left';
+      case 'down-left':
+        return 'walk_down_left';
+      default:
+        return 'idle';
     }
   }
 
@@ -481,6 +538,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const remotePet = this.remotePets.get(userId);
     if (remotePet) {
+      const shadow = (remotePet as any).shadow;
+      if (shadow) shadow.destroy();
       const hoverText = (remotePet as any).hoverText;
       if (hoverText) hoverText.destroy();
       remotePet.destroy();
@@ -674,9 +733,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       else this.zoomOut();
     });
 
-    this.cursors = this.gameScene.setupKeyboardControls(scene, key =>
+    const keyboardSetup = this.gameScene.setupKeyboardControls(scene, key =>
       this.moveStep(key)
     );
+    this.cursors = keyboardSetup.cursors;
+    this.pressedArrowKeys = keyboardSetup.keys;
 
     scene.input.on(
       'pointerdown',
@@ -816,7 +877,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     item: DecorItem,
     x: number,
     y: number,
-    initialRotation: string = 'SE'
+    initialRotation: string = 'SE',
+    onAdded?: () => void
   ): void {
     if (!this.scene) return;
 
@@ -840,6 +902,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.decorSprites!.add(sprite);
         this.setupDecorInteractions(sprite);
+        this.decorManagerService.refreshDecorCounts(this.decorSprites);
+        if (onAdded) {
+          onAdded();
+        }
       }
     );
   }
@@ -973,15 +1039,35 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.decorService.getSavedDecor(parseInt(targetUserId)).subscribe({
       next: instances => {
+        if (!instances || instances.length === 0) {
+          this.decorManagerService.refreshDecorCounts(this.decorSprites);
+          this.decorService.isRoomLoaded.set(true);
+          return;
+        }
+
+        const availableIds = new Set(this.decorService.items().map(i => i.id));
+        let pendingAdds = instances.filter(i => availableIds.has(i.decorId)).length;
+        if (pendingAdds === 0) {
+          this.decorManagerService.refreshDecorCounts(this.decorSprites);
+          this.decorService.isRoomLoaded.set(true);
+          return;
+        }
+
+        const onDecorAdded = () => {
+          pendingAdds -= 1;
+          if (pendingAdds === 0) {
+            this.decorManagerService.refreshDecorCounts(this.decorSprites);
+            this.decorService.isRoomLoaded.set(true);
+          }
+        };
+
         this.decorManagerService.restoreDecorSnapshot(
           this.scene!,
           instances,
           (item, x, y, rotation) => {
-            this.addDecor(item, x, y, rotation);
+            this.addDecor(item, x, y, rotation, onDecorAdded);
           }
         );
-        this.decorManagerService.refreshDecorCounts(this.decorSprites);
-        this.decorService.isRoomLoaded.set(true);
       },
       error: err => {
         console.error('Failed to load decor:', err);
@@ -1072,6 +1158,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private onMoveComplete(): void {
     this.isMoving = false;
+    if (this.dog) {
+      // Delay the idle animation for a smoother transition from walk
+      // Only switch to idle if no keys are currently held
+      setTimeout(() => {
+        if (this.dog && this.pressedArrowKeys.size === 0) {
+          this.dog.play('idle');
+        }
+      }, 200);
+    }
     this.saveUserSettings();
     this.markLocalActivity();
 
@@ -1104,11 +1199,30 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private markLocalActivity(): void {
     this.lastLocalInteractionAt = Date.now();
+    this.wakeDog();
     if (this.localRestIcon) {
       this.localRestIcon.destroy();
       this.localRestIcon = null;
     }
     this.reportActivityThrottled();
+  }
+
+  private wakeDog(): void {
+    this.isSleeping = false;
+
+    if (!this.dog) return;
+
+    if (this.dog.anims?.currentAnim) {
+      this.dog.anims.resume();
+    }
+  }
+
+  private setDogSleeping(): void {
+    if (!this.dog || this.isSleeping) return;
+
+    this.isSleeping = true;
+    this.dog.anims.stop();
+    this.dog.setFrame(50);
   }
 
   private initRoomMultiplayer(): void {
@@ -1170,6 +1284,36 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private update(scene: Phaser.Scene): void {
     if (!this.dog) return;
 
+    // Handle continuous movement from held arrow keys
+    if (!this.isMoving && this.pressedArrowKeys.size > 0) {
+      // Check for diagonal movements first
+      const hasUp = this.pressedArrowKeys.has('up');
+      const hasDown = this.pressedArrowKeys.has('down');
+      const hasLeft = this.pressedArrowKeys.has('left');
+      const hasRight = this.pressedArrowKeys.has('right');
+
+      // Diagonal movements
+      if (hasUp && hasLeft) {
+        this.moveStep('up-left');
+      } else if (hasUp && hasRight) {
+        this.moveStep('up-right');
+      } else if (hasDown && hasLeft) {
+        this.moveStep('down-left');
+      } else if (hasDown && hasRight) {
+        this.moveStep('down-right');
+      }
+      // Single direction movements (with priority)
+      else if (hasDown) {
+        this.moveStep('down');
+      } else if (hasUp) {
+        this.moveStep('up');
+      } else if (hasRight) {
+        this.moveStep('right');
+      } else if (hasLeft) {
+        this.moveStep('left');
+      }
+    }
+
     const hz = (this as any)._hoverZone;
     if (hz) {
       hz.x = this.dog.x;
@@ -1217,6 +1361,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
+    this.syncPetShadow(this.dog);
+    this.remotePets.forEach(remotePet => this.syncPetShadow(remotePet));
+
     this.remoteRestIcons.forEach((icon, userId) => {
       const remotePet = this.remotePets.get(userId);
       if (!remotePet || !icon.active) {
@@ -1231,6 +1378,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const isLocalIdle = Date.now() - this.lastLocalInteractionAt >= 60000;
     if (isLocalIdle && this.dog) {
       if (!this.localRestIcon && this.scene) {
+        this.setDogSleeping();
         this.localRestIcon = this.scene.add
           .image(
             this.dog.x + this.restIconOffsetX,
@@ -1263,5 +1411,17 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const normalized = totalExp / 5.0;
     const level = Math.floor((Math.sqrt(1 + 4 * normalized) - 1) / 2);
     return Math.max(0, level);
+  }
+
+  private syncPetShadow(pet: Phaser.GameObjects.Sprite | null): void {
+    if (!pet) return;
+
+    const shadow = (pet as any).shadow as
+      | Phaser.GameObjects.Container
+      | undefined;
+    if (!shadow || !shadow.active) return;
+
+    shadow.x = pet.x - 3;
+    shadow.y = pet.y + 10;
   }
 }

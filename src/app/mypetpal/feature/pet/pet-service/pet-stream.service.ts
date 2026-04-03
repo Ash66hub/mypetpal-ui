@@ -14,11 +14,9 @@ export class PetStreamService {
   constructor(private petService: PetService) {}
 
   public async getUserPets(userId: string) {
-    console.log('PetStreamService: Fetching pets for user...', userId);
     try {
       const pets = await this.petService.getUserPet(userId);
-      console.log('PetStreamService: Pets fetched successfully', pets);
-      
+
       const pet = Array.isArray(pets) ? pets[0] : pets;
       if (pet) {
         this.currentPetStream.next(pet);
