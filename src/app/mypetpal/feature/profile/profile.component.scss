@@ -4,16 +4,19 @@
     display: flex;
     justify-content: center;
     padding: 24px;
-    background: #0f172a;
-    color: #e2e8f0;
+    background:
+        radial-gradient(circle at 15% 8%, rgba(88, 225, 208, 0.15), transparent 40%),
+        radial-gradient(circle at 82% 14%, rgba(255, 127, 163, 0.16), transparent 42%),
+        linear-gradient(165deg, #14183a 0%, #101227 100%);
+    color: #f8f3dc;
     overflow-y: auto; /* Scroll internally */
 }
 
 .content-container {
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(36, 43, 95, 0.95), rgba(23, 28, 66, 0.95));
+    border: 3px solid #4f57a8;
+    box-shadow: 0 6px 0 rgba(9, 11, 33, 0.9);
+    border-radius: 12px;
     width: 100%;
     max-width: 500px;
     margin: auto 0;
@@ -24,17 +27,21 @@
         padding: 16px;
         display: flex;
         align-items: center;
-        background: rgba(15, 23, 42, 0.5);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(12, 16, 45, 0.45);
+        border-bottom: 2px solid rgba(12, 16, 45, 0.9);
 
         h2 {
             margin: 0 0 0 16px;
-            font-size: 20px;
+            font-size: 13px;
             font-weight: 600;
+            font-family: var(--retro-font-display);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #ffe9b4;
         }
 
         button {
-            color: #e2e8f0;
+            color: #ffe9b4;
         }
     }
 }
@@ -55,30 +62,33 @@
     .avatar-giant {
         width: 100px;
         height: 100px;
-        border-radius: 24px;
+        border-radius: 10px;
         font-size: 48px;
         font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 16px;
-        box-shadow: 0 8px 32px rgba(124, 58, 237, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 0 rgba(9, 11, 33, 0.8);
+        border: 3px solid rgba(12, 16, 45, 0.9);
 
         &.bg-primary {
-            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
-            color: #fff;
+            background: linear-gradient(180deg, #63ebd9 0%, #31cab5 100%);
+            color: #0b1b31;
         }
     }
 
     h3 {
         margin: 0 0 4px 0;
-        font-size: 24px;
-        color: #fff;
+        font-size: 14px;
+        color: #ffe9b4;
+        font-family: var(--retro-font-display);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     .user-email {
-        color: #94a3b8;
+        color: #d7d3bb;
         font-size: 14px;
     }
 }
@@ -94,8 +104,11 @@ mat-divider {
 
     h4 {
         margin: 0;
-        font-size: 18px;
-        color: #fff;
+        font-size: 11px;
+        color: #ffe9b4;
+        font-family: var(--retro-font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
     }
 
     mat-form-field {
@@ -106,13 +119,18 @@ mat-divider {
     .update-btn {
         margin-top: 16px;
         height: 48px;
-        border-radius: 12px;
+        border-radius: 8px;
         font-weight: 600;
-        letter-spacing: 0.5px;
-        background: #7c3aed;
+        letter-spacing: 0.04em;
+        font-size: 10px;
+        font-family: var(--retro-font-display);
+        background: linear-gradient(180deg, #65ecda 0%, #36cdb8 100%);
+        border: 2px solid #0b1b31;
+        color: #0b1b31;
+        box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
         
         &:hover:not([disabled]) {
-            background: #8b5cf6;
+            filter: brightness(1.05);
         }
 
         &[disabled] {
@@ -126,15 +144,18 @@ mat-divider {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    background: rgba(239, 68, 68, 0.05);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 16px;
+    background: rgba(87, 29, 55, 0.35);
+    border: 2px solid rgba(255, 86, 103, 0.5);
+    border-radius: 10px;
     padding: 20px;
 
     h4 {
         margin: 0;
-        color: #ef4444;
-        font-size: 18px;
+        color: #ff9dad;
+        font-size: 11px;
+        font-family: var(--retro-font-display);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     p {
@@ -146,9 +167,11 @@ mat-divider {
 
     .btn-delete {
         align-self: flex-start;
-        border-color: rgba(239, 68, 68, 0.5);
-        color: #ef4444;
-        border-radius: 8px;
+        border-color: rgba(255, 86, 103, 0.75);
+        color: #ff9dad;
+        border-radius: 6px;
+        font-family: var(--retro-font-display);
+        font-size: 10px;
 
         &:hover:not([disabled]) {
             background: rgba(239, 68, 68, 0.1);

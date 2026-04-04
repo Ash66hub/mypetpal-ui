@@ -12,6 +12,8 @@ import * as Phaser from 'phaser';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PetStreamService } from '../feature/pet/pet-service/pet-stream.service';
+import { PetService } from '../feature/pet/pet-service/pet.service';
+import { Pet, RoomKey } from '../feature/pet/pet';
 import {
   DecorItem,
   DecorService,
@@ -58,6 +60,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private currentZoom = 1.0;
   private settings: UserSettings | null = null;
+  private currentPet: Pet | null = null;
+  private selectedPetAssetKey: string = 'GoldenRetriever_spritesheet';
+  private selectedRoomKey: RoomKey = 'room1';
 
   public roomOwnerId: string | null = null;
   public activeRoomId: string | null = null;
@@ -89,6 +94,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly restIconOffsetX = 8;
   private readonly restIconOffsetY = 15;
   private readonly restIconScale = 0.03;
+  private readonly depthScale = 0.01;
+  private readonly shadowDepthOffset = 0.2;
+  private readonly spriteFootOffsetFactor = 0.35;
 
   readonly emojis = [
     '😂',
@@ -134,8 +142,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.remotePets.size;
   }
 
+  get currentVisitorIds(): number[] {
+    return Array.from(this.remotePets.keys())
+      .map(id => parseInt(id, 10))
+      .filter(id => !Number.isNaN(id));
+  }
+
   constructor(
     private petStreamService: PetStreamService,
+    private petService: PetService,
     private router: Router,
     private route: ActivatedRoute,
     private decorService: DecorService,
@@ -596,6 +611,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    await this.loadSelectionContext();
+
     if (myId) {
       try {
         const s = await this.userSettingsService
@@ -614,11 +631,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           await this.playerLevelService.ensureInitialLevelLoaded(myId);
         this.currentPlayerLevel = levelData.level;
         this.currentPlayerExp = levelData.exp;
+        this.decorService.userLevel.set(this.currentPlayerLevel);
 
         this.playerLevelService.startRealtimeLevelTracking(myId, {
           onLeveledUp: (newLevel, totalExp) => {
             this.currentPlayerLevel = newLevel;
             this.currentPlayerExp = totalExp;
+            this.decorService.userLevel.set(this.currentPlayerLevel);
             if (this.dog && this.scene) {
               this.playerLevelService.playLeveledUpAnimation(
                 this.scene,
@@ -631,6 +650,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
             this.currentPlayerExp = totalExp;
             this.currentPlayerLevel =
               this.playerLevelService.calculateLevelFromExpPublic(totalExp);
+            this.decorService.userLevel.set(this.currentPlayerLevel);
           }
         });
       } catch (e) {
@@ -662,7 +682,68 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.router.navigate(['/petCreation']);
       return false;
     }
+
+    this.currentPet = pet;
     return true;
+  }
+
+  private async loadSelectionContext(): Promise<void> {
+    const myId = localStorage.getItem('userId');
+    if (!myId || !this.currentPet) {
+      return;
+    }
+
+    this.selectedPetAssetKey = this.resolvePetAssetKey(this.currentPet);
+    this.selectedRoomKey = this.resolveRoomKey(this.currentPet);
+
+    if (this.roomOwnerId && this.roomOwnerId !== myId) {
+      try {
+        const roomOwnerPet = await this.petService.getUserPet(this.roomOwnerId);
+        if (roomOwnerPet) {
+          this.selectedRoomKey = this.resolveRoomKey(roomOwnerPet);
+        }
+      } catch (error) {
+        console.warn('Failed to load room selection for host:', error);
+      }
+    }
+  }
+
+  private resolvePetAssetKey(pet: Pet): string {
+    return (
+      pet.petAvatar ||
+      pet.selection?.petAssetKey ||
+      pet.petType ||
+      'GoldenRetriever_spritesheet'
+    );
+  }
+
+  private resolveRoomKey(pet: Pet): RoomKey {
+    const roomKey =
+      pet.selection?.roomKey || this.extractRoomKeyFromMetadata(pet.metadata);
+
+    switch (roomKey) {
+      case 'room2':
+      case 'room3':
+        return roomKey;
+      default:
+        return 'room1';
+    }
+  }
+
+  private extractRoomKeyFromMetadata(metadata?: string): RoomKey | null {
+    if (!metadata) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(metadata) as { SelectedRoomKey?: string };
+      return parsed.SelectedRoomKey === 'room2' ||
+        parsed.SelectedRoomKey === 'room3'
+        ? (parsed.SelectedRoomKey as RoomKey)
+        : 'room1';
+    } catch {
+      return null;
+    }
   }
 
   private initializeGame(): void {
@@ -681,7 +762,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private preload(scene: Phaser.Scene): void {
-    this.gameScene.preloadAssets(scene);
+    this.gameScene.preloadAssets(
+      scene,
+      this.selectedPetAssetKey,
+      this.selectedRoomKey
+    );
   }
 
   private create(scene: Phaser.Scene): void {
@@ -696,8 +781,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     let camY = this.settings?.lastCameraY || center.y;
 
     if (this.roomOwnerId) {
-      dogX = center.x;
-      dogY = center.y;
+      dogX = center.x + 24;
+      dogY = center.y + 20;
       camX = center.x;
       camY = center.y;
     }
@@ -709,6 +794,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       camX,
       camY,
       this.currentZoom,
+      this.selectedPetAssetKey,
+      this.selectedRoomKey,
       () => {
         this.loadSavedDecor();
         this.initRoomMultiplayer();
@@ -893,10 +980,36 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           this.decorSprites = this.scene!.physics.add.group();
           this.scene!.physics.add.collider(
             this.decorSprites,
-            this.decorSprites
+            this.decorSprites,
+            undefined,
+            (a, b) => {
+              const sa = a as Phaser.Physics.Arcade.Sprite;
+              const sb = b as Phaser.Physics.Arcade.Sprite;
+
+              // Avoid passive Arcade pushback for any pair that involves a wall.
+              // Wall interactions are handled by explicit drop resolution logic instead.
+              if (this.isWallLikeDecor(sa) || this.isWallLikeDecor(sb)) {
+                return false;
+              }
+
+              return true;
+            },
+            this
           );
           if (this.dog) {
-            this.scene!.physics.add.collider(this.dog, this.decorSprites);
+            this.scene!.physics.add.collider(
+              this.dog,
+              this.decorSprites,
+              undefined,
+              (dogBody, decorBody) => {
+                const pet = dogBody as Phaser.Physics.Arcade.Sprite;
+                const decor = decorBody as Phaser.Physics.Arcade.Sprite;
+
+                // If pet is visually behind decor, let it pass without physics pushback.
+                return pet.depth >= decor.depth;
+              },
+              this
+            );
           }
         }
 
@@ -936,6 +1049,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
         if (this.isInsideFloor(dragX, dragY)) {
           sprite.setPosition(dragX, dragY);
+          this.decorManagerService.refreshSelectionFeedback(
+            sprite,
+            this.scene!
+          );
           this.updateToolboxPosition();
         }
       }
@@ -951,6 +1068,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.scene!,
         this.decorSprites!
       );
+      this.decorManagerService.refreshSelectionFeedback(sprite, this.scene!);
       this.updateToolboxPosition();
 
       const moved =
@@ -985,6 +1103,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedDecor.clearTint();
       const border = (this.selectedDecor as any).__selectionBorder;
       if (border) border.setVisible(false);
+      const overlay = (this.selectedDecor as any).__selectionOverlay;
+      if (overlay) overlay.setVisible(false);
       this.selectedDecor = null;
     }
     this.setActiveDecorForDragging(null);
@@ -1030,6 +1150,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.scene,
       this.decorSprites!
     );
+    this.decorManagerService.refreshSelectionFeedback(
+      this.selectedDecor,
+      this.scene
+    );
+    this.updateToolboxPosition();
     this.saveRoomLayout();
   }
 
@@ -1046,7 +1171,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         const availableIds = new Set(this.decorService.items().map(i => i.id));
-        let pendingAdds = instances.filter(i => availableIds.has(i.decorId)).length;
+        let pendingAdds = instances.filter(i =>
+          availableIds.has(i.decorId)
+        ).length;
         if (pendingAdds === 0) {
           this.decorManagerService.refreshDecorCounts(this.decorSprites);
           this.decorService.isRoomLoaded.set(true);
@@ -1253,9 +1380,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           this.showToast('You were kicked from this room.');
           setTimeout(() => this.returnHome(), 1500);
         },
-        onRemotePetLeft: userId => {
+        onRemotePetLeft: (userId, username) => {
           if (userId !== this.currentlyKickingUserId) {
-            this.showToast('A Pal has left your space');
+            this.showToast(`${username} has left your space`);
           }
           this.removeRemotePet(userId);
         },
@@ -1283,6 +1410,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private update(scene: Phaser.Scene): void {
     if (!this.dog) return;
+
+    this.updateRenderDepths();
 
     // Handle continuous movement from held arrow keys
     if (!this.isMoving && this.pressedArrowKeys.size > 0) {
@@ -1327,7 +1456,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     }
 
-    let stackY = -40;
+    let stackY = -28;
     for (let i = this.chatBubbles.length - 1; i >= 0; i--) {
       const bubble = this.chatBubbles[i];
       bubble.x = this.dog.x;
@@ -1342,7 +1471,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       );
       if (!remotePet) return;
 
-      let remoteStackY = -40;
+      let remoteStackY = -28;
       for (let i = bubbles.length - 1; i >= 0; i--) {
         const bubble = bubbles[i];
         bubble.x = remotePet.x;
@@ -1357,7 +1486,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       const hoverText = (remotePet as any).hoverText;
       if (hoverText) {
         hoverText.x = remotePet.x;
-        hoverText.y = remotePet.y - 28;
+        hoverText.y = remotePet.y + 24;
       }
     });
 
@@ -1423,5 +1552,67 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     shadow.x = pet.x - 3;
     shadow.y = pet.y + 10;
+  }
+
+  private isWallLikeDecor(sprite: Phaser.Physics.Arcade.Sprite): boolean {
+    const category = (sprite.getData('decorCategory') as string) || '';
+    if (category === 'wall') {
+      return true;
+    }
+
+    const decorId = (sprite.getData('decorId') as string) || '';
+    if (decorId.toLowerCase().startsWith('w')) {
+      return true;
+    }
+
+    const item = sprite.getData('item') as { name?: string } | undefined;
+    return (item?.name || '').toLowerCase().includes('wall');
+  }
+
+  private updateRenderDepths(): void {
+    this.updatePetDepth(this.dog);
+
+    this.remotePets.forEach(remotePet => {
+      this.updatePetDepth(remotePet);
+    });
+
+    if (this.decorSprites) {
+      this.decorSprites.getChildren().forEach(child => {
+        const decor = child as Phaser.GameObjects.Sprite;
+        this.updateSpriteDepth(decor);
+      });
+    }
+
+    const selectedOverlay = (this.selectedDecor as any)?.__selectionOverlay as
+      | Phaser.GameObjects.Image
+      | undefined;
+    if (selectedOverlay && this.selectedDecor) {
+      selectedOverlay.setDepth(this.selectedDecor.depth + 0.05);
+    }
+
+    const selectedBorder = (this.selectedDecor as any)?.__selectionBorder as
+      | Phaser.GameObjects.Graphics
+      | undefined;
+    if (selectedBorder && this.selectedDecor) {
+      selectedBorder.setDepth(this.selectedDecor.depth + 0.05);
+    }
+  }
+
+  private updatePetDepth(pet: Phaser.GameObjects.Sprite | null): void {
+    if (!pet) return;
+
+    this.updateSpriteDepth(pet);
+
+    const shadow = (pet as any).shadow as
+      | Phaser.GameObjects.Container
+      | undefined;
+    if (shadow && shadow.active) {
+      shadow.setDepth(pet.depth - this.shadowDepthOffset);
+    }
+  }
+
+  private updateSpriteDepth(sprite: Phaser.GameObjects.Sprite): void {
+    const footY = sprite.y + sprite.displayHeight * this.spriteFootOffsetFactor;
+    sprite.setDepth(footY * this.depthScale);
   }
 }

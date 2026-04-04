@@ -1,0 +1,120 @@
+.mat-mdc-card,
+.mdc-card {
+  background: linear-gradient(180deg, var(--retro-bg-panel-soft) 0%, var(--retro-bg-panel) 100%) !important;
+  border: 3px solid var(--retro-border-mid) !important;
+  border-radius: var(--retro-radius-lg) !important;
+  box-shadow: var(--retro-shadow-soft) !important;
+}
+
+.mat-toolbar,
+.mat-mdc-toolbar {
+  color: var(--retro-text-main) !important;
+  font-family: var(--retro-font-display) !important;
+}
+
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button,
+.mat-mdc-button {
+  border-radius: var(--retro-radius-sm) !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mat-mdc-raised-button:not(:disabled),
+.mat-mdc-unelevated-button:not(:disabled) {
+  background: linear-gradient(180deg, #66f0db 0%, #2ec7b1 100%) !important;
+  color: #071323 !important;
+  border: 2px solid #071323 !important;
+  box-shadow: 0 4px 0 rgba(6, 14, 30, 0.9) !important;
+  font-family: var(--retro-font-display) !important;
+}
+
+.mat-mdc-outlined-button:not(:disabled),
+.mat-mdc-button:not(:disabled) {
+  color: var(--retro-text-main) !important;
+  border-color: var(--retro-border-mid) !important;
+}
+
+.mat-mdc-icon-button {
+  color: var(--retro-text-main) !important;
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-text-field-wrapper {
+  background: var(--retro-bg-input) !important;
+  border-radius: var(--retro-radius-sm) !important;
+}
+
+.mdc-notched-outline__leading,
+.mdc-notched-outline__notch,
+.mdc-notched-outline__trailing {
+  border-color: var(--retro-border-mid) !important;
+  border-width: 2px !important;
+}
+
+.mat-mdc-form-field-focus-overlay {
+  background: transparent !important;
+}
+
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--retro-accent-gold) !important;
+}
+
+.mat-mdc-input-element,
+.mat-mdc-select-value,
+.mat-mdc-select-min-line,
+.mat-mdc-floating-label,
+.mdc-floating-label {
+  color: var(--retro-text-main) !important;
+  font-family: var(--retro-font-body) !important;
+}
+
+.mat-mdc-dialog-surface,
+.mat-mdc-menu-panel,
+.mat-mdc-snack-bar-container .mdc-snackbar__surface,
+.mat-mdc-tooltip .mdc-tooltip__surface {
+  background: linear-gradient(180deg, #1f2552 0%, #14193f 100%) !important;
+  color: var(--retro-text-main) !important;
+  border: 2px solid var(--retro-border-mid) !important;
+  border-radius: var(--retro-radius-md) !important;
+  box-shadow: var(--retro-shadow-soft) !important;
+}
+
+.mat-mdc-tab-group,
+.mat-mdc-tab-nav-bar {
+  --mdc-tab-indicator-active-indicator-color: var(--retro-accent-gold);
+}
+
+.mat-mdc-tab .mdc-tab__text-label {
+  color: var(--retro-text-muted);
+  font-family: var(--retro-font-display);
+  font-size: 11px;
+}
+
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--retro-accent-gold);
+}
+
+.mat-mdc-menu-item {
+  min-height: 38px !important;
+  font-family: var(--retro-font-body);
+}
+
+.mat-mdc-divider {
+  border-top-color: rgba(139, 147, 216, 0.35) !important;
+}
+
+button:focus-visible,
+input:focus-visible,
+.mat-mdc-menu-item:focus-visible,
+.mat-mdc-raised-button:focus-visible,
+.mat-mdc-button:focus-visible {
+  outline: 2px solid var(--retro-accent-gold);
+  outline-offset: 2px;
+}

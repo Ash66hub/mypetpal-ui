@@ -1,4 +1,40 @@
-/* You can add global styles to this file, and also import other style files */
+@use './styles/retro-theme';
+@use './styles/material-retro-overrides';
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+.mat-typography,
+.mat-typography .mat-h1,
+.mat-typography .mat-h2,
+.mat-typography .mat-h3,
+.mat-typography .mat-h4,
+.mat-typography .mat-h5,
+.mat-typography .mat-h6,
+h1,
+h2,
+h3 {
+	font-family: var(--retro-font-display);
+}
+
+.mat-typography,
+p,
+span,
+div,
+input,
+button,
+textarea,
+select {
+	font-family: var(--retro-font-body);
+}
+
+app-root,
+app-game,
+app-login,
+app-profile,
+app-pet-creation {
+	image-rendering: auto;
+}
+
+canvas,
+.pixelated,
+img.pixelated {
+	image-rendering: pixelated;
+}

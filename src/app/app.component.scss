@@ -11,11 +11,12 @@
     height: 100vh;
     width: 100vw;
     overflow: hidden;
+    background: linear-gradient(180deg, #10122b 0%, #15193b 100%);
 }
 
 app-top-bar{
     display: block;
-    height: 64px;
+    height: 68px;
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -23,14 +24,20 @@ app-top-bar{
 }
 
 .app-body {
-    height: calc(100vh - 64px);
+    height: calc(100vh - 68px);
     width: 100%;
     overflow: hidden;
     position: relative;
-    background: #f8f9fa;
+    background:
+        radial-gradient(circle at 15% 8%, rgba(88, 225, 208, 0.22), transparent 42%),
+        radial-gradient(circle at 86% 10%, rgba(255, 127, 163, 0.2), transparent 45%),
+        linear-gradient(145deg, #161a3d 0%, #111431 55%, #0e1026 100%);
 
     &.full-screen {
         height: 100vh;
-        background: linear-gradient(135deg, #0f0c1a 0%, #1a1a2e 100%);
+        background:
+            radial-gradient(circle at 12% 10%, rgba(88, 225, 208, 0.18), transparent 40%),
+            radial-gradient(circle at 88% 8%, rgba(255, 127, 163, 0.16), transparent 36%),
+            linear-gradient(155deg, #15173c 0%, #10122a 100%);
     }
 }

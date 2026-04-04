@@ -19,9 +19,11 @@ export interface ConfirmDialogData {
         <p>{{ data.message }}</p>
       </div>
       <div class="dialog-actions">
-        <button class="btn-cancel" (click)="onSecondary()">{{ data.cancelText || 'Cancel' }}</button>
-        <button 
-          class="btn-confirm" 
+        <button class="btn-cancel" (click)="onSecondary()">
+          {{ data.cancelText || 'Cancel' }}
+        </button>
+        <button
+          class="btn-confirm"
           [class.destructive]="data.isDestructive"
           (click)="onPrimary()">
           {{ data.confirmText || 'Confirm' }}
@@ -29,75 +31,84 @@ export interface ConfirmDialogData {
       </div>
     </div>
   `,
-  styles: [`
-    .confirm-dialog-container {
-      background: #0c0c16;
-      color: #fff;
-      padding: 24px;
-      border-radius: 20px;
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-      max-width: 400px;
-      font-family: 'Inter', system-ui, sans-serif;
-    }
-
-    .dialog-title {
-      margin: 0 0 16px 0;
-      font-size: 20px;
-      font-weight: 700;
-      color: #a78bfa;
-    }
-
-    .dialog-content {
-      margin-bottom: 24px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .dialog-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-
-      button {
-        padding: 10px 20px;
+  styles: [
+    `
+      .confirm-dialog-container {
+        background: linear-gradient(180deg, #242b61 0%, #191f48 100%);
+        color: #f8f3dc;
+        padding: 24px;
         border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: none;
+        border: 3px solid #4f57a8;
+        box-shadow: 0 6px 0 rgba(9, 11, 33, 0.9);
+        max-width: 400px;
+        font-family: var(--retro-font-body);
+      }
+
+      .dialog-title {
+        margin: 0 0 16px 0;
+        font-size: 12px;
+        font-weight: 700;
+        color: #ffe9b4;
+        font-family: var(--retro-font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .dialog-content {
+        margin-bottom: 24px;
+        color: rgba(255, 255, 255, 0.7);
+        color: #d8d2b8;
         font-size: 14px;
+        line-height: 1.5;
       }
 
-      .btn-cancel {
-        background: rgba(255, 255, 255, 0.05);
-        color: rgba(255, 255, 255, 0.6);
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: #fff;
-        }
-      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
 
-      .btn-confirm {
-        background: #7c3aed;
-        color: white;
-        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-        &:hover {
-          background: #8b5cf6;
-          transform: translateY(-1px);
+        button {
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: 2px solid #0c102d;
+          font-size: 10px;
+          font-family: var(--retro-font-display);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          box-shadow: 0 3px 0 rgba(9, 11, 33, 0.9);
         }
 
-        &.destructive {
-          background: #ef4444;
-          box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        .btn-cancel {
+          background: #1a214d;
+          color: #f8f3dc;
           &:hover {
-            background: #f87171;
+            background: #2a326d;
+            color: #fff8e4;
+          }
+        }
+
+        .btn-confirm {
+          background: linear-gradient(180deg, #65ecda 0%, #36cdb8 100%);
+          color: #0b1b31;
+          &:hover {
+            background: linear-gradient(180deg, #78f4e2 0%, #42d6c1 100%);
+            transform: translateY(-1px);
+          }
+
+          &.destructive {
+            background: #ff5667;
+            color: #fff6f8;
+            &:hover {
+              background: #ff6f7e;
+            }
           }
         }
       }
-    }
-  `]
+    `
+  ]
 })
 export class ConfirmDialogComponent {
   constructor(

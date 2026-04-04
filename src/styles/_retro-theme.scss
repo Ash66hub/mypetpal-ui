@@ -1,0 +1,119 @@
+:root {
+  --retro-font-display: 'Press Start 2P', monospace;
+  --retro-font-body: 'Nunito', 'Trebuchet MS', sans-serif;
+  --retro-bg-night: #10122b;
+  --retro-bg-panel: #1b1f45;
+  --retro-bg-panel-soft: #232959;
+  --retro-bg-input: #131836;
+  --retro-text-main: #f8f3dc;
+  --retro-text-muted: #c9c5aa;
+  --retro-text-dim: #97947f;
+  --retro-accent-gold: #ffbf52;
+  --retro-accent-teal: #58e1d0;
+  --retro-accent-rose: #ff7fa3;
+  --retro-danger: #ff5667;
+  --retro-success: #65e07f;
+  --retro-border-dark: #090b21;
+  --retro-border-mid: #3e4584;
+  --retro-border-light: #8b93d8;
+  --retro-shadow-strong: 0 8px 0 rgba(9, 11, 33, 0.9);
+  --retro-shadow-soft: 0 6px 0 rgba(9, 11, 33, 0.45);
+  --retro-radius-sm: 6px;
+  --retro-radius-md: 10px;
+  --retro-radius-lg: 14px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--retro-text-main);
+  font-family: var(--retro-font-body);
+  background:
+    radial-gradient(circle at 20% 5%, rgba(88, 225, 208, 0.2), transparent 40%),
+    radial-gradient(circle at 85% 15%, rgba(255, 127, 163, 0.2), transparent 45%),
+    linear-gradient(145deg, #121536 0%, #1a1f4a 42%, #111329 100%);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+  background-size: 5px 5px;
+  z-index: -1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.pixel-title,
+.retro-title {
+  font-family: var(--retro-font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pixel-card {
+  background: linear-gradient(180deg, var(--retro-bg-panel-soft) 0%, var(--retro-bg-panel) 100%);
+  border: 3px solid var(--retro-border-mid);
+  outline: 2px solid var(--retro-border-dark);
+  box-shadow: var(--retro-shadow-soft);
+  border-radius: var(--retro-radius-lg);
+}
+
+.pixel-button {
+  font-family: var(--retro-font-display);
+  border: 2px solid var(--retro-border-dark);
+  border-radius: var(--retro-radius-md);
+  box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
+  text-transform: uppercase;
+}
+
+.retro-panel-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.retro-panel-scrollbar::-webkit-scrollbar-track {
+  background: rgba(17, 19, 41, 0.8);
+  border-radius: 8px;
+}
+
+.retro-panel-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7d86d8 0%, #4f57a8 100%);
+  border: 2px solid #16183b;
+  border-radius: 8px;
+}
+
+@keyframes retroFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes retroBlink {
+  0%,
+  44% {
+    opacity: 1;
+  }
+  50%,
+  92% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}

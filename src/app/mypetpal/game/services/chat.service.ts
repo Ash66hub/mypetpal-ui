@@ -41,8 +41,7 @@ export class ChatService {
 
     const txt = scene.add
       .text(0, 0, filteredText, {
-        fontFamily: "'Quicksand', sans-serif",
-        fontStyle: 'bold',
+        fontFamily: "'Press Start 2P', 'Quicksand', sans-serif",
         fontSize: '32px',
         color: '#1a1a2e',
         align: 'center',
@@ -96,7 +95,7 @@ export class ChatService {
     pointer.lineTo(pointerSize, bubbleHeight / 2 - 1);
     pointer.strokePath();
 
-    const container = scene.add.container(anchor.x, anchor.y - 28, [
+    const container = scene.add.container(anchor.x, anchor.y - 18, [
       pointer,
       bg,
       txt

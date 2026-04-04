@@ -9,12 +9,11 @@
 	pointer-events: auto;
 
 	.level-bar-content {
-		background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(168, 85, 247, 0.75));
-		backdrop-filter: blur(12px);
-		border: 1px solid rgba(217, 119, 255, 0.4);
-		border-radius: 20px;
+		background: linear-gradient(180deg, rgba(43, 51, 106, 0.96), rgba(28, 34, 77, 0.96));
+		border: 2px solid #0c102d;
+		border-radius: 10px;
 		padding: 12px 16px;
-		box-shadow: 0 4px 16px rgba(124, 58, 237, 0.2);
+		box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
 		display: flex;
 		gap: 12px;
 		align-items: center;
@@ -26,10 +25,12 @@
 			min-width: 70px;
 
 			.level-badge {
+				font-family: var(--retro-font-display);
 				font-weight: 800;
-				font-size: 14px;
-				color: #ffd700;
-				text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+				font-size: 10px;
+				color: #ffe09a;
+				text-shadow: none;
+				letter-spacing: 0.03em;
 			}
 
 			.level-name {
@@ -46,9 +47,9 @@
 			position: relative;
 			height: 24px;
 			background: rgba(0, 0, 0, 0.25);
-			border-radius: 12px;
+			border-radius: 8px;
 			overflow: hidden;
-			border: 1px solid rgba(217, 119, 255, 0.3);
+			border: 2px solid rgba(12, 16, 45, 0.9);
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -58,21 +59,23 @@
 				left: 0;
 				top: 0;
 				height: 100%;
-				background: linear-gradient(90deg, #4ade80, #22c55e);
-				border-radius: 12px;
+				background: repeating-linear-gradient(90deg, #6cec87 0 12px, #47cf68 12px 24px);
+				border-radius: 6px;
 				transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-				box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+				box-shadow: none;
 			}
 
 			.exp-text {
 				position: relative;
 				z-index: 10;
-				font-size: 10px;
+				font-size: 9px;
+				font-family: var(--retro-font-display);
 				font-weight: 600;
-				color: #fff;
-				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+				color: #fef6df;
+				text-shadow: none;
 				white-space: nowrap;
 				pointer-events: none;
+				letter-spacing: 0.03em;
 			}
 		}
 	}

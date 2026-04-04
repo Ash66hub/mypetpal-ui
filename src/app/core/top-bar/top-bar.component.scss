@@ -2,11 +2,11 @@
     height: 100%;
     display: flex;
     align-items: center;
-    padding: 0 24px;
+    padding: 0 20px;
     gap: 12px; // Space between logos
-    background: linear-gradient(90deg, #120e2a 0%, #1c113b 100%) !important;
-    border-bottom: 1px solid rgba(124, 58, 237, 0.4);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(180deg, #242d62 0%, #161c45 100%) !important;
+    border-bottom: 3px solid #0a0d26;
+    box-shadow: 0 5px 0 rgba(9, 11, 33, 0.95), inset 0 -2px 0 rgba(255, 255, 255, 0.08);
     z-index: 2000;
     pointer-events: auto !important;
 }
@@ -14,7 +14,8 @@
 .header-logo {
     height: 30px;
     width: auto;
-    filter: drop-shadow(0 2px 8px rgba(180, 130, 250, 0.4));
+    image-rendering: pixelated;
+    filter: drop-shadow(0 3px 0 rgba(8, 10, 27, 0.7));
     cursor: pointer;
     user-select: none;
 }
@@ -24,14 +25,51 @@
 }
 
 mat-icon {
-    color: rgba(255, 255, 255, 0.9);
+    color: #ffe9b4;
     transition: all 0.2s ease;
     font-size: 28px;
     height: 28px;
     width: 28px;
 }
 
+button[mat-icon-button] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 8px;
+    border: 2px solid #0a0d26;
+    background: linear-gradient(180deg, #62e8d6 0%, #2fc6b0 100%);
+    box-shadow: 0 3px 0 rgba(9, 11, 33, 0.9);
+
+    &:hover {
+        transform: translateY(-1px);
+    }
+}
+
 button[mat-icon-button]:hover mat-icon {
-    color: #b482ff;
-    filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.5));
+    color: #0b1a2f;
+    filter: none;
+}
+
+.profile-trigger {
+    overflow: hidden;
+}
+
+.pet-thumb {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 2px solid #0a0d26;
+    background: radial-gradient(circle at 30% 25%, #78f1e1 0%, #2bbca7 65%, #1f9a88 100%);
+    color: #0b1a2f;
+    font-family: var(--retro-font-display);
+    font-size: 16px;
+    line-height: 1;
+    text-transform: uppercase;
 }

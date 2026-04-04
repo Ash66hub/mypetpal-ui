@@ -1,6 +1,13 @@
 export enum PetType {
-  DOGO = 'Dogo',
-  CATO = 'Cato'
+  GoldenRetriever_spritesheet = 'GoldenRetriever_spritesheet',
+  Cat_spritesheet = 'Cat_spritesheet'
+}
+
+export type RoomKey = 'room1' | 'room2' | 'room3';
+
+export interface PetSelection {
+  petAssetKey: PetType;
+  roomKey: RoomKey;
 }
 
 export enum PetStatus {
@@ -18,6 +25,8 @@ export class Pet {
   public age: number;
   public petStatus: PetStatus;
   public petAvatar?: string;
+  public selection?: PetSelection;
+  public metadata?: string;
 
   // Pet stats max:100
   public xp: number;

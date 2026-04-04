@@ -44,6 +44,7 @@ export class SocialPanelComponent implements OnInit {
   @Input() isHosting: boolean = false;
   @Input() visitingUsername: string = '';
   @Input() hostingCount: number = 0;
+  @Input() visitingUserIds: number[] = [];
 
   @Output() onReturnHome = new EventEmitter<void>();
 
@@ -159,6 +160,13 @@ export class SocialPanelComponent implements OnInit {
   }
 
   public sendVisitInvite(friendId: number) {
+    if (!this.canInviteToRoom(friendId)) {
+      this.snackbarService.openSnackbarWithAction(
+        'This pal is already visiting your space.'
+      );
+      return;
+    }
+
     this.friendService.sendVisitInvite(this.currentUserId, friendId).subscribe({
       next: () => {
         this.snackbarService.openSnackbarWithAction('Visit invitation sent!');
@@ -175,6 +183,22 @@ export class SocialPanelComponent implements OnInit {
         }
       }
     });
+  }
+
+  public canInviteToRoom(friendId: number): boolean {
+    return !this.visitingUserIds.includes(friendId);
+  }
+
+  public getInviteTooltip(friend: Friend): string {
+    if (!friend.isOnline) {
+      return 'Cannot invite, pal is offline';
+    }
+
+    if (!this.canInviteToRoom(friend.userId)) {
+      return 'Already visiting your space';
+    }
+
+    return 'Invite to Room';
   }
 
   public respondToVisitInvite(

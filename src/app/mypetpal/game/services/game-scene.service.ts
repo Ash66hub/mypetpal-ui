@@ -57,12 +57,16 @@ export class GameSceneService {
     };
   }
 
-  preloadAssets(scene: Phaser.Scene): void {
-    scene.load.spritesheet('dog', '/assets/GoldenRetriever_spritesheet.png', {
+  preloadAssets(
+    scene: Phaser.Scene,
+    petAssetKey: string,
+    roomAssetKey: string
+  ): void {
+    scene.load.spritesheet(petAssetKey, `/assets/${petAssetKey}.png`, {
       frameWidth: 32,
       frameHeight: 32
     });
-    scene.load.image('room', '/assets/room1.png');
+    scene.load.image(roomAssetKey, `/assets/${roomAssetKey}.png`);
     scene.load.image('rotate', '/assets/rotate.png');
     scene.load.image('trash', '/assets/delete.png');
     scene.load.image('rest', '/assets/rest.png');
@@ -75,17 +79,19 @@ export class GameSceneService {
     cameraX: number,
     cameraY: number,
     cameraZoom: number,
+    petAssetKey: string,
+    roomAssetKey: string,
     onSceneReady: (scene: Phaser.Scene) => void
   ): Phaser.GameObjects.Sprite {
     const roomCenterX = this.ROOM_CENTER;
     const roomCenterY = this.ROOM_CENTER;
 
-    const room = scene.add.image(roomCenterX, roomCenterY, 'room');
+    const room = scene.add.image(roomCenterX, roomCenterY, roomAssetKey);
     room.displayWidth = 600;
     room.scaleY = room.scaleX;
 
     const dog = scene.physics.add
-      .sprite(dogStartX, dogStartY, 'dog')
+      .sprite(dogStartX, dogStartY, petAssetKey)
       .setScale(0.9);
     dog.setCollideWorldBounds(true);
     dog.setBounce(0);
@@ -105,7 +111,7 @@ export class GameSceneService {
     );
     (dog as any).shadow = shadow;
 
-    this.createAnimations(scene);
+    this.createAnimations(scene, petAssetKey);
     dog.play('idle');
 
     scene.cameras.main.centerOn(cameraX, cameraY);
@@ -120,14 +126,14 @@ export class GameSceneService {
     return dog;
   }
 
-  private createAnimations(scene: Phaser.Scene): void {
+  private createAnimations(scene: Phaser.Scene, petAssetKey: string): void {
     const anims = scene.anims;
 
     // Idle animation - frames 0-3
     if (!anims.exists('idle')) {
       anims.create({
         key: 'idle',
-        frames: anims.generateFrameNumbers('dog', { start: 0, end: 3 }),
+        frames: anims.generateFrameNumbers(petAssetKey, { start: 0, end: 3 }),
         frameRate: 8,
         repeat: -1
       });
@@ -148,7 +154,7 @@ export class GameSceneService {
       if (!anims.exists(animation.key)) {
         anims.create({
           key: animation.key,
-          frames: anims.generateFrameNumbers('dog', {
+          frames: anims.generateFrameNumbers(petAssetKey, {
             start: animation.start,
             end: animation.end
           }),

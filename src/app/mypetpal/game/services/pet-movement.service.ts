@@ -7,6 +7,9 @@ import * as Phaser from 'phaser';
 export class PetMovementService {
   private readonly STEP_DISTANCE = 4.4;
   private readonly MOVE_DURATION = 150;
+  private readonly PET_COLLISION_RADIUS = 2;
+  private readonly DEPTH_SCALE = 0.01;
+  private readonly PET_FOOT_OFFSET_FACTOR = 0.35;
   private readonly MIN_ZOOM = 2;
   private readonly MAX_ZOOM = 12.0;
   private readonly ZOOM_STEP = 0.5;
@@ -67,7 +70,7 @@ export class PetMovementService {
 
     for (const remotePet of Array.from(remotePets.values())) {
       const dist = Phaser.Math.Distance.Between(x, y, remotePet.x, remotePet.y);
-      if (dist < 4) {
+      if (dist < this.PET_COLLISION_RADIUS) {
         return true;
       }
     }
@@ -83,12 +86,42 @@ export class PetMovementService {
   ): boolean {
     if (!decorSprites || !dog) return false;
 
-    const body = dog.body as Phaser.Physics.Arcade.Body;
-    const temp = scene.add.zone(x, y, body.width, body.height);
-    scene.physics.add.existing(temp);
-    const overlapping = scene.physics.overlap(temp, decorSprites);
-    temp.destroy();
-    return overlapping;
+    const centerX = x;
+    const centerY = y;
+    const projectedPetDepth =
+      (y + dog.displayHeight * this.PET_FOOT_OFFSET_FACTOR) * this.DEPTH_SCALE;
+
+    for (const child of decorSprites.getChildren()) {
+      const decor = child as Phaser.GameObjects.Sprite;
+      const body = (child as any).body as
+        | Phaser.Physics.Arcade.Body
+        | undefined;
+      if (!body) {
+        continue;
+      }
+
+      // If pet is visually behind this decor, do not treat it as blocking.
+      if (projectedPetDepth < decor.depth) {
+        continue;
+      }
+
+      body.updateFromGameObject();
+
+      const nearestX = Phaser.Math.Clamp(centerX, body.x, body.right);
+      const nearestY = Phaser.Math.Clamp(centerY, body.y, body.bottom);
+      const dist = Phaser.Math.Distance.Between(
+        centerX,
+        centerY,
+        nearestX,
+        nearestY
+      );
+
+      if (dist < this.PET_COLLISION_RADIUS) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   zoomIn(currentZoom: number): number {

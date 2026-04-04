@@ -109,17 +109,17 @@
           <div class="pal-actions">
             <!-- Action: Invite -->
             <span
-              [matTooltip]="
-                friend.isOnline
-                  ? 'Invite to Room'
-                  : 'Cannot invite, pal is offline'
-              "
+              [matTooltip]="getInviteTooltip(friend)"
               matTooltipShowDelay="0">
               <button
                 class="icon-btn"
-                [disabled]="!friend.isOnline"
+                [disabled]="!friend.isOnline || !canInviteToRoom(friend.userId)"
                 (click)="sendVisitInvite(friend.userId)"
-                [style.pointer-events]="friend.isOnline ? 'auto' : 'none'">
+                [style.pointer-events]="
+                  friend.isOnline && canInviteToRoom(friend.userId)
+                    ? 'auto'
+                    : 'none'
+                ">
                 <i class="action-icon">🏠</i>
               </button>
             </span>
@@ -183,7 +183,7 @@
             <h4 class="section-title">Visit invitations</h4>
             <div
               *ngFor="let invite of friendService.visitInvitations()"
-              class="social-item">
+              class="social-item visit-invite-item">
               <div class="user-info">
                 <div class="avatar-sm v-avatar">
                   {{ invite.senderUsername[0] | uppercase }}

@@ -13,9 +13,27 @@ export class DecorManagerService {
   private readonly MAX_WALLS_PER_TYPE = 50;
   private readonly MAX_ITEMS_PER_TYPE = 10;
   private readonly DECOR_SCALE = 0.25;
-  private readonly DECOR_PIXEL_BLOCK_SIZE = 2;
+  private readonly DECOR_PIXEL_BLOCK_SIZE = 1;
+  private readonly SW_HORIZONTAL_SKEW_DEGREES = 15;
+  private readonly SE_LEFT_TILT_ANGLE = 2;
+  private readonly SW_LEFT_TILT_ANGLE = -13;
+  private readonly LOUNGE_SOFA_CORNER_SW_RIGHT_TILT_ANGLE = -5;
+  private readonly LOUNGE_SOFA_CORNER_DECOR_ID = 'f19';
+  private readonly BED_SW_RIGHT_TILT_ANGLE = -3;
+  private readonly BED_DECOR_ID = 'f5';
   private readonly SELECTION_DEPTH = 9;
+  private readonly SELECTION_HALO_SCALE = 1.04;
+  private readonly SELECTION_HALO_ALPHA = 0.45;
+  private readonly SELECTION_HALO_COLOR = 0x7c3aed;
   private readonly TOOLBOX_DEPTH = 30;
+  private readonly ALPHA_THRESHOLD = 10;
+  private readonly WALL_OVERLAP_RATIO = 0.1;
+  private readonly MIXED_WALL_OVERLAP_RATIO = 0.03;
+  private readonly DECOR_WALL_OVERLAP_RATIO = 0.5;
+  private readonly opaqueBoundsCache = new Map<
+    string,
+    { x: number; y: number; width: number; height: number }
+  >();
 
   constructor(private decorService: DecorService) {}
 
@@ -49,7 +67,6 @@ export class DecorManagerService {
   ): void {
     const seKey = `${item.id}_SE`;
     const swKey = `${item.id}_SW`;
-    const initialKey = `${item.id}_${initialRotation}`;
 
     const loadAndAdd = () => {
       this.applyPixelFilter(scene, seKey);
@@ -57,21 +74,18 @@ export class DecorManagerService {
 
       const seRenderKey = this.ensurePixelatedTexture(scene, seKey);
       const swRenderKey = this.ensurePixelatedTexture(scene, swKey);
+      const swSkewRenderKey = this.ensureHorizontallySkewedTexture(
+        scene,
+        swRenderKey
+      );
 
       const initialRenderKey =
-        initialRotation === 'SW' ? swRenderKey : seRenderKey;
+        initialRotation === 'SW' ? swSkewRenderKey : seRenderKey;
 
       const sprite = scene.physics.add.sprite(x, y, initialRenderKey);
       sprite.setScale(this.DECOR_SCALE);
-      sprite.setAngle(initialRotation === 'SW' ? -5 : 0);
-
-      const newWidth = sprite.width * 0.9;
-      const newHeight = sprite.height * 0.9;
-      sprite.setBodySize(newWidth, newHeight);
-      sprite.setOffset(
-        (sprite.width - newWidth) / 2,
-        (sprite.height - newHeight) / 2
-      );
+      sprite.setAngle(this.getAngleForRotation(initialRotation, item.id));
+      this.applyOpaqueCollisionBounds(scene, sprite, initialRenderKey);
 
       sprite.setImmovable(true);
       sprite.setDepth(10);
@@ -80,7 +94,7 @@ export class DecorManagerService {
       sprite.setData('decorCategory', item.category);
       sprite.setData('rotation', initialRotation);
       sprite.setData('seRenderKey', seRenderKey);
-      sprite.setData('swRenderKey', swRenderKey);
+      sprite.setData('swRenderKey', swSkewRenderKey);
 
       if (onSpriteAdded) {
         onSpriteAdded(sprite);
@@ -165,6 +179,54 @@ export class DecorManagerService {
     return pixelKey;
   }
 
+  private ensureHorizontallySkewedTexture(
+    scene: Phaser.Scene,
+    textureKey: string
+  ): string {
+    const skewKey = `${textureKey}_skx${this.SW_HORIZONTAL_SKEW_DEGREES}`;
+    if (scene.textures.exists(skewKey)) {
+      return skewKey;
+    }
+
+    const texture = scene.textures.get(textureKey);
+    const sourceImage = texture?.getSourceImage() as
+      | HTMLImageElement
+      | HTMLCanvasElement
+      | undefined;
+
+    if (!sourceImage) {
+      return textureKey;
+    }
+
+    const width = sourceImage.width;
+    const height = sourceImage.height;
+    const shear = Math.tan(
+      Phaser.Math.DegToRad(this.SW_HORIZONTAL_SKEW_DEGREES)
+    );
+    const shiftX = Math.ceil(Math.abs(shear) * height);
+
+    const output = document.createElement('canvas');
+    output.width = width + shiftX;
+    output.height = height;
+    const ctx = output.getContext('2d');
+
+    if (!ctx) {
+      return textureKey;
+    }
+
+    ctx.imageSmoothingEnabled = false;
+
+    // Keep the bottom edge anchored while shifting the top toward the right.
+    ctx.setTransform(1, 0, -shear, 1, shiftX, 0);
+    ctx.drawImage(sourceImage, 0, 0, width, height);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    scene.textures.addCanvas(skewKey, output);
+    this.applyPixelFilter(scene, skewKey);
+
+    return skewKey;
+  }
+
   selectDecor(
     sprite: Phaser.GameObjects.Sprite,
     scene: Phaser.Scene,
@@ -174,28 +236,59 @@ export class DecorManagerService {
     this.showSelectionFeedback(sprite, scene);
   }
 
+  refreshSelectionFeedback(
+    sprite: Phaser.GameObjects.Sprite,
+    scene: Phaser.Scene
+  ): void {
+    this.showSelectionFeedback(sprite, scene);
+  }
+
   private showSelectionFeedback(
     sprite: Phaser.GameObjects.Sprite,
     scene: Phaser.Scene
   ): void {
-    let selectionBorder = (sprite as any).__selectionBorder;
-    if (!selectionBorder) {
-      selectionBorder = scene.add.graphics();
-      selectionBorder.setDepth(this.SELECTION_DEPTH);
-      (sprite as any).__selectionBorder = selectionBorder;
+    let selectionOverlay = (sprite as any).__selectionOverlay as
+      | Phaser.GameObjects.Image
+      | undefined;
+    if (!selectionOverlay) {
+      selectionOverlay = scene.add.image(
+        sprite.x,
+        sprite.y,
+        sprite.texture.key
+      );
+      (sprite as any).__selectionOverlay = selectionOverlay;
     }
 
-    selectionBorder.clear();
-    selectionBorder.lineStyle(0.5, 0x7c3aed, 0.8);
+    const frameName = (sprite.frame as any)?.name;
+    if (frameName !== undefined && frameName !== null) {
+      selectionOverlay.setTexture(sprite.texture.key, frameName);
+    } else {
+      selectionOverlay.setTexture(sprite.texture.key);
+    }
 
-    const bounds = sprite.getBounds();
-    selectionBorder.strokeRect(
-      bounds.x - 2,
-      bounds.y - 2,
-      bounds.width + 4,
-      bounds.height + 4
-    );
-    selectionBorder.setVisible(true);
+    selectionOverlay
+      .setPosition(sprite.x, sprite.y)
+      .setOrigin(sprite.originX, sprite.originY)
+      .setScale(
+        sprite.scaleX * this.SELECTION_HALO_SCALE,
+        sprite.scaleY * this.SELECTION_HALO_SCALE
+      )
+      .setAngle(sprite.angle)
+      .setAlpha(this.SELECTION_HALO_ALPHA)
+      .setTint(this.SELECTION_HALO_COLOR)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(this.SELECTION_DEPTH)
+      .setVisible(true);
+
+    selectionOverlay.setFlip(sprite.flipX, sprite.flipY);
+
+    // Backward compatibility: if an older rectangular border exists, hide it.
+    const selectionBorder = (sprite as any).__selectionBorder as
+      | Phaser.GameObjects.Graphics
+      | undefined;
+    if (selectionBorder) {
+      selectionBorder.setVisible(false);
+    }
   }
 
   deleteDecor(
@@ -205,6 +298,11 @@ export class DecorManagerService {
     const selectionBorder = (sprite as any).__selectionBorder;
     if (selectionBorder) {
       selectionBorder.destroy();
+    }
+
+    const selectionOverlay = (sprite as any).__selectionOverlay;
+    if (selectionOverlay) {
+      selectionOverlay.destroy();
     }
 
     decorSprites.remove(sprite);
@@ -220,7 +318,114 @@ export class DecorManagerService {
 
     sprite.setTexture(nextKey);
     sprite.setData('rotation', nextRotation);
-    sprite.setAngle(nextRotation === 'SW' ? -5 : 0);
+    sprite.setAngle(
+      this.getAngleForRotation(nextRotation, sprite.getData('decorId'))
+    );
+    this.applyOpaqueCollisionBounds(
+      sprite.scene,
+      sprite as Phaser.Physics.Arcade.Sprite,
+      nextKey
+    );
+  }
+
+  private applyOpaqueCollisionBounds(
+    scene: Phaser.Scene,
+    sprite: Phaser.Physics.Arcade.Sprite,
+    textureKey: string
+  ): void {
+    const bounds = this.getOpaqueBounds(scene, textureKey);
+
+    sprite.setBodySize(bounds.width, bounds.height);
+    sprite.setOffset(bounds.x, bounds.y);
+  }
+
+  private getOpaqueBounds(
+    scene: Phaser.Scene,
+    textureKey: string
+  ): { x: number; y: number; width: number; height: number } {
+    const cached = this.opaqueBoundsCache.get(textureKey);
+    if (cached) {
+      return cached;
+    }
+
+    const texture = scene.textures.get(textureKey);
+    const sourceImage = texture?.getSourceImage() as
+      | HTMLImageElement
+      | HTMLCanvasElement
+      | undefined;
+
+    if (!sourceImage) {
+      const fallback = { x: 0, y: 0, width: 1, height: 1 };
+      this.opaqueBoundsCache.set(textureKey, fallback);
+      return fallback;
+    }
+
+    const width = sourceImage.width;
+    const height = sourceImage.height;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      const fallback = { x: 0, y: 0, width, height };
+      this.opaqueBoundsCache.set(textureKey, fallback);
+      return fallback;
+    }
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(sourceImage, 0, 0, width, height);
+
+    const data = ctx.getImageData(0, 0, width, height).data;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const alpha = data[(y * width + x) * 4 + 3];
+        if (alpha > this.ALPHA_THRESHOLD) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    const resolved =
+      maxX >= minX && maxY >= minY
+        ? {
+            x: minX,
+            y: minY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1
+          }
+        : { x: 0, y: 0, width, height };
+
+    this.opaqueBoundsCache.set(textureKey, resolved);
+    return resolved;
+  }
+
+  private getAngleForRotation(rotation: string, decorId?: string): number {
+    if (rotation === 'SW') {
+      if (decorId === this.LOUNGE_SOFA_CORNER_DECOR_ID) {
+        return this.LOUNGE_SOFA_CORNER_SW_RIGHT_TILT_ANGLE;
+      }
+
+      return decorId === this.BED_DECOR_ID
+        ? this.BED_SW_RIGHT_TILT_ANGLE
+        : this.SW_LEFT_TILT_ANGLE;
+    }
+
+    if (rotation === 'SE') {
+      return decorId === this.BED_DECOR_ID ? -4 : this.SE_LEFT_TILT_ANGLE;
+    }
+
+    return 0;
   }
 
   resolveDecorOverlap(
@@ -228,35 +433,130 @@ export class DecorManagerService {
     scene: Phaser.Scene,
     decorSprites: Phaser.GameObjects.Group
   ): void {
+    const movingSprite = sprite as Phaser.Physics.Arcade.Sprite;
+    const movingBody = movingSprite.body as Phaser.Physics.Arcade.Body | null;
+    if (!movingBody) {
+      return;
+    }
+
+    const isMovingWall = this.isWallDecor(movingSprite);
+
     let attempts = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 60;
+    const defaultEdgePadding = 0.5;
 
     while (attempts < maxAttempts) {
-      let overlappingItem: any = null;
+      movingBody.updateFromGameObject();
 
-      decorSprites.getChildren().forEach((item: any) => {
-        if (item !== sprite) {
-          (sprite.body as Phaser.Physics.Arcade.Body).updateFromGameObject();
-          (item.body as Phaser.Physics.Arcade.Body).updateFromGameObject();
-          if (scene.physics.overlap(sprite, item)) {
-            overlappingItem = item;
+      let separatedThisPass = false;
+
+      for (const item of decorSprites.getChildren()) {
+        if (item === sprite) continue;
+
+        const otherSprite = item as Phaser.Physics.Arcade.Sprite;
+        const otherBody = otherSprite.body as Phaser.Physics.Arcade.Body | null;
+        if (!otherBody) continue;
+
+        const isOtherWall = this.isWallDecor(otherSprite);
+        const movingRotation =
+          (movingSprite.getData('rotation') as string) || '';
+        const otherRotation = (otherSprite.getData('rotation') as string) || '';
+        const wallPair = isMovingWall && isOtherWall;
+        const decorWallPair =
+          (isMovingWall && !isOtherWall) || (!isMovingWall && isOtherWall);
+        if (wallPair) {
+          continue;
+        }
+        const sameWallOrientation =
+          wallPair && movingRotation === otherRotation;
+        const mixedWallPair = wallPair && movingRotation !== otherRotation;
+        const wallOverlapPadding =
+          -Math.min(movingBody.width, otherBody.width) *
+          this.WALL_OVERLAP_RATIO;
+        const mixedWallOverlapPadding =
+          -Math.min(movingBody.width, otherBody.width) *
+          this.MIXED_WALL_OVERLAP_RATIO;
+        const decorWallOverlapPadding =
+          -Math.min(movingBody.width, otherBody.width) *
+          this.DECOR_WALL_OVERLAP_RATIO;
+        const edgePadding = sameWallOrientation
+          ? wallOverlapPadding
+          : mixedWallPair
+            ? mixedWallOverlapPadding
+            : decorWallPair
+              ? decorWallOverlapPadding
+              : defaultEdgePadding;
+
+        otherBody.updateFromGameObject();
+
+        const isOverlapping =
+          movingBody.right > otherBody.x &&
+          movingBody.x < otherBody.right &&
+          movingBody.bottom > otherBody.y &&
+          movingBody.y < otherBody.bottom;
+
+        if (!isOverlapping) continue;
+
+        if (decorWallPair) {
+          const wallSprite = isMovingWall ? movingSprite : otherSprite;
+          const decorSprite = isMovingWall ? otherSprite : movingSprite;
+
+          // If decor is visually behind the wall, allow overlap without pushback.
+          if (decorSprite.depth < wallSprite.depth) {
+            continue;
           }
         }
-      });
 
-      if (!overlappingItem) break;
+        const moveLeft = otherBody.x - movingBody.right - edgePadding;
+        const moveRight = otherBody.right - movingBody.x + edgePadding;
+        const moveUp = otherBody.y - movingBody.bottom - edgePadding;
+        const moveDown = otherBody.bottom - movingBody.y + edgePadding;
 
-      const angle = Phaser.Math.Angle.Between(
-        overlappingItem.x,
-        overlappingItem.y,
-        sprite.x,
-        sprite.y
-      );
-      sprite.x += Math.cos(angle) * 3;
-      sprite.y += Math.sin(angle) * 3;
+        const candidates = [
+          { axis: 'x' as const, delta: moveLeft },
+          { axis: 'x' as const, delta: moveRight },
+          { axis: 'y' as const, delta: moveUp },
+          { axis: 'y' as const, delta: moveDown }
+        ];
+
+        const best = candidates.reduce((prev, curr) =>
+          Math.abs(curr.delta) < Math.abs(prev.delta) ? curr : prev
+        );
+
+        if (best.axis === 'x') {
+          sprite.x += best.delta;
+        } else {
+          sprite.y += best.delta;
+        }
+
+        movingBody.updateFromGameObject();
+        separatedThisPass = true;
+        break;
+      }
+
+      if (!separatedThisPass) {
+        break;
+      }
 
       attempts++;
     }
+  }
+
+  private isWallDecor(sprite: Phaser.GameObjects.Sprite): boolean {
+    const category =
+      ((sprite as any).getData?.('decorCategory') as string) || '';
+    if (category === 'wall') {
+      return true;
+    }
+
+    const decorId = ((sprite as any).getData?.('decorId') as string) || '';
+    if (decorId.toLowerCase().startsWith('w')) {
+      return true;
+    }
+
+    const item = (sprite as any).getData?.('item') as DecorItem | undefined;
+    const name = item?.name?.toLowerCase() || '';
+    return name.includes('wall');
   }
 
   refreshDecorCounts(decorSprites: Phaser.GameObjects.Group | null): void {
@@ -281,6 +581,8 @@ export class DecorManagerService {
     decorSprites.getChildren().forEach((child: any) => {
       const border = (child as any).__selectionBorder;
       if (border) border.destroy();
+      const overlay = (child as any).__selectionOverlay;
+      if (overlay) overlay.destroy();
       child.destroy();
     });
 

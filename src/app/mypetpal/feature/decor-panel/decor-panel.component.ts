@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, DoCheck } from '@angular/core';
 import { DecorService, DecorItem } from '../../../core/decor/decor.service';
 import { SharedModule } from '../../../shared/shared.module';
 
@@ -9,10 +9,11 @@ import { SharedModule } from '../../../shared/shared.module';
   standalone: true,
   imports: [SharedModule]
 })
-export class DecorPanelComponent implements OnInit {
+export class DecorPanelComponent implements OnInit, DoCheck {
   public isCollapsed: boolean = true;
   public activeCategory: 'furniture' | 'plant' | 'wall' = 'furniture';
   public filteredItems: DecorItem[] = [];
+  private lastKnownUserLevel: number = -1;
 
   @Input() isVisiting: boolean = false;
 
@@ -20,6 +21,15 @@ export class DecorPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.updateFilteredItems();
+    this.lastKnownUserLevel = this.decorService.userLevel();
+  }
+
+  ngDoCheck(): void {
+    const currentLevel = this.decorService.userLevel();
+    if (currentLevel !== this.lastKnownUserLevel) {
+      this.lastKnownUserLevel = currentLevel;
+      this.updateFilteredItems();
+    }
   }
 
   public togglePanel(): void {
@@ -34,7 +44,18 @@ export class DecorPanelComponent implements OnInit {
   private updateFilteredItems(): void {
     this.filteredItems = this.decorService.getItemsByCategory(
       this.activeCategory
-    );
+    ).slice().sort((a, b) => {
+      const lockDelta = Number(this.isLocked(a)) - Number(this.isLocked(b));
+      if (lockDelta !== 0) {
+        return lockDelta;
+      }
+
+      if (a.levelRequired !== b.levelRequired) {
+        return a.levelRequired - b.levelRequired;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
   }
 
   public isLocked(item: DecorItem): boolean {

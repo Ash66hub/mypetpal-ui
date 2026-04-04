@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { LoginStreamService } from '../../core/login/login-service/login-stream.service';
 import { Router } from '@angular/router';
-import { FriendService } from '../../core/social/friend.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-top-bar',
@@ -9,12 +9,37 @@ import { FriendService } from '../../core/social/friend.service';
     styleUrls: ['./top-bar.component.scss'],
     standalone: false
 })
-export class TopBarComponent {
+export class TopBarComponent implements OnInit, OnDestroy {
+  public avatarLetter: string = 'U';
+  private userSub?: Subscription;
+
   constructor(
     private loginStreamService: LoginStreamService,
-    private router: Router,
-    private friendService: FriendService
+    private router: Router
   ) {}
+
+  ngOnInit(): void {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      void this.loginStreamService.getCurrentUser(userId);
+    }
+
+    this.userSub = this.loginStreamService.currentUserStream.subscribe(user => {
+      this.avatarLetter = this.resolveAvatarLetter(user?.username);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
+  }
+
+  private resolveAvatarLetter(username?: string): string {
+    const trimmed = username?.trim();
+    if (!trimmed) {
+      return 'U';
+    }
+    return trimmed.charAt(0).toUpperCase();
+  }
 
   public openProfile() {
     this.router.navigate(['/profile']);

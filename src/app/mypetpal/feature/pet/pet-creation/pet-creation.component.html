@@ -4,8 +4,11 @@
       <mat-card-content>
         <h3>Create Pet Profile</h3>
         <form [formGroup]="petForm" (ngSubmit)="onSubmit()">
-          <!-- Pet Name -->
-          <mat-form-field appearance="fill" class="full-width">
+          <div class="intro-copy">
+            Choose your pet sprite and the room that starts your world.
+          </div>
+
+          <mat-form-field appearance="fill" class="full-width name-field">
             <mat-label>Pet Name</mat-label>
             <input
               matInput
@@ -17,20 +20,48 @@
             }
           </mat-form-field>
 
-          <!-- Pet Type Dropdown -->
-          <mat-form-field appearance="fill" class="full-width">
-            <mat-label>Pet Type</mat-label>
-            <mat-select formControlName="petType" required>
-              @for (type of petTypes; track type) {
-                <mat-option [value]="type">{{ type }}</mat-option>
+          <section class="selection-section">
+            <div class="section-header">
+              <h4>Pick your pet</h4>
+              <p>Choose one. It's really as simple as that.</p>
+            </div>
+            <div class="preview-grid pet-grid">
+              @for (option of petOptions; track option.key) {
+                <button
+                  type="button"
+                  class="preview-card"
+                  [class.selected]="selectedPetOption === option.key"
+                  (click)="selectPet(option.key)">
+                  <img [src]="option.previewPath" [alt]="option.label" />
+                  <span class="preview-title">{{ option.label }}</span>
+                  <span class="preview-copy">{{ option.description }}</span>
+                </button>
               }
-            </mat-select>
-            @if (petForm.get('petType')?.hasError('required')) {
-              <mat-error> Pet type is required </mat-error>
-            }
-          </mat-form-field>
+            </div>
+          </section>
 
-          <!-- TODO: Pet Avatar Upload -->
+          <section class="selection-section">
+            <div class="section-header">
+              <h4>Pick your room</h4>
+              <p>
+                Choose the room that becomes your building space. No, this can't
+                be changed later.
+              </p>
+            </div>
+            <div class="preview-grid room-grid">
+              @for (room of roomOptions; track room.key) {
+                <button
+                  type="button"
+                  class="preview-card room-card"
+                  [class.selected]="selectedRoomOption === room.key"
+                  (click)="selectRoom(room.key)">
+                  <img [src]="room.previewPath" [alt]="room.label" />
+                  <span class="preview-title">{{ room.label }}</span>
+                  <span class="preview-copy">{{ room.description }}</span>
+                </button>
+              }
+            </div>
+          </section>
 
           <!-- Button Group -->
           <div class="button-group">
@@ -39,7 +70,7 @@
               color="primary"
               type="submit"
               [disabled]="petForm.invalid">
-              Create Pet
+              Start
             </button>
           </div>
         </form>

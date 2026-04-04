@@ -20,8 +20,11 @@ export class PetStreamService {
       const pet = Array.isArray(pets) ? pets[0] : pets;
       if (pet) {
         this.currentPetStream.next(pet);
+      } else {
+        this.currentPetStream.next(new Pet());
       }
     } catch (error) {
+      this.currentPetStream.next(new Pet());
       console.error('PetStreamService: Error fetching pets', error);
       // Re-throw so LoginComponent knows it failed
       throw error;
