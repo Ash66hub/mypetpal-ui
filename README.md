@@ -1,5 +1,35 @@
 # MypetpalUi
 
+Frontend for the MyPetPal project (Angular).
+
+## Disclaimer
+
+This README.md was generated with AI assistance.
+
+## Contact
+
+For questions or support, contact: hi@aswanth.net
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file.
+
+## Related repositories
+
+- UI repo (this project): https://github.com/Ash66hub/mypetpal-ui
+- API repo (required): https://github.com/Ash66hub/mypetpal-api
+
+## Dependencies and run order
+
+This frontend depends on the backend API at https://github.com/Ash66hub/mypetpal-api.
+
+- UI local URL: http://localhost:4200/
+- API base URL used by UI: http://localhost:5050/
+
+Build and run the API repo first, then start this UI repo. If the API is not running, login/game/data features in the UI will not work.
+
+## Angular CLI
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.6.
 
 ## Development server

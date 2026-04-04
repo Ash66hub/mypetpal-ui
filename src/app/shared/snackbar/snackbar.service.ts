@@ -1,21 +1,27 @@
 import { Injectable } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { IndividualConfig, ToastrService } from 'ngx-toastr';
+import { SnackbarToastComponent } from './snackbar-toast.component';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SnackbarService {
-  constructor(private snackBar: MatSnackBar) {}
+  constructor(private toastrService: ToastrService) {}
 
   openSnackbarWithAction(
     message: string,
     action: string = 'Close',
     duration: number = 5000
   ): void {
-    this.snackBar.open(message, action, {
-      duration: duration,
-      verticalPosition: 'top',
-      horizontalPosition: 'right'
-    });
+    const options: Partial<IndividualConfig> = {
+      timeOut: duration,
+      toastComponent: SnackbarToastComponent,
+      closeButton: false,
+      tapToDismiss: false,
+      positionClass: 'toast-top-right',
+      payload: { action }
+    };
+
+    this.toastrService.show(message, '', options, 'snackbar');
   }
 }

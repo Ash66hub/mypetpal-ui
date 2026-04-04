@@ -39,7 +39,10 @@
                         <mat-icon>{{hideNewPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
                     </button>
                     @if (passwordForm.get('newPassword')?.hasError('minlength')) {
-                        <mat-error>Must be at least 8 characters</mat-error>
+                        <mat-error>Must be at least 12 characters</mat-error>
+                    }
+                    @if (passwordForm.get('newPassword')?.hasError('weakPassword')) {
+                        <mat-error>Must include both letters and numbers</mat-error>
                     }
                 </mat-form-field>
 

@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { User } from '../../shared/user/user';
 import { LoginStreamService } from './login-service/login-stream.service';
-import { confirmPasswordValidator } from '../../shared/validators/custom-validators';
+import {
+  confirmPasswordValidator,
+  passwordStrengthValidator
+} from '../../shared/validators/custom-validators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SnackbarService } from '../../shared/snackbar/snackbar.service';
 import { Router } from '@angular/router';
@@ -42,7 +45,14 @@ export class LoginComponent implements OnInit {
       {
         email: ['', [Validators.required, Validators.email]],
         username: ['', [Validators.required, Validators.minLength(5)]],
-        password: ['', [Validators.required, Validators.minLength(8)]],
+        password: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(12),
+            passwordStrengthValidator()
+          ]
+        ],
         confirmPassword: ['', [Validators.required]]
       },
       { validators: confirmPasswordValidator() }

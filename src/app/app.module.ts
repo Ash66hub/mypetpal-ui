@@ -7,6 +7,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { MypetpalModule } from './mypetpal/mypetpal.module';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { httpInterceptor } from './core/authentication/http-intercept.interceptor';
+import { ToastrModule } from 'ngx-toastr';
+import { SnackbarToastComponent } from './shared/snackbar/snackbar-toast.component';
 
 @NgModule({
   declarations: [AppComponent],
@@ -14,7 +16,15 @@ import { httpInterceptor } from './core/authentication/http-intercept.intercepto
     BrowserModule,
     AuthenticationModule,
     AppRoutingModule,
-    MypetpalModule
+    MypetpalModule,
+    SnackbarToastComponent,
+    ToastrModule.forRoot({
+      positionClass: 'toast-top-right',
+      newestOnTop: true,
+      maxOpened: 3,
+      autoDismiss: true,
+      toastClass: 'ngx-toastr app-snackbar-toast-container'
+    })
   ],
   bootstrap: [AppComponent],
   providers: [

@@ -9,6 +9,7 @@ import { SnackbarService } from '../../../shared/snackbar/snackbar.service';
 import { User } from '../../../shared/user/user';
 import { ConfirmDialogComponent } from '../../../shared/dialogs/confirm-dialog.component';
 import { SharedModule } from '../../../shared/shared.module';
+import { passwordStrengthValidator } from '../../../shared/validators/custom-validators';
 
 @Component({
   selector: 'app-profile',
@@ -42,7 +43,14 @@ export class ProfileComponent implements OnInit {
     this.passwordForm = this.fb.group(
       {
         oldPassword: ['', Validators.required],
-        newPassword: ['', [Validators.required, Validators.minLength(8)]],
+        newPassword: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(12),
+            passwordStrengthValidator()
+          ]
+        ],
         confirmPassword: ['', Validators.required]
       },
       { validators: this.passwordMatchValidator }

@@ -35,6 +35,9 @@ app-top-bar{
 
     &.full-screen {
         height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         background:
             radial-gradient(circle at 12% 10%, rgba(88, 225, 208, 0.18), transparent 40%),
             radial-gradient(circle at 88% 8%, rgba(255, 127, 163, 0.16), transparent 36%),

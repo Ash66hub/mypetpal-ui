@@ -45,6 +45,10 @@ export class TopBarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/profile']);
   }
 
+  public goHome() {
+    this.router.navigate(['/game']);
+  }
+
   public logoutUser() {
     this.loginStreamService.logout();
 

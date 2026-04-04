@@ -1,3 +1,4 @@
+@use 'ngx-toastr/toastr';
 @use './styles/retro-theme';
 @use './styles/material-retro-overrides';
 
@@ -37,4 +38,47 @@ canvas,
 .pixelated,
 img.pixelated {
 	image-rendering: pixelated;
+}
+
+.toast-top-right {
+	top: 98px !important;
+	right: 16px !important;
+}
+
+.app-snackbar-toast-container {
+	background: linear-gradient(180deg, #3d284f 0%, #2b1f3e 100%) !important;
+	border: 2px solid #ff5667;
+	right: 24px;
+	color: #ffe4eb !important;
+	box-shadow: 0 4px 0 rgba(55, 10, 31, 0.7) !important;
+	padding: 12px 14px !important;
+	border-radius: 8px !important;
+	width: 420px;
+	max-width: calc(100vw - 84px);
+}
+
+@media (max-width: 768px) {
+	.toast-top-right {
+		top: 86px !important;
+		right: 12px !important;
+	}
+
+	.app-snackbar-toast-container {
+		width: min(92vw, 360px);
+		max-width: calc(100vw - 24px);
+		padding: 11px 12px !important;
+	}
+}
+
+@media (max-width: 480px) {
+	.toast-top-right {
+		top: 82px !important;
+		right: 8px !important;
+	}
+
+	.app-snackbar-toast-container {
+		width: min(95vw, 330px);
+		max-width: calc(100vw - 16px);
+		padding: 10px 11px !important;
+	}
 }

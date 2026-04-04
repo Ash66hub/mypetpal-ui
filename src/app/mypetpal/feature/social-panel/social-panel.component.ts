@@ -58,6 +58,10 @@ export class SocialPanelComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.isMobileViewport()) {
+      this.friendService.isCollapsed.set(true);
+    }
+
     const userIdStr = localStorage.getItem('userId');
     if (userIdStr) {
       this.currentUserId = parseInt(userIdStr);
@@ -74,6 +78,10 @@ export class SocialPanelComponent implements OnInit {
     this.petStreamService.currentPetStream.subscribe(pet => {
       this.currentPet = pet;
     });
+  }
+
+  private isMobileViewport(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth <= 768;
   }
 
   public toggleCollapse() {

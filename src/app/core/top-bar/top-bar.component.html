@@ -1,6 +1,14 @@
 <mat-toolbar color="primary" class="custom-toolbar">
-  <img src="/assets/logo.png" alt="MyPetPal Logo" class="header-logo" />
-  <img src="/assets/logo-text.png" alt="MyPetPal Logo" class="header-logo" />
+  <img
+    src="/assets/logo.png"
+    alt="MyPetPal Logo"
+    class="header-logo"
+    (click)="goHome()" />
+  <img
+    src="/assets/logo-text.png"
+    alt="MyPetPal Logo"
+    class="header-logo"
+    (click)="goHome()" />
 
   <!-- Spacer to push the user icon to the right -->
   <span class="spacer"></span>

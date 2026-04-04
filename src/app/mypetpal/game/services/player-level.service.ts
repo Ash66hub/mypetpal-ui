@@ -22,8 +22,8 @@ export class PlayerLevelService {
   ) {}
 
   private getExpForLevel(level: number): number {
-    if (level <= 0) return 0;
-    return (10 * level * (level + 1)) / 2;
+    if (level <= 1) return 0;
+    return (10 * (level - 1) * level) / 2;
   }
 
   getExpForNextLevel(currentLevel: number): number {
@@ -63,7 +63,7 @@ export class PlayerLevelService {
         .get<any>(`${apiUrl}Users/${userId}`)
         .toPromise();
 
-      if (!response) return { level: 0, exp: 0 };
+      if (!response) return { level: 1, exp: 0 };
 
       const expRaw =
         response.totalExperience ??
@@ -76,10 +76,10 @@ export class PlayerLevelService {
         return { level, exp: parsedExp };
       }
 
-      return { level: 0, exp: 0 };
+      return { level: 1, exp: 0 };
     } catch (error) {
       console.warn('Could not load player level from API:', error);
-      return { level: 0, exp: 0 };
+      return { level: 1, exp: 0 };
     }
   }
 
@@ -88,13 +88,13 @@ export class PlayerLevelService {
   ): Promise<{ level: number; exp: number }> {
     const maxAttempts = 5;
     const delayMs = 250;
-    let lastResult = { level: 0, exp: 0 };
+    let lastResult = { level: 1, exp: 0 };
 
     for (let i = 0; i < maxAttempts; i++) {
       const result = await this.loadPlayerLevel(userId);
       lastResult = result;
 
-      if (result.exp > 0 || result.level > 0) {
+      if (result.exp > 0 || result.level > 1) {
         return result;
       }
 
@@ -105,10 +105,10 @@ export class PlayerLevelService {
   }
 
   private calculateLevelFromExp(totalExp: number): number {
-    if (totalExp < 10) return 0;
+    if (totalExp < 10) return 1;
     const normalized = totalExp / 5.0;
     const level = Math.floor((Math.sqrt(1 + 4 * normalized) - 1) / 2);
-    return Math.max(0, level);
+    return Math.max(1, level + 1);
   }
 
   calculateLevelFromExpPublic(totalExp: number): number {
@@ -163,7 +163,7 @@ export class PlayerLevelService {
     scene.tweens.add({
       targets: sprite,
       scale: 0.036,
-      duration: 400,
+      duration: 700,
       yoyo: true,
       repeat: 1,
       ease: 'Cubic.easeOut'
@@ -173,7 +173,7 @@ export class PlayerLevelService {
       targets: glow,
       alpha: 0,
       scale: 2,
-      duration: 800,
+      duration: 1400,
       ease: 'Cubic.easeOut',
       onComplete: () => glow.destroy()
     });
@@ -194,7 +194,7 @@ export class PlayerLevelService {
       targets: levelText,
       y: levelText.y - 18,
       alpha: 0,
-      duration: 1400,
+      duration: 2200,
       ease: 'Cubic.easeOut',
       onComplete: () => levelText.destroy()
     });

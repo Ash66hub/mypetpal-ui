@@ -196,6 +196,23 @@ button {
     font-size: 14px;
 }
 
+.button-group button[mat-raised-button] {
+    background: linear-gradient(180deg, #65ecda 0%, #36cdb8 100%) !important;
+    color: #0b1b31 !important;
+    border: 2px solid #0b1b31 !important;
+    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9) !important;
+}
+
+.button-group button[mat-raised-button]:disabled,
+.button-group button[mat-raised-button].mat-mdc-button-disabled,
+.button-group button[mat-raised-button].mdc-button--disabled {
+    background: linear-gradient(180deg, #46508f 0%, #333a70 100%) !important;
+    color: #cfd5ee !important;
+    border: 2px solid #252d61 !important;
+    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.55) !important;
+    opacity: 1 !important;
+}
+
 @media (max-width: 860px) {
     .preview-grid.pet-grid,
     .preview-grid.room-grid {

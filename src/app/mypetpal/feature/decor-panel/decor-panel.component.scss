@@ -19,7 +19,7 @@
 
     .drawer-handle {
         position: absolute;
-        top: 24px;
+        top: 112px;
         right: -56px;
         width: 56px;
         height: 56px;
@@ -86,9 +86,19 @@
     padding: 16px;
     gap: 8px;
     background: rgba(12, 16, 45, 0.55);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    touch-action: pan-x;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 
     button {
-        flex: 1;
+        flex: 0 0 auto;
+        min-width: 88px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -116,6 +126,20 @@
             box-shadow: inset 0 0 0 1px rgba(9, 11, 33, 0.7);
         }
     }
+}
+
+.drag-hint {
+    margin: 8px 16px 0;
+    padding: 6px 10px;
+    border: 1px solid rgba(101, 236, 218, 0.65);
+    border-radius: 8px;
+    background: rgba(16, 28, 63, 0.6);
+    color: #65ecda;
+    font-size: 9px;
+    font-family: var(--retro-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
 }
 
 .asset-grid-viewport {
@@ -182,6 +206,11 @@
     &.locked {
         cursor: not-allowed;
         filter: grayscale(0.8) opacity(0.8);
+    }
+
+    &.touch-dragging:not(.locked) {
+        transform: scale(0.97);
+        opacity: 0.8;
     }
 
     .tile-card {
@@ -286,6 +315,105 @@
         
         &:hover {
             background: rgba(124, 58, 237, 0.5);
+        }
+    }
+}
+
+.touch-drag-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -120%);
+    pointer-events: none;
+    z-index: 2600;
+    background: rgba(13, 18, 47, 0.9);
+    border: 2px solid #ffbf52;
+    border-radius: 10px;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+
+    &.can-drop {
+        border-color: #65ecda;
+        transform: translate(-50%, -120%) scale(1.03);
+
+        .ghost-label {
+            color: #65ecda;
+        }
+    }
+
+    .ghost-thumb {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+
+    .ghost-label {
+        color: #ffe9b4;
+        font-size: 9px;
+        font-family: var(--retro-font-display);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .decor-panel-container {
+        width: 50vw;
+    }
+
+    .panel-content {
+        .panel-header {
+            padding: 16px;
+        }
+    }
+
+    .category-tabs {
+        padding: 10px;
+        gap: 6px;
+
+        button {
+            padding: 10px 6px;
+
+            .icon {
+                font-size: 18px;
+            }
+        }
+    }
+
+    .asset-grid-viewport {
+        padding: 10px;
+
+        .asset-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+    }
+
+    .asset-tile {
+        .asset-name {
+            font-size: 8px;
+        }
+    }
+
+    .drag-hint {
+        margin: 6px 10px 0;
+        font-size: 8px;
+    }
+
+    .touch-drag-ghost {
+        .ghost-thumb {
+            width: 22px;
+            height: 22px;
+        }
+
+        .ghost-label {
+            font-size: 8px;
         }
     }
 }

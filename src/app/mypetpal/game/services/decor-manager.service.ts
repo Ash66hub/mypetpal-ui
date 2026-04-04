@@ -657,11 +657,11 @@ export class DecorManagerService {
     const rotateIcon = scene.add
       .image(-12, 0, 'rotate')
       .setOrigin(0.5)
-      .setDisplaySize(16, 16);
+      .setDisplaySize(18, 18);
     const trashIcon = scene.add
       .image(12, 0, 'trash')
       .setOrigin(0.5)
-      .setDisplaySize(16, 16);
+      .setDisplaySize(18, 18);
 
     const toolbox = scene.add.container(0, 0, [rotateIcon, trashIcon]);
     toolbox.setDepth(this.TOOLBOX_DEPTH);

@@ -10,5 +10,24 @@
         >{{ currentLevelExp }} / {{ expForNextLevel }} EXP</span
       >
     </div>
+
+    <div class="exp-info-wrapper">
+      <button
+        class="exp-info-btn"
+        (click)="toggleExpInfoBanner($event)"
+        title="Level and EXP info"
+        aria-label="Level and EXP info">
+        i
+      </button>
+
+      @if (isExpInfoOpen) {
+        <div class="exp-info-banner" (click)="$event.stopPropagation()">
+          <h4>How EXP Works</h4>
+          <p>Stay active in the game to gain EXP over time.</p>
+          <p>You gain an extra +10 EXP when adding a new pal.</p>
+          <p>At higher levels, more decor items are unlocked.</p>
+        </div>
+      }
+    </div>
   </div>
 </div>

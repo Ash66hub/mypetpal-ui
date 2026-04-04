@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.snackbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.message {
+  font-family: var(--retro-font-display);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+.action-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 228, 235, 0.5);
+  border-radius: 6px;
+  color: #ffe4eb;
+  font-family: var(--retro-font-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 228, 235, 0.12);
+  }
+}

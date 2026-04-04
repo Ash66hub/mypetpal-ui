@@ -55,7 +55,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   public toastMessage: string | null = null;
   private toastTimeout: any;
 
-  public currentPlayerLevel = 0;
+  public currentPlayerLevel = 1;
   public currentPlayerExp = 0;
 
   private currentZoom = 1.0;
@@ -318,6 +318,78 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private movePetToPoint(targetX: number, targetY: number): void {
+    if (!this.dog || !this.scene || this.isMoving) {
+      return;
+    }
+
+    if (
+      !this.isInsideFloor(targetX, targetY) ||
+      this.petMovementService.isCollidingWithDecor(
+        targetX,
+        targetY,
+        this.dog,
+        this.decorSprites,
+        this.scene
+      ) ||
+      this.petMovementService.isCollidingWithRemotePets(
+        targetX,
+        targetY,
+        this.remotePets
+      )
+    ) {
+      return;
+    }
+
+    const deltaX = targetX - this.dog.x;
+    const deltaY = targetY - this.dog.y;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    let direction = 'down';
+    if (absX > absY) {
+      direction = deltaX < 0 ? 'left' : 'right';
+    } else {
+      direction = deltaY < 0 ? 'up' : 'down';
+    }
+
+    this.markLocalActivity();
+    this.isMoving = true;
+    this.dog.play(this.getMovementAnimationKey(direction));
+
+    const distance = Phaser.Math.Distance.Between(
+      this.dog.x,
+      this.dog.y,
+      targetX,
+      targetY
+    );
+    const duration = Math.max(180, distance * 45);
+
+    const fastPhaseRatio = 0.88;
+    const midX = this.dog.x + (targetX - this.dog.x) * fastPhaseRatio;
+    const midY = this.dog.y + (targetY - this.dog.y) * fastPhaseRatio;
+    const fastDuration = Math.max(120, Math.floor(duration * fastPhaseRatio));
+    const settleDuration = Math.max(70, duration - fastDuration);
+
+    this.scene.tweens.add({
+      targets: this.dog,
+      x: midX,
+      y: midY,
+      duration: fastDuration,
+      ease: 'Linear',
+      onComplete: () => {
+        this.scene?.tweens.add({
+          targets: this.dog,
+          x: targetX,
+          y: targetY,
+          duration: settleDuration,
+          ease: 'Sine.easeOut',
+          onComplete: () => this.onMoveComplete()
+        });
+      }
+    });
+  }
+
   private getMovementAnimationKey(direction: string): string {
     switch (direction) {
       case 'down':
@@ -399,12 +471,45 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!data || !this.scene) return;
 
     const item: DecorItem = JSON.parse(data);
+    this.placeDecorAtClientPosition(item, event.clientX, event.clientY);
+  }
+
+  @HostListener('window:decor-touch-drop', ['$event'])
+  public onTouchDrop(event: Event): void {
+    const customEvent = event as CustomEvent<{
+      item?: DecorItem;
+      clientX?: number;
+      clientY?: number;
+    }>;
+
+    const item = customEvent.detail?.item;
+    const clientX = customEvent.detail?.clientX;
+    const clientY = customEvent.detail?.clientY;
+
+    if (!item || clientX === undefined || clientY === undefined) {
+      return;
+    }
+
+    this.placeDecorAtClientPosition(item, clientX, clientY);
+  }
+
+  private placeDecorAtClientPosition(
+    item: DecorItem,
+    clientX: number,
+    clientY: number
+  ): void {
+    if (!this.scene) {
+      return;
+    }
+
     const container = document.getElementById('game-container');
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
 
     const gameX =
       (x / container.offsetWidth) * (this.scene.game.config.width as number);
@@ -635,14 +740,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.playerLevelService.startRealtimeLevelTracking(myId, {
           onLeveledUp: (newLevel, totalExp) => {
-            this.currentPlayerLevel = newLevel;
+            this.currentPlayerLevel =
+              this.playerLevelService.calculateLevelFromExpPublic(totalExp);
             this.currentPlayerExp = totalExp;
             this.decorService.userLevel.set(this.currentPlayerLevel);
             if (this.dog && this.scene) {
               this.playerLevelService.playLeveledUpAnimation(
                 this.scene,
                 this.dog,
-                newLevel
+                this.currentPlayerLevel
               );
             }
           },
@@ -831,6 +937,17 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       (pointer: Phaser.Input.Pointer, gameObjects: any[]) => {
         if (gameObjects.length === 0) {
           this.deselectDecor();
+
+          const pointerAny = pointer as any;
+          const isTouchInput =
+            pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
+
+          if (isTouchInput) {
+            const worldPoint = pointer.positionToCamera(
+              scene.cameras.main
+            ) as Phaser.Math.Vector2;
+            this.movePetToPoint(worldPoint.x, worldPoint.y);
+          }
         }
       }
     );
@@ -1536,10 +1653,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private calculateLevelFromExp(totalExp: number): number {
-    if (totalExp < 10) return 0;
+    if (totalExp < 10) return 1;
     const normalized = totalExp / 5.0;
     const level = Math.floor((Math.sqrt(1 + 4 * normalized) - 1) / 2);
-    return Math.max(0, level);
+    return Math.max(1, level + 1);
   }
 
   private syncPetShadow(pet: Phaser.GameObjects.Sprite | null): void {

@@ -118,21 +118,21 @@ describe('LoginComponent', () => {
       expect(control?.valid).toBeTrue();
     });
 
-    it('should make password control required and enforce min length', () => {
+    it('should make password control required and enforce strength rules', () => {
       const control = component.signUpForm.get('password');
       control?.setValue('');
       expect(control?.valid).toBeFalse();
 
-      control?.setValue('123');
+      control?.setValue('123456789012');
       expect(control?.valid).toBeFalse();
 
-      control?.setValue('password123');
+      control?.setValue('password1234');
       expect(control?.valid).toBeTrue();
     });
 
     it('should check if passwords match', () => {
-      component.signUpForm.get('password')?.setValue('password123');
-      component.signUpForm.get('confirmPassword')?.setValue('password123');
+      component.signUpForm.get('password')?.setValue('password1234');
+      component.signUpForm.get('confirmPassword')?.setValue('password1234');
       expect(component.checkPasswordsMatch()).toBeTrue();
 
       component.signUpForm

@@ -26,14 +26,14 @@
           @if (!isSignUpMode) {
             <h2 class="form-title">Welcome back!</h2>
             <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>Username or Email</mat-label>
                 <input matInput formControlName="usernameOrEmail" required />
                 @if (loginForm.get('usernameOrEmail')?.invalid) {
                   <mat-error>Please enter a valid username or email.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>Password</mat-label>
                 <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
                 <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
@@ -61,31 +61,34 @@
           @if (isSignUpMode) {
             <h2 class="form-title">Create your account</h2>
             <form [formGroup]="signUpForm" (ngSubmit)="onSignUp()">
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>Email</mat-label>
                 <input matInput formControlName="email" required />
                 @if (signUpForm.get('email')?.invalid) {
                   <mat-error>Please enter a valid email.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>Username</mat-label>
                 <input matInput formControlName="username" required />
                 @if (signUpForm.get('username')?.invalid) {
                   <mat-error>Username should be at least 5 characters.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>Password</mat-label>
                 <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
                 <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
                   <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
-                @if (signUpForm.get('password')?.invalid) {
-                  <mat-error>Password should be at least 8 characters.</mat-error>
+                @if (signUpForm.get('password')?.hasError('minlength')) {
+                  <mat-error>Password must be at least 12 characters.</mat-error>
+                }
+                @if (signUpForm.get('password')?.hasError('weakPassword')) {
+                  <mat-error>Password must include both letters and numbers.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>Confirm Password</mat-label>
                 <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="confirmPassword" required />
               </mat-form-field>

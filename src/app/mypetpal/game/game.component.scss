@@ -13,7 +13,7 @@
         content: "";
         position: absolute; // Fix: use absolute to stay within game-wrapper container 
         inset: 0;
-        background: url('/assets/room-isometric.png') center center / cover no-repeat;
+        background: url('/assets/room1.png') center center / cover no-repeat;
         image-rendering: pixelated;
         opacity: 0.62;
         filter: brightness(0.68) saturate(0.72) contrast(0.88);
@@ -60,7 +60,7 @@
 
 .zoom-controls {
     position: absolute;
-    bottom: 30px;
+    bottom: 96px;
     right: 30px;
     display: flex;
     flex-direction: column;
@@ -138,6 +138,7 @@
 
     .chat-input-wrapper {
         flex: 1;
+        min-width: 0;
         display: flex;
         gap: 8px;
         padding: 6px;
@@ -231,6 +232,7 @@
 
         input {
             flex: 1;
+            min-width: 0;
             background: transparent;
             border: none;
             padding: 10px 12px;
@@ -281,6 +283,43 @@
     }
 }
 
+@media (max-width: 640px) {
+    .chat-controls {
+        left: 12px;
+        right: 12px;
+        transform: none;
+        width: auto;
+        max-width: none;
+        gap: 6px;
+        bottom: 14px;
+
+        .return-home-btn {
+            width: 44px;
+            min-width: 44px;
+        }
+
+        .chat-input-wrapper {
+            gap: 6px;
+            padding: 5px;
+
+            input {
+                padding: 9px 8px;
+                font-size: 13px;
+            }
+
+            .char-counter {
+                font-size: 9px;
+                padding: 0 2px;
+            }
+
+            button {
+                padding: 9px 12px;
+                font-size: 9px;
+            }
+        }
+    }
+}
+
 .save-status {
     position: fixed;
     top: 50%;
@@ -302,7 +341,7 @@
 
 .toast-notification {
     position: fixed;
-    bottom: 100px;
+    top: 96px;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(180deg, #3d284f 0%, #2b1f3e 100%);
