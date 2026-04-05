@@ -1,4 +1,4 @@
-.decor-panel-container {
+.left-panel-container {
     position: fixed;
     top: 68px;
     left: 0;
@@ -6,7 +6,7 @@
     height: calc(100vh - 68px);
     background: linear-gradient(180deg, rgba(34, 41, 92, 0.96), rgba(20, 25, 61, 0.96));
     border-right: 3px solid #0c102d;
-    box-shadow: 6px 0 0 rgba(9, 11, 33, 0.9);
+    //box-shadow: 6px 0 0 rgba(9, 11, 33, 0.9);
     z-index: 1500;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -17,9 +17,18 @@
         box-shadow: none;
     }
 
-    .drawer-handle {
+    .panel-handle-rail {
         position: absolute;
+        top: 50%;
         right: -56px;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .drawer-handle {
+        position: relative;
         width: 56px;
         height: 56px;
         background: linear-gradient(180deg, #66f0db 0%, #2ec7b1 100%);
@@ -34,6 +43,7 @@
         touch-action: none;
         box-shadow: 4px 0 0 rgba(9, 11, 33, 0.9);
         transition: all 0.2s ease;
+        padding: 0;
 
         &:active {
             cursor: grabbing;
@@ -42,14 +52,26 @@
         &:hover {
             filter: brightness(1.05);
             width: 64px;
-            right: -64px;
+            margin-right: -8px;
             
-            .hammer-icon {
+            .handle-icon {
                 transform: rotate(-15deg) scale(1.2);
             }
         }
 
-        .hammer-icon {
+        &.active {
+            background: linear-gradient(180deg, #ffcf73 0%, #ffb84d 100%);
+        }
+
+        &.leaderboard-handle {
+            background: linear-gradient(180deg, #86a9ff 0%, #5f7de2 100%);
+
+            &.active {
+                background: linear-gradient(180deg, #ffd780 0%, #ffb74d 100%);
+            }
+        }
+
+        .handle-icon {
             font-size: 24px;
             color: #0b1b31;
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -177,6 +199,7 @@
         }
     }
 }
+
 
 @keyframes pulse {
     0%, 100% { opacity: 0.5; }
@@ -368,8 +391,21 @@
 }
 
 @media (max-width: 768px) {
-    .decor-panel-container {
+    .left-panel-container {
         width: 50vw;
+
+        .panel-handle-rail {
+            right: -50px;
+        }
+
+        .drawer-handle {
+            width: 50px;
+            height: 50px;
+
+            &:hover {
+                width: 56px;
+            }
+        }
     }
 
     .panel-content {

@@ -1,0 +1,67 @@
+<div class="leaderboard-content custom-scrollbar">
+  <div class="leaderboard-subtitle">Top 10 Players</div>
+
+  @if (isLeaderboardLoading) {
+    <div class="panel-loader leaderboard-loader">
+      <app-paw-spinner [diameter]="44" color="#ffbf52"></app-paw-spinner>
+      <p>Loading rankings...</p>
+    </div>
+  }
+
+  @if (!isLeaderboardLoading && leaderboardError) {
+    <div class="leaderboard-error">
+      <p>{{ leaderboardError }}</p>
+      <button type="button" (click)="refreshLeaderboard()">Retry</button>
+    </div>
+  }
+
+  @if (
+    !isLeaderboardLoading &&
+    !leaderboardError &&
+    leaderboardPlayers.length === 0
+  ) {
+    <p class="leaderboard-empty">No players ranked yet.</p>
+  }
+
+  @if (
+    !isLeaderboardLoading &&
+    !leaderboardError &&
+    leaderboardPlayers.length > 0
+  ) {
+    <div class="leaderboard-list">
+      <div
+        *ngFor="let player of leaderboardPlayers; let index = index"
+        class="leaderboard-item"
+        [class.top-three]="index < 3">
+        <div class="leaderboard-top-row">
+          <div class="rank">#{{ index + 1 }}</div>
+          <div class="player-meta">
+            <span class="username">{{ player.username }}</span>
+          </div>
+        </div>
+        <div class="leaderboard-bottom-row">
+          <div class="level-pill">Lv {{ player.level }}</div>
+          <div class="leaderboard-actions">
+            @if (player.userId !== currentUserId) {
+              <button
+                type="button"
+                class="icon-btn view-home-btn"
+                (click)="viewHomeFromLeaderboard(player)"
+                [matTooltip]="'View home snapshot'"
+                matTooltipShowDelay="0">
+                <i class="action-icon">👁️</i>
+              </button>
+            }
+            <button
+              type="button"
+              class="add-friend-btn"
+              [disabled]="!canSendFriendRequest(player)"
+              (click)="sendFriendRequestFromLeaderboard(player)">
+              {{ getAddFriendButtonLabel(player) }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -75,7 +75,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       title: 'Move Your Pet',
       messageDesktop:
         'Use the direction controls around your pet, or use your keyboard arrow keys to move.',
-      messageMobile: 'Tap the floor to guide your pet around your space.'
+      messageMobile:
+        'Tap the floor to guide your pet around your space. On touch devices, use two fingers to move the room and pinch to zoom.'
     },
     {
       target: 'decor',
@@ -102,6 +103,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private selectedRoomKey: RoomKey = 'room1';
 
   public roomOwnerId: string | null = null;
+  public isHomeViewMode = false;
   public activeRoomId: string | null = null;
   private remotePets: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private remoteRestIcons: Map<string, Phaser.GameObjects.Image> = new Map();
@@ -126,6 +128,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private selectedVisitor: string | null = null;
   private currentlyKickingUserId: string | null = null;
   private kickToolbox: Phaser.GameObjects.Container | null = null;
+  private readonly gameRouteContextStorageKey = 'mpp_game_route_context';
+  private snapshotRoamTimer: Phaser.Time.TimerEvent | null = null;
+  private snapshotRoamTween: Phaser.Tweens.Tween | null = null;
 
   // Zzzz icon offset.
   private readonly restIconOffsetX = 8;
@@ -136,6 +141,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly spriteFootOffsetFactor = 0.35;
   private readonly minZoomLevel = 2;
   private readonly maxZoomLevel = 12;
+  private readonly defaultZoomLevel = 6.0;
   private isPinchZooming = false;
   private pinchStartDistance = 0;
   private pinchStartZoom = 1;
@@ -171,13 +177,17 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     return !!this.roomOwnerId;
   }
 
+  get isRealtimeVisit(): boolean {
+    return !!this.roomOwnerId && !this.isHomeViewMode;
+  }
+
   get isHosting(): boolean {
     return !this.roomOwnerId && this.remotePets.size > 0;
   }
 
   get visitingUsername(): string {
     if (!this.roomOwnerId) return '';
-    return 'a Pal';
+    return this.isHomeViewMode ? "a User's pet home" : 'a Pal';
   }
 
   get hostingCount(): number {
@@ -221,6 +231,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopSnapshotRoaming();
+
     if (this.game) {
       this.game.destroy(true);
     }
@@ -285,6 +297,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.collapsePanelsForTutorial();
     this.tutorialStepIndex = 0;
     this.showTutorial = true;
     this.applyTutorialStepFocus();
@@ -318,6 +331,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public moveStep(direction: string): void {
+    if (this.isHomeViewMode) return;
     if (!this.dog || !this.scene || this.isMoving) return;
 
     this.markLocalActivity();
@@ -508,6 +522,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public talk(text: string): void {
+    if (this.isHomeViewMode) return;
     if (!text || !this.dog || !this.scene) return;
 
     const userId = localStorage.getItem('userId');
@@ -669,9 +684,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   public stopMove(): void {}
 
   public returnHome(): void {
-    this.router.navigate(['/game']).then(() => {
-      window.location.reload();
-    });
+    this.stopSnapshotRoaming();
+    sessionStorage.removeItem(this.gameRouteContextStorageKey);
+    this.router.navigate(['/game']);
   }
 
   public showToast(message: string): void {
@@ -796,6 +811,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private updateRemoteRestIcon(userId: string, isOnline: boolean): void {
     const existing = this.remoteRestIcons.get(userId);
+
+    if (this.isHomeViewMode && this.roomOwnerId === userId) {
+      if (existing) {
+        existing.destroy();
+        this.remoteRestIcons.delete(userId);
+      }
+      return;
+    }
+
     if (isOnline) {
       if (existing) {
         existing.destroy();
@@ -825,15 +849,21 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async initialize(): Promise<void> {
-    this.roomOwnerId = this.route.snapshot.paramMap.get('roomOwnerId');
+    const { isHomeViewMode, roomOwnerId } = this.resolveRouteContext();
+    this.isHomeViewMode = isHomeViewMode;
+    this.roomOwnerId = roomOwnerId;
     const myId = localStorage.getItem('userId');
-    this.activeRoomId = this.roomOwnerId || myId;
+    this.activeRoomId = this.isHomeViewMode ? null : this.roomOwnerId || myId;
 
-    if (!(await this.getPetDetails())) {
-      return;
+    if (!this.isHomeViewMode) {
+      if (!(await this.getPetDetails())) {
+        return;
+      }
+
+      await this.loadSelectionContext();
+    } else {
+      await this.loadRoomOwnerSelectionContext();
     }
-
-    await this.loadSelectionContext();
 
     if (myId) {
       try {
@@ -842,7 +872,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           .toPromise();
         if (s) {
           this.settings = s;
-          this.currentZoom = s.zoomLevel || 5.0;
+          this.currentZoom = Math.max(
+            s.zoomLevel ?? this.defaultZoomLevel,
+            this.defaultZoomLevel
+          );
         }
       } catch (e) {
         console.warn('Settings load failed:', e);
@@ -886,8 +919,84 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => this.initializeGame(), 100);
   }
 
+  private resolveRouteContext(): {
+    isHomeViewMode: boolean;
+    roomOwnerId: string | null;
+  } {
+    const urlWithoutQuery = this.router.url.split('?')[0] ?? '';
+    const isViewModeRoute = urlWithoutQuery.endsWith('/game/viewMode');
+    const isVisitModeRoute = urlWithoutQuery.endsWith('/game/visitMode');
+
+    // Backward compatibility for legacy deep links.
+    if (!isViewModeRoute && !isVisitModeRoute) {
+      const legacyIsViewMode = this.route.snapshot.url.some(
+        segment => segment.path === 'view'
+      );
+      const legacyOwnerId = this.route.snapshot.paramMap.get('roomOwnerId');
+      return {
+        isHomeViewMode: legacyIsViewMode,
+        roomOwnerId: legacyOwnerId
+      };
+    }
+
+    const mode = isViewModeRoute ? 'viewMode' : 'visitMode';
+    const state = history.state as
+      | { roomOwnerId?: string | number; mode?: string }
+      | undefined;
+
+    if (
+      state?.roomOwnerId != null &&
+      (state.mode === mode || typeof state.mode === 'undefined')
+    ) {
+      return {
+        isHomeViewMode: isViewModeRoute,
+        roomOwnerId: String(state.roomOwnerId)
+      };
+    }
+
+    const rawStored = sessionStorage.getItem(this.gameRouteContextStorageKey);
+    if (rawStored) {
+      try {
+        const stored = JSON.parse(rawStored) as {
+          mode?: string;
+          roomOwnerId?: string | number;
+        };
+
+        if (stored.mode === mode && stored.roomOwnerId != null) {
+          return {
+            isHomeViewMode: isViewModeRoute,
+            roomOwnerId: String(stored.roomOwnerId)
+          };
+        }
+      } catch {
+        // Ignore invalid storage payload and fall through.
+      }
+    }
+
+    return {
+      isHomeViewMode: isViewModeRoute,
+      roomOwnerId: null
+    };
+  }
+
+  private async loadRoomOwnerSelectionContext(): Promise<void> {
+    if (!this.roomOwnerId) {
+      return;
+    }
+
+    try {
+      const roomOwnerPet = await this.petService.getUserPet(this.roomOwnerId);
+      if (roomOwnerPet) {
+        this.selectedRoomKey = this.resolveRoomKey(roomOwnerPet);
+      }
+    } catch (error) {
+      console.warn('Failed to load room selection for host:', error);
+    }
+  }
+
   private async getPetDetails(): Promise<boolean> {
     let pet = this.petStreamService.currentPetStream.getValue();
+    let petFetchFailed = false;
 
     if (!pet.petId) {
       const userPublicId = localStorage.getItem('userPublicId');
@@ -898,12 +1007,19 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           await this.petStreamService.getUserPets(identifier);
           pet = this.petStreamService.currentPetStream.getValue();
         } catch (error) {
+          petFetchFailed = true;
           console.error('Failed to fetch pet on reload:', error);
         }
       }
     }
 
     if (!pet.petId) {
+      if (petFetchFailed) {
+        this.toastMessage =
+          'Unable to load your pet right now. Please check server connection and try again.';
+        return false;
+      }
+
       this.router.navigate(['/petCreation']);
       return false;
     }
@@ -1023,8 +1139,24 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedPetAssetKey,
       this.selectedRoomKey,
       () => {
+        if (this.isHomeViewMode) {
+          this.dog?.setVisible(false);
+          const localShadow = (this.dog as any)?.shadow as
+            | Phaser.GameObjects.Container
+            | undefined;
+          localShadow?.setVisible(false);
+        }
+
         this.loadSavedDecor();
-        this.initRoomMultiplayer();
+
+        if (this.isRealtimeVisit || !this.roomOwnerId) {
+          this.initRoomMultiplayer();
+        }
+
+        if (this.roomOwnerId) {
+          void this.spawnRoomOwnerSnapshotPet();
+        }
+
         this.isGameLoading = false;
         this.startTutorialIfNeeded();
       }
@@ -1040,7 +1172,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.gameScene.setupCameraPanning(
       scene,
       () => this.saveUserSettings(),
-      () => !this.isDraggingDecor && !this.isPinchZooming
+      () => !this.isDraggingDecor
     );
     this.gameScene.setupMouseWheelZoom(scene, dir => {
       if (dir === 'in') this.zoomIn();
@@ -1064,7 +1196,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           const isTouchInput =
             pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
 
-          if (isTouchInput && !this.hasMultipleActiveTouchPointers(scene)) {
+          if (
+            isTouchInput &&
+            !this.isHomeViewMode &&
+            !this.hasMultipleActiveTouchPointers(scene)
+          ) {
             const worldPoint = pointer.positionToCamera(
               scene.cameras.main
             ) as Phaser.Math.Vector2;
@@ -1076,6 +1212,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupArrows(scene: Phaser.Scene): void {
+    if (this.isHomeViewMode) return;
+
     if (!this.dog) return;
 
     if (!this.arrowGroup && this.scene) {
@@ -1122,9 +1260,20 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.collapsePanelsForTutorial();
     this.tutorialStepIndex = 0;
     this.showTutorial = true;
     this.applyTutorialStepFocus();
+  }
+
+  private collapsePanelsForTutorial(): void {
+    if (this.decorPanel && !this.decorPanel.isCollapsed) {
+      this.decorPanel.togglePanel();
+    }
+
+    if (this.socialPanel && !this.socialPanel.isCollapsed) {
+      this.socialPanel.toggleCollapse();
+    }
   }
 
   private completeTutorial(): void {
@@ -1139,6 +1288,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     localStorage.removeItem('firstTimeTutorialPendingFor');
+
+    if (this.decorPanel && !this.decorPanel.isCollapsed) {
+      this.decorPanel.togglePanel();
+    }
+
+    if (this.socialPanel && !this.socialPanel.isCollapsed) {
+      this.socialPanel.toggleCollapse();
+    }
+
     this.showTutorial = false;
     this.tutorialSpotStyles = {
       pet: { display: 'none' },
@@ -1303,6 +1461,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onArrowHoverStart(scene: Phaser.Scene): void {
+    if (this.isHomeViewMode) {
+      return;
+    }
+
     this.arrowHoverSources += 1;
     this.setupArrows(scene);
   }
@@ -1799,6 +1961,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private reportActivityThrottled(): void {
+    if (this.isHomeViewMode) return;
+
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
@@ -1898,6 +2062,248 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
+  private async spawnRoomOwnerSnapshotPet(): Promise<void> {
+    if (!this.scene || !this.roomOwnerId) {
+      return;
+    }
+
+    const ownerId = this.roomOwnerId;
+    if (this.remotePets.has(ownerId)) {
+      return;
+    }
+
+    const center = this.gameScene.getWorldCenter();
+    let petX = center.x + 24;
+    let petY = center.y + 20;
+
+    const roomOwnerNumericId = parseInt(ownerId, 10);
+    if (!Number.isNaN(roomOwnerNumericId)) {
+      try {
+        const settings = await this.userSettingsService
+          .getSettings(roomOwnerNumericId)
+          .toPromise();
+
+        if (settings) {
+          petX = settings.lastPetX ?? petX;
+          petY = settings.lastPetY ?? petY;
+        }
+      } catch {
+        // Room owner settings are optional for snapshot view.
+      }
+    }
+
+    this.roomMultiplayer.spawnRemotePetSnapshot(
+      this.scene,
+      ownerId,
+      petX,
+      petY,
+      {
+        onRemotePetSpawned: (userId, sprite) => {
+          this.remotePets.set(userId, sprite);
+          this.remoteChatBubbles.set(userId, []);
+        },
+        onRemoteStatusChanged: (userId, isOnline) => {
+          this.updateRemoteRestIcon(userId, isOnline);
+        }
+      }
+    );
+
+    this.startSnapshotRoaming(ownerId);
+  }
+
+  private startSnapshotRoaming(ownerId: string): void {
+    if (!this.scene || !this.isHomeViewMode) {
+      return;
+    }
+
+    this.stopSnapshotRoaming();
+    const existingRestIcon = this.remoteRestIcons.get(ownerId);
+    if (existingRestIcon) {
+      existingRestIcon.destroy();
+      this.remoteRestIcons.delete(ownerId);
+    }
+
+    this.scheduleNextSnapshotRoam(ownerId, Phaser.Math.Between(400, 900));
+  }
+
+  private scheduleNextSnapshotRoam(ownerId: string, delayMs: number): void {
+    if (!this.scene || !this.isHomeViewMode) {
+      return;
+    }
+
+    this.snapshotRoamTimer = this.scene.time.delayedCall(delayMs, () => {
+      this.tryMoveSnapshotPet(ownerId);
+      this.scheduleNextSnapshotRoam(ownerId, Phaser.Math.Between(1050, 1700));
+    });
+  }
+
+  private stopSnapshotRoaming(): void {
+    if (this.snapshotRoamTimer) {
+      this.snapshotRoamTimer.remove(false);
+      this.snapshotRoamTimer = null;
+    }
+
+    if (this.snapshotRoamTween) {
+      this.snapshotRoamTween.stop();
+      this.snapshotRoamTween = null;
+    }
+  }
+
+  private tryMoveSnapshotPet(ownerId: string): void {
+    if (!this.scene || !this.isHomeViewMode) {
+      return;
+    }
+
+    const pet = this.remotePets.get(ownerId);
+    if (!pet || !pet.active) {
+      return;
+    }
+
+    if (this.snapshotRoamTween?.isPlaying()) {
+      return;
+    }
+
+    const stepDistance = Phaser.Math.Between(10, 17);
+    const directions = this.getShuffledRoamDirections();
+
+    for (const direction of directions) {
+      const targetX = pet.x + direction.dx * stepDistance;
+      const targetY = pet.y + direction.dy * stepDistance;
+
+      if (!this.canSnapshotPetMoveTo(ownerId, pet, targetX, targetY)) {
+        continue;
+      }
+
+      const movementAnim = this.resolvePetAnimationKey(
+        pet,
+        direction.animSuffix
+      );
+      if (
+        movementAnim &&
+        (!pet.anims.isPlaying || pet.anims.currentAnim?.key !== movementAnim)
+      ) {
+        pet.play(movementAnim, true);
+      }
+
+      const existingRestIcon = this.remoteRestIcons.get(ownerId);
+      if (existingRestIcon) {
+        existingRestIcon.destroy();
+        this.remoteRestIcons.delete(ownerId);
+      }
+
+      this.snapshotRoamTween = this.scene.tweens.add({
+        targets: pet,
+        x: targetX,
+        y: targetY,
+        duration: Phaser.Math.Between(340, 540),
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          const idleAnim = this.resolvePetAnimationKey(pet, 'idle');
+          if (
+            idleAnim &&
+            (!pet.anims.isPlaying || pet.anims.currentAnim?.key !== idleAnim)
+          ) {
+            pet.play(idleAnim, true);
+          }
+          this.snapshotRoamTween = null;
+        }
+      });
+
+      return;
+    }
+
+    // No valid direction found this cycle; next tick will try another direction.
+  }
+
+  private canSnapshotPetMoveTo(
+    ownerId: string,
+    pet: Phaser.GameObjects.Sprite,
+    x: number,
+    y: number
+  ): boolean {
+    if (!this.scene) {
+      return false;
+    }
+
+    if (!this.isInsideFloor(x, y)) {
+      return false;
+    }
+
+    const blocksDecor = this.petMovementService.isCollidingWithDecor(
+      x,
+      y,
+      pet as unknown as Phaser.Physics.Arcade.Sprite,
+      this.decorSprites,
+      this.scene
+    );
+    if (blocksDecor) {
+      return false;
+    }
+
+    const localPetDistance = this.dog
+      ? Phaser.Math.Distance.Between(x, y, this.dog.x, this.dog.y)
+      : Number.POSITIVE_INFINITY;
+    if (localPetDistance < 8) {
+      return false;
+    }
+
+    for (const [remoteUserId, remotePet] of this.remotePets.entries()) {
+      if (remoteUserId === ownerId || !remotePet.active) {
+        continue;
+      }
+
+      if (Phaser.Math.Distance.Between(x, y, remotePet.x, remotePet.y) < 8) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private getShuffledRoamDirections(): Array<{
+    dx: number;
+    dy: number;
+    animSuffix: string;
+  }> {
+    const base = [
+      { dx: 0, dy: -1, animSuffix: 'walk_up' },
+      { dx: 1, dy: -1, animSuffix: 'walk_up_right' },
+      { dx: 1, dy: 0, animSuffix: 'walk_right' },
+      { dx: 1, dy: 1, animSuffix: 'walk_down_right' },
+      { dx: 0, dy: 1, animSuffix: 'walk_down' },
+      { dx: -1, dy: 1, animSuffix: 'walk_down_left' },
+      { dx: -1, dy: 0, animSuffix: 'walk_left' },
+      { dx: -1, dy: -1, animSuffix: 'walk_up_left' }
+    ];
+
+    return Phaser.Utils.Array.Shuffle(base.slice());
+  }
+
+  private resolvePetAnimationKey(
+    pet: Phaser.GameObjects.Sprite,
+    suffix: string
+  ): string | null {
+    if (!this.scene) {
+      return null;
+    }
+
+    const textureKey = pet.texture?.key;
+    if (!textureKey) {
+      return null;
+    }
+
+    const textureSpecificKey = `${textureKey}_${suffix}`;
+    if (this.scene.anims.exists(textureSpecificKey)) {
+      return textureSpecificKey;
+    }
+
+    if (this.scene.anims.exists(suffix)) {
+      return suffix;
+    }
+
+    return null;
+  }
+
   private update(scene: Phaser.Scene): void {
     if (!this.dog) return;
 
@@ -1994,27 +2400,34 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.updateKickToolboxPosition();
 
-    const isLocalIdle = Date.now() - this.lastLocalInteractionAt >= 60000;
-    if (isLocalIdle && this.dog) {
-      if (!this.localRestIcon && this.scene) {
-        this.setDogSleeping();
-        this.localRestIcon = this.scene.add
-          .image(
-            this.dog.x + this.restIconOffsetX,
-            this.dog.y - this.restIconOffsetY,
-            'rest'
-          )
-          .setScale(this.restIconScale)
-          .setDepth(26);
+    if (this.isHomeViewMode) {
+      if (this.localRestIcon) {
+        this.localRestIcon.destroy();
+        this.localRestIcon = null;
       }
-    } else if (this.localRestIcon) {
-      this.localRestIcon.destroy();
-      this.localRestIcon = null;
-    }
+    } else {
+      const isLocalIdle = Date.now() - this.lastLocalInteractionAt >= 60000;
+      if (isLocalIdle && this.dog) {
+        if (!this.localRestIcon && this.scene) {
+          this.setDogSleeping();
+          this.localRestIcon = this.scene.add
+            .image(
+              this.dog.x + this.restIconOffsetX,
+              this.dog.y - this.restIconOffsetY,
+              'rest'
+            )
+            .setScale(this.restIconScale)
+            .setDepth(26);
+        }
+      } else if (this.localRestIcon) {
+        this.localRestIcon.destroy();
+        this.localRestIcon = null;
+      }
 
-    if (this.localRestIcon && this.localRestIcon.active && this.dog) {
-      this.localRestIcon.x = this.dog.x + this.restIconOffsetX;
-      this.localRestIcon.y = this.dog.y - this.restIconOffsetY;
+      if (this.localRestIcon && this.localRestIcon.active && this.dog) {
+        this.localRestIcon.x = this.dog.x + this.restIconOffsetX;
+        this.localRestIcon.y = this.dog.y - this.restIconOffsetY;
+      }
     }
 
     if (!this.isInsideFloor(this.dog.x, this.dog.y)) {

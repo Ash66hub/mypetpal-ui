@@ -1,111 +1,121 @@
-<div class="decor-panel-container" [class.collapsed]="isCollapsed">
-  <!-- Toggle Button (Hammer) -->
-  <div
-    class="drawer-handle"
-    [style.top.px]="handleTop"
-    (click)="onHandleClick()"
-    (mousedown)="onHandleMouseDown($event)"
-    (touchstart)="onHandleTouchStart($event)"
-    title="Decorate Room">
-    <div class="hammer-icon">🔨</div>
+<div class="left-panel-container" [class.collapsed]="isCollapsed">
+  <div class="panel-handle-rail">
+    <button
+      type="button"
+      class="drawer-handle"
+      [class.active]="!isCollapsed && activePanel === 'decor'"
+      (click)="onDecorHandleClick()"
+      title="Decorate Room">
+      <span class="handle-icon">🔨</span>
+    </button>
+
+    <button
+      type="button"
+      class="drawer-handle leaderboard-handle"
+      [class.active]="!isCollapsed && activePanel === 'leaderboard'"
+      (click)="onLeaderboardHandleClick()"
+      title="Open Leaderboard">
+      <span class="handle-icon">🏆</span>
+    </button>
   </div>
 
   <div class="panel-content">
     <div class="panel-header">
-      <h3>Decor</h3>
+      <h3>{{ activePanel === 'decor' ? 'Decor' : 'Leaderboard' }}</h3>
     </div>
 
-    <!-- Visiting Message -->
-    @if (isVisiting) {
-      <div
-        class="visiting-msg"
-        style="padding: 2rem 1rem; text-align: center; color: #6b7280">
-        <i>Unavailable while visiting</i>
-      </div>
+    @if (activePanel === 'decor') {
+      @if (isVisiting) {
+        <div
+          class="visiting-msg"
+          style="padding: 2rem 1rem; text-align: center; color: #6b7280">
+          <i>Unavailable while visiting</i>
+        </div>
+      }
+
+      @if (!isVisiting) {
+        <div class="category-tabs">
+          <button
+            [class.active]="activeCategory === 'furniture'"
+            (click)="setCategory('furniture')">
+            <span class="icon">🪑</span>
+            <span class="label">Decor</span>
+          </button>
+          <button
+            [class.active]="activeCategory === 'plant'"
+            (click)="setCategory('plant')">
+            <span class="icon">🪴</span>
+            <span class="label">Plants</span>
+          </button>
+          <button
+            [class.active]="activeCategory === 'wall'"
+            (click)="setCategory('wall')">
+            <span class="icon">🧱</span>
+            <span class="label">Walls</span>
+          </button>
+        </div>
+
+        <div class="asset-grid-viewport custom-scrollbar">
+          @if (!decorService.isRoomLoaded()) {
+            <div class="panel-loader">
+              <app-paw-spinner
+                [diameter]="48"
+                color="#a78bfa"></app-paw-spinner>
+              <p>Establishing room...</p>
+            </div>
+          }
+
+          @if (decorService.isRoomLoaded()) {
+            <div class="asset-grid">
+              <div
+                *ngFor="let item of filteredItems"
+                class="asset-tile"
+                [class.locked]="isLocked(item)"
+                [class.touch-dragging]="touchDraggingItemId === item.id"
+                [class.draggable]="!isLocked(item)"
+                [draggable]="!isLocked(item)"
+                (dragstart)="onDragStart($event, item)"
+                (touchstart)="onTouchDragStart($event, item)"
+                (touchmove)="onTouchDragMove($event)"
+                (touchend)="onTouchDragEnd($event)"
+                (touchcancel)="onTouchDragCancel()"
+                [title]="
+                  isLocked(item)
+                    ? 'Unlock at Level ' + item.levelRequired
+                    : item.name
+                ">
+                <div class="tile-card">
+                  <img
+                    [src]="item.imagePath"
+                    [alt]="item.name"
+                    class="asset-thumb" />
+
+                  @if (!isLocked(item)) {
+                    <div
+                      class="count-badge"
+                      [class.zero]="getRemaining(item) === 0">
+                      {{ getRemaining(item) }}
+                    </div>
+                  }
+
+                  @if (isLocked(item)) {
+                    <div class="lock-overlay">
+                      <div class="lock-icon">🔒</div>
+                      <span class="lvl-req">Lv. {{ item.levelRequired }}</span>
+                    </div>
+                  }
+                </div>
+
+                <span class="asset-name">{{ item.name }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     }
 
-    @if (!isVisiting) {
-      <!-- Category Sidebar/Tabs -->
-      <div class="category-tabs">
-        <button
-          [class.active]="activeCategory === 'furniture'"
-          (click)="setCategory('furniture')">
-          <span class="icon">🪑</span>
-          <span class="label">Decor</span>
-        </button>
-        <button
-          [class.active]="activeCategory === 'plant'"
-          (click)="setCategory('plant')">
-          <span class="icon">🪴</span>
-          <span class="label">Plants</span>
-        </button>
-        <button
-          [class.active]="activeCategory === 'wall'"
-          (click)="setCategory('wall')">
-          <span class="icon">🧱</span>
-          <span class="label">Walls</span>
-        </button>
-      </div>
-
-      <!-- Asset Grid -->
-      <div class="asset-grid-viewport custom-scrollbar">
-        <!-- Loading state -->
-        @if (!decorService.isRoomLoaded()) {
-          <div class="panel-loader">
-            <app-paw-spinner [diameter]="48" color="#a78bfa"></app-paw-spinner>
-            <p>Establishing room...</p>
-          </div>
-        }
-
-        @if (decorService.isRoomLoaded()) {
-          <div class="asset-grid">
-            <div
-              *ngFor="let item of filteredItems"
-              class="asset-tile"
-              [class.locked]="isLocked(item)"
-              [class.touch-dragging]="touchDraggingItemId === item.id"
-              [class.draggable]="!isLocked(item)"
-              [draggable]="!isLocked(item)"
-              (mousedown)="onMouseHoldStart($event, item)"
-              (dragstart)="onDragStart($event, item)"
-              (touchstart)="onTouchDragStart($event, item)"
-              (touchmove)="onTouchDragMove($event)"
-              (touchend)="onTouchDragEnd($event)"
-              (touchcancel)="onTouchDragCancel()"
-              [title]="
-                isLocked(item)
-                  ? 'Unlock at Level ' + item.levelRequired
-                  : item.name
-              ">
-              <div class="tile-card">
-                <img
-                  [src]="item.imagePath"
-                  [alt]="item.name"
-                  class="asset-thumb" />
-
-                <!-- Count Badge -->
-                @if (!isLocked(item)) {
-                  <div
-                    class="count-badge"
-                    [class.zero]="getRemaining(item) === 0">
-                    {{ getRemaining(item) }}
-                  </div>
-                }
-
-                <!-- Lock Overlay -->
-                @if (isLocked(item)) {
-                  <div class="lock-overlay">
-                    <div class="lock-icon">🔒</div>
-                    <span class="lvl-req">Lv. {{ item.levelRequired }}</span>
-                  </div>
-                }
-              </div>
-
-              <span class="asset-name">{{ item.name }}</span>
-            </div>
-          </div>
-        }
-      </div>
+    @if (activePanel === 'leaderboard') {
+      <app-leaderboard-panel></app-leaderboard-panel>
     }
   </div>
 </div>

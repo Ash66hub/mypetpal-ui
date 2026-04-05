@@ -14,7 +14,12 @@ export const routes: Routes = [
   { path: '', redirectTo: '/game', pathMatch: 'full' },
   { path: 'game', component: GameComponent, canActivate: [AuthGuard] },
   {
-    path: 'game/:roomOwnerId',
+    path: 'game/visitMode',
+    component: GameComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'game/viewMode',
     component: GameComponent,
     canActivate: [AuthGuard]
   },

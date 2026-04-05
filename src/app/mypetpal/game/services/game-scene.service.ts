@@ -228,21 +228,73 @@ export class GameSceneService {
     onCameraMove: () => void,
     canPan: () => boolean = () => true
   ): void {
+    const isTouchCapableDevice = !!scene.game.device.input.touch;
+    let lastTouchPanCenter: { x: number; y: number } | null = null;
+
+    const getActiveTouchPointers = () =>
+      scene.input.manager.pointers.filter(
+        pointer => pointer.isDown && this.isTouchPointer(pointer)
+      );
+
+    const resetTouchPan = () => {
+      lastTouchPanCenter = null;
+    };
+
     scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.isDown || !canPan()) return;
 
-      const pointerAny = pointer as any;
-      const isTouchInput =
-        pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
-      const panMultiplier = isTouchInput ? this.TOUCH_PAN_SENSITIVITY : 1;
+      if (isTouchCapableDevice || this.isTouchPointer(pointer)) {
+        const activeTouchPointers = getActiveTouchPointers();
+
+        if (activeTouchPointers.length < 2) {
+          resetTouchPan();
+          return;
+        }
+
+        const centerX =
+          (activeTouchPointers[0].x + activeTouchPointers[1].x) / 2;
+        const centerY =
+          (activeTouchPointers[0].y + activeTouchPointers[1].y) / 2;
+
+        if (!lastTouchPanCenter) {
+          lastTouchPanCenter = { x: centerX, y: centerY };
+          return;
+        }
+
+        scene.cameras.main.scrollX -=
+          ((centerX - lastTouchPanCenter.x) * this.TOUCH_PAN_SENSITIVITY) /
+          scene.cameras.main.zoom;
+        scene.cameras.main.scrollY -=
+          ((centerY - lastTouchPanCenter.y) * this.TOUCH_PAN_SENSITIVITY) /
+          scene.cameras.main.zoom;
+        lastTouchPanCenter = { x: centerX, y: centerY };
+        onCameraMove();
+        return;
+      }
 
       scene.cameras.main.scrollX -=
-        ((pointer.x - pointer.prevPosition.x) * panMultiplier) /
-        scene.cameras.main.zoom;
+        (pointer.x - pointer.prevPosition.x) / scene.cameras.main.zoom;
       scene.cameras.main.scrollY -=
-        ((pointer.y - pointer.prevPosition.y) * panMultiplier) /
-        scene.cameras.main.zoom;
+        (pointer.y - pointer.prevPosition.y) / scene.cameras.main.zoom;
       onCameraMove();
+    });
+
+    scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.isTouchPointer(pointer) && getActiveTouchPointers().length < 2) {
+        resetTouchPan();
+      }
+    });
+
+    scene.input.on('pointerup', () => {
+      if (getActiveTouchPointers().length < 2) {
+        resetTouchPan();
+      }
+    });
+
+    scene.input.on('pointerupoutside', () => {
+      if (getActiveTouchPointers().length < 2) {
+        resetTouchPan();
+      }
     });
   }
 
@@ -315,6 +367,11 @@ export class GameSceneService {
       keys: pressedKeys,
       cursors: scene.input.keyboard!.createCursorKeys()
     };
+  }
+
+  private isTouchPointer(pointer: Phaser.Input.Pointer): boolean {
+    const pointerAny = pointer as any;
+    return pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
   }
 
   getWorldCenter(): { x: number; y: number } {

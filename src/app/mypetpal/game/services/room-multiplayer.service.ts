@@ -332,7 +332,10 @@ export class RoomMultiplayerService {
       return;
     }
 
-    if (!remotePet.anims.isPlaying || remotePet.anims.currentAnim?.key !== idleKey) {
+    if (
+      !remotePet.anims.isPlaying ||
+      remotePet.anims.currentAnim?.key !== idleKey
+    ) {
       remotePet.play(idleKey, true);
     }
   }
@@ -357,7 +360,11 @@ export class RoomMultiplayerService {
       });
     }
 
-    const walkAnimations: Array<{ suffix: string; start: number; end: number }> = [
+    const walkAnimations: Array<{
+      suffix: string;
+      start: number;
+      end: number;
+    }> = [
       { suffix: 'walk_down', start: 32, end: 35 },
       { suffix: 'walk_down_right', start: 36, end: 39 },
       { suffix: 'walk_right', start: 40, end: 43 },
@@ -580,5 +587,21 @@ export class RoomMultiplayerService {
 
   leaveRoom(activeRoomId: string): void {
     this.friendService.leaveRoom(activeRoomId);
+  }
+
+  spawnRemotePetSnapshot(
+    scene: Phaser.Scene,
+    userId: string,
+    x: number,
+    y: number,
+    callbacks: {
+      onRemotePetSpawned: (
+        userId: string,
+        sprite: Phaser.GameObjects.Sprite
+      ) => void;
+      onRemoteStatusChanged: (userId: string, isOnline: boolean) => void;
+    }
+  ): Phaser.GameObjects.Sprite | null {
+    return this.getOrCreateRemotePet(scene, userId, x, y, callbacks);
   }
 }

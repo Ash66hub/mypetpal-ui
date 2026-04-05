@@ -18,18 +18,24 @@
     <!-- Header -->
     <div class="panel-header">
       <h3>Neighborhood</h3>
+      @if (isHomeView || isVisiting) {
+        <button
+          type="button"
+          class="return-home-btn centered-return-home"
+          (click)="returnHome()">
+          Return Home
+        </button>
+      }
       @if (isVisiting || isHosting) {
         <div class="visit-status">
           @if (isVisiting) {
             <span>
-              You are currently visiting {{ visitingUsername }}.
-              <br />
-              <a
-                href="javascript:void(0)"
-                (click)="returnHome()"
-                class="return-home-link"
-                >Return home</a
-              >
+              You are currently {{ isHomeView ? 'viewing' : 'visiting' }}
+              {{ visitingUsername }}.
+              @if (isHomeView) {
+                <br />
+                To hang out with them, you have to be invited to visit!
+              }
             </span>
           }
           @if (isHosting) {
@@ -123,6 +129,13 @@
                 <i class="action-icon">🏠</i>
               </button>
             </span>
+            <button
+              class="icon-btn"
+              (click)="viewHome(friend.userId)"
+              [matTooltip]="'View home snapshot'"
+              matTooltipShowDelay="0">
+              <i class="action-icon">👁️</i>
+            </button>
             <!-- Action: More -->
             <button class="icon-btn" [matMenuTriggerFor]="friendMenu">
               <i class="action-icon">⋮</i>

@@ -1,0 +1,281 @@
+:host {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.leaderboard-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.leaderboard-subtitle {
+    font-size: 10px;
+    font-family: var(--retro-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 233, 180, 0.85);
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.leaderboard-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 12px;
+    border-radius: 10px;
+    background: rgba(19, 24, 57, 0.9);
+    border: 2px solid rgba(12, 16, 45, 0.9);
+    min-height: 68px;
+
+    &.top-three {
+        border-color: rgba(255, 191, 82, 0.75);
+        background: rgba(255, 191, 82, 0.08);
+    }
+
+    .rank {
+        font-size: 13px;
+        font-family: var(--retro-font-display);
+        color: #ffe9b4;
+        text-align: center;
+        min-width: 52px;
+    }
+
+    .player-meta {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .username {
+        font-size: 14px;
+        font-weight: 600;
+        color: #f8f3dc;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .leaderboard-top-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .leaderboard-bottom-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .leaderboard-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .level-pill {
+        font-size: 11px;
+        font-family: var(--retro-font-display);
+        background: rgba(102, 240, 219, 0.18);
+        border: 1px solid rgba(102, 240, 219, 0.45);
+        color: #aef9ec;
+        padding: 7px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    .add-friend-btn {
+        border: 2px solid #0b1b31;
+        border-radius: 8px;
+        padding: 7px 10px;
+        min-width: 64px;
+        cursor: pointer;
+        background: linear-gradient(180deg, #66f0db 0%, #2ec7b1 100%);
+        color: #0b1b31;
+        font-family: var(--retro-font-display);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        box-shadow: 0 3px 0 rgba(9, 11, 33, 0.9);
+        transition: transform 0.15s ease, filter 0.15s ease;
+
+        &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            filter: brightness(1.03);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            filter: grayscale(0.2);
+        }
+    }
+
+    .view-home-btn {
+        flex-shrink: 0;
+    }
+}
+
+.icon-btn {
+    background: rgba(18, 22, 56, 0.9);
+    border: 2px solid rgba(12, 16, 45, 0.9);
+    color: rgba(248, 243, 220, 0.72);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+
+    .action-icon {
+        font-style: normal;
+        font-size: 14px;
+        line-height: 1;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 191, 82, 0.2);
+        border-color: rgba(255, 191, 82, 0.7);
+        color: #fff8df;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+}
+
+.leaderboard-empty {
+    margin: 12px 0 0;
+    text-align: center;
+    color: rgba(248, 243, 220, 0.7);
+    font-size: 12px;
+}
+
+.leaderboard-loader {
+    min-height: 180px;
+}
+
+.leaderboard-error {
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+
+    p {
+        margin: 0 0 10px;
+        color: #ffd7de;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    button {
+        border: 2px solid #0b1b31;
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+        background: linear-gradient(180deg, #66f0db 0%, #2ec7b1 100%);
+        color: #0b1b31;
+        font-family: var(--retro-font-display);
+        font-size: 10px;
+        box-shadow: 0 3px 0 rgba(9, 11, 33, 0.9);
+    }
+}
+
+.custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(124, 58, 237, 0.3);
+        border-radius: 10px;
+
+        &:hover {
+            background: rgba(124, 58, 237, 0.5);
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .leaderboard-item {
+        gap: 8px;
+        padding: 10px 8px;
+
+        .leaderboard-top-row {
+            gap: 8px;
+        }
+
+        .leaderboard-bottom-row {
+            gap: 8px;
+        }
+
+        .leaderboard-actions {
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .level-pill {
+            font-size: 8px;
+            padding: 4px 6px;
+        }
+
+        .add-friend-btn {
+            font-size: 9px;
+            padding: 5px 6px;
+            min-width: 52px;
+            line-height: 1;
+        }
+
+        .view-home-btn {
+            width: 24px;
+            height: 24px;
+
+            .action-icon {
+                font-size: 12px;
+            }
+        }
+
+        .username {
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: initial;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            font-size: 11px;
+            line-height: 1.15;
+            max-height: 2.3em;
+        }
+
+        .rank {
+            font-size: 10px;
+            min-width: 38px;
+        }
+    }
+}

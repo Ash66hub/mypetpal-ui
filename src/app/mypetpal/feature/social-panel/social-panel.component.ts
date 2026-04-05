@@ -24,6 +24,8 @@ import { SharedModule } from '../../../shared/shared.module';
   imports: [SharedModule]
 })
 export class SocialPanelComponent implements OnInit {
+  private readonly gameRouteContextStorageKey = 'mpp_game_route_context';
+
   get activeTab() {
     return this.friendService.activeTab();
   }
@@ -41,6 +43,7 @@ export class SocialPanelComponent implements OnInit {
   public isSearchPerformed: boolean = false;
 
   @Input() isVisiting: boolean = false;
+  @Input() isHomeView: boolean = false;
   @Input() isHosting: boolean = false;
   @Input() visitingUsername: string = '';
   @Input() hostingCount: number = 0;
@@ -145,6 +148,18 @@ export class SocialPanelComponent implements OnInit {
     this.onReturnHome.emit();
   }
 
+  public viewHome(friendId: number): void {
+    const roomOwnerId = String(friendId);
+    sessionStorage.setItem(
+      this.gameRouteContextStorageKey,
+      JSON.stringify({ mode: 'viewMode', roomOwnerId })
+    );
+
+    this.router.navigate(['/game/viewMode'], {
+      state: { mode: 'viewMode', roomOwnerId }
+    });
+  }
+
   public sendRequest(targetId: number) {
     this.friendService.sendRequest(this.currentUserId, targetId).subscribe({
       next: () => {
@@ -222,9 +237,14 @@ export class SocialPanelComponent implements OnInit {
     this.friendService.respondToVisitInvite(inviteId, accept).subscribe(() => {
       this.friendService.refreshSocialData();
       if (accept && senderId != null) {
-        this.router.navigate(['/game', senderId]).then(() => {
-          // Force a full reload to tear down the old Phaser scene and load the friend's decor
-          window.location.reload();
+        const roomOwnerId = String(senderId);
+        sessionStorage.setItem(
+          this.gameRouteContextStorageKey,
+          JSON.stringify({ mode: 'visitMode', roomOwnerId })
+        );
+
+        this.router.navigate(['/game/visitMode'], {
+          state: { mode: 'visitMode', roomOwnerId }
         });
       } else {
         const msg = accept ? 'Invitation accepted!' : 'Invitation declined.';

@@ -40,6 +40,7 @@
   <app-social-panel
     #socialPanel
     [isVisiting]="isVisiting"
+    [isHomeView]="isHomeViewMode"
     [isHosting]="isHosting"
     [visitingUsername]="visitingUsername"
     [hostingCount]="hostingCount"
@@ -53,53 +54,64 @@
   </div>
 
   <!-- Chat Controls -->
-  <div class="chat-controls">
-    @if (roomOwnerId) {
+  @if (isHomeViewMode) {
+    <div class="chat-controls home-view-controls">
       <button
-        class="return-home-btn"
+        class="return-home-btn home-view-return-home"
         (click)="returnHome()"
-        [matTooltip]="'Return home'"
         title="Return home">
         <span class="icon">🏠</span>
-      </button>
-    }
-    <div class="chat-input-wrapper">
-      <input
-        #chatInput
-        type="text"
-        maxlength="100"
-        placeholder="Speak to the room..."
-        (focus)="onInputFocus()"
-        (blur)="onInputBlur()"
-        (keydown)="$event.stopPropagation()"
-        (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
-      <div class="emoji-selector-wrapper">
-        <button
-          class="emoji-toggle-btn"
-          (click)="$event.stopPropagation(); toggleEmojiPicker()"
-          title="Add Emoji">
-          🐾
-        </button>
-        @if (isEmojiPickerOpen) {
-          <div class="emoji-dropdown" (click)="$event.stopPropagation()">
-            <button
-              class="emoji-btn"
-              *ngFor="let emoji of emojis"
-              (click)="addEmoji(emoji)"
-              [title]="'Add ' + emoji">
-              {{ emoji }}
-            </button>
-          </div>
-        }
-      </div>
-      <span class="char-counter">{{ chatInput.value.length }}/100</span>
-      <button
-        class="talk-btn"
-        (click)="talk(chatInput.value); chatInput.value = ''">
-        Talk
+        <span class="label">Return Home</span>
       </button>
     </div>
-  </div>
+  } @else {
+    <div class="chat-controls">
+      @if (roomOwnerId) {
+        <button
+          class="return-home-btn visit-return-home"
+          (click)="returnHome()"
+          title="Return home">
+          <span class="label">Return Home</span>
+        </button>
+      }
+      <div class="chat-input-wrapper">
+        <input
+          #chatInput
+          type="text"
+          maxlength="100"
+          placeholder="Speak to the room..."
+          (focus)="onInputFocus()"
+          (blur)="onInputBlur()"
+          (keydown)="$event.stopPropagation()"
+          (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
+        <div class="emoji-selector-wrapper">
+          <button
+            class="emoji-toggle-btn"
+            (click)="$event.stopPropagation(); toggleEmojiPicker()"
+            title="Add Emoji">
+            🐾
+          </button>
+          @if (isEmojiPickerOpen) {
+            <div class="emoji-dropdown" (click)="$event.stopPropagation()">
+              <button
+                class="emoji-btn"
+                *ngFor="let emoji of emojis"
+                (click)="addEmoji(emoji)"
+                [title]="'Add ' + emoji">
+                {{ emoji }}
+              </button>
+            </div>
+          }
+        </div>
+        <span class="char-counter">{{ chatInput.value.length }}/100</span>
+        <button
+          class="talk-btn"
+          (click)="talk(chatInput.value); chatInput.value = ''">
+          Talk
+        </button>
+      </div>
+    </div>
+  }
 
   @if (showTutorial && currentTutorialStep) {
     <div class="tutorial-overlay" role="dialog" aria-live="polite">

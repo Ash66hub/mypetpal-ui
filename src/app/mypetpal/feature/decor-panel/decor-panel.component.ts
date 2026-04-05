@@ -1,12 +1,6 @@
-import {
-  Component,
-  OnInit,
-  Input,
-  DoCheck,
-  OnDestroy,
-  HostListener
-} from '@angular/core';
+import { Component, OnInit, Input, DoCheck, OnDestroy } from '@angular/core';
 import { DecorService, DecorItem } from '../../../core/decor/decor.service';
+import { LeaderboardPanelComponent } from '../leaderboard-panel/leaderboard-panel.component';
 import { SharedModule } from '../../../shared/shared.module';
 
 @Component({
@@ -14,14 +8,13 @@ import { SharedModule } from '../../../shared/shared.module';
   templateUrl: './decor-panel.component.html',
   styleUrls: ['./decor-panel.component.scss'],
   standalone: true,
-  imports: [SharedModule]
+  imports: [SharedModule, LeaderboardPanelComponent]
 })
 export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   public isCollapsed: boolean = true;
+  public activePanel: 'decor' | 'leaderboard' = 'decor';
   public activeCategory: 'furniture' | 'plant' | 'wall' = 'furniture';
   public filteredItems: DecorItem[] = [];
-  public handleTop = 112;
-  public isDraggingHandle = false;
   public touchDraggingItemId: string | null = null;
   public touchGhostX = 0;
   public touchGhostY = 0;
@@ -35,15 +28,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   private activeMouseHold = false;
   private pendingClientX = 0;
   private pendingClientY = 0;
-  private handleDragPointerId: number | null = null;
-  private handleDragStartY = 0;
-  private handleStartTop = 112;
-  private handleDraggedDistance = 0;
-  private suppressNextHandleClick = false;
   private readonly longPressDurationMs = 260;
-  private readonly panelTopOffsetPx = 68;
-  private readonly handleHeightPx = 56;
-  private readonly handleEdgePaddingPx = 12;
 
   @Input() isVisiting: boolean = false;
 
@@ -52,6 +37,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   ngOnInit(): void {
     this.updateFilteredItems();
     this.lastKnownUserLevel = this.decorService.userLevel();
+
   }
 
   ngDoCheck(): void {
@@ -70,31 +56,29 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     this.isCollapsed = !this.isCollapsed;
   }
 
-  public onHandleClick(): void {
-    if (this.suppressNextHandleClick) {
-      this.suppressNextHandleClick = false;
+  public onDecorHandleClick(): void {
+    if (this.isCollapsed) {
+      this.activePanel = 'decor';
+      this.isCollapsed = false;
+      return;
+    }
+
+    if (this.activePanel !== 'decor') {
+      this.activePanel = 'decor';
       return;
     }
 
     this.togglePanel();
   }
 
-  public onHandleMouseDown(event: MouseEvent): void {
-    if (event.button !== 0) {
+  public onLeaderboardHandleClick(): void {
+    if (this.isCollapsed || this.activePanel !== 'leaderboard') {
+      this.activePanel = 'leaderboard';
+      this.isCollapsed = false;
       return;
     }
 
-    this.beginHandleDrag(event.clientY, null);
-    event.preventDefault();
-  }
-
-  public onHandleTouchStart(event: TouchEvent): void {
-    const touch = event.changedTouches[0];
-    if (!touch) {
-      return;
-    }
-
-    this.beginHandleDrag(touch.clientY, touch.identifier);
+    this.togglePanel();
   }
 
   public expandPanel(): void {
@@ -248,92 +232,9 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     }, this.longPressDurationMs);
   }
 
-  @HostListener('document:mousemove', ['$event'])
-  public onDocumentMouseMove(event: MouseEvent): void {
-    if (this.isDraggingHandle && this.handleDragPointerId === null) {
-      this.updateHandleDrag(event.clientY);
-      return;
-    }
-
-    if (!this.activeMouseHold) {
-      return;
-    }
-
-    this.pendingClientX = event.clientX;
-    this.pendingClientY = event.clientY;
-
-    if (this.isLongTouchDragging && this.touchDraggingItem) {
-      this.updateTouchGhostFromPoint(event.clientX, event.clientY);
-    }
-  }
-
-  @HostListener('document:mouseup', ['$event'])
-  public onDocumentMouseUp(event: MouseEvent): void {
-    if (this.isDraggingHandle && this.handleDragPointerId === null) {
-      this.endHandleDrag();
-      return;
-    }
-
-    if (!this.activeMouseHold || event.button !== 0) {
-      return;
-    }
-
-    this.clearLongPressTimer();
-
-    if (this.isLongTouchDragging && this.touchDraggingItem) {
-      this.emitDropIfInsideGame(
-        this.touchDraggingItem,
-        event.clientX,
-        event.clientY
-      );
-    }
-
-    this.activeMouseHold = false;
-    this.clearTouchDragState();
-  }
-
   public onTouchDragCancel(): void {
     this.clearLongPressTimer();
     this.clearTouchDragState();
-  }
-
-  @HostListener('document:touchmove', ['$event'])
-  public onDocumentTouchMove(event: TouchEvent): void {
-    if (!this.isDraggingHandle || this.handleDragPointerId === null) {
-      return;
-    }
-
-    const touch = this.findTouchByIdentifier(
-      event.touches,
-      this.handleDragPointerId
-    );
-    if (!touch) {
-      return;
-    }
-
-    this.updateHandleDrag(touch.clientY);
-  }
-
-  @HostListener('document:touchend', ['$event'])
-  public onDocumentTouchEnd(event: TouchEvent): void {
-    if (!this.isDraggingHandle || this.handleDragPointerId === null) {
-      return;
-    }
-
-    const touch = this.findTouchByIdentifier(
-      event.changedTouches,
-      this.handleDragPointerId
-    );
-    if (!touch) {
-      return;
-    }
-
-    this.endHandleDrag();
-  }
-
-  @HostListener('window:resize')
-  public onWindowResize(): void {
-    this.handleTop = this.clampHandleTop(this.handleTop);
   }
 
   private findMatchingTouch(touches: TouchList): Touch | null {
@@ -349,58 +250,6 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     }
 
     return null;
-  }
-
-  private findTouchByIdentifier(
-    touches: TouchList,
-    identifier: number
-  ): Touch | null {
-    for (let i = 0; i < touches.length; i += 1) {
-      const touch = touches.item(i);
-      if (touch && touch.identifier === identifier) {
-        return touch;
-      }
-    }
-
-    return null;
-  }
-
-  private beginHandleDrag(clientY: number, pointerId: number | null): void {
-    this.isDraggingHandle = true;
-    this.handleDragPointerId = pointerId;
-    this.handleDragStartY = clientY;
-    this.handleStartTop = this.handleTop;
-    this.handleDraggedDistance = 0;
-  }
-
-  private updateHandleDrag(clientY: number): void {
-    const deltaY = clientY - this.handleDragStartY;
-    const nextTop = this.clampHandleTop(this.handleStartTop + deltaY);
-    this.handleTop = nextTop;
-    this.handleDraggedDistance = Math.max(
-      this.handleDraggedDistance,
-      Math.abs(deltaY)
-    );
-  }
-
-  private endHandleDrag(): void {
-    if (this.handleDraggedDistance > 4) {
-      this.suppressNextHandleClick = true;
-    }
-
-    this.isDraggingHandle = false;
-    this.handleDragPointerId = null;
-    this.handleDraggedDistance = 0;
-  }
-
-  private clampHandleTop(rawTop: number): number {
-    const minTop = this.handleEdgePaddingPx;
-    const maxTop =
-      window.innerHeight -
-      this.panelTopOffsetPx -
-      this.handleHeightPx -
-      this.handleEdgePaddingPx;
-    return Math.min(Math.max(rawTop, minTop), Math.max(minTop, maxTop));
   }
 
   private clearTouchDragState(): void {

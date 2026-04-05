@@ -354,6 +354,28 @@
     }
 }
 
+.centered-return-home {
+    margin-top: 2px;
+    align-self: center;
+    min-width: 140px;
+    background: linear-gradient(180deg, #66f0db 0%, #2ec7b1 100%);
+    border: 2px solid #0b1b31;
+    border-radius: 10px;
+    color: #0b1b31;
+    font-family: var(--retro-font-display);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
+
+    &:hover {
+        filter: brightness(1.04);
+        transform: translateY(-1px);
+    }
+}
+
 .search-pane {
     .search-box-wrapper {
         position: relative;
