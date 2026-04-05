@@ -91,6 +91,11 @@ export class SocialPanelComponent implements OnInit {
     }
   }
 
+  public expandPanel(): void {
+    this.friendService.isCollapsed.set(false);
+    this.friendService.refreshSocialData();
+  }
+
   public setTab(tab: 'friends' | 'requests' | 'search' | 'profile') {
     this.friendService.activeTab.set(tab);
     if (tab !== 'profile') {

@@ -54,6 +54,13 @@ button[mat-icon-button]:hover mat-icon {
     filter: none;
 }
 
+mat-menu .menu-help-icon {
+    font-size: 20px;
+    height: 20px;
+    width: 20px;
+    line-height: 20px;
+}
+
 .profile-trigger {
     overflow: hidden;
 }

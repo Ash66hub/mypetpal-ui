@@ -19,12 +19,14 @@ import { MatDividerModule } from '@angular/material/divider';
 
 import { UserComponent } from './user/user.component';
 import { ConfirmDialogComponent } from './dialogs/confirm-dialog.component';
+import { AboutDialogComponent } from './dialogs/about-dialog.component';
 import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.component';
 
 @NgModule({
   declarations: [
     UserComponent,
     ConfirmDialogComponent,
+    AboutDialogComponent,
     PawSpinnerComponent
   ],
   imports: [
@@ -67,6 +69,7 @@ import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.compon
     MatTooltipModule,
     MatDividerModule,
     ConfirmDialogComponent,
+    AboutDialogComponent,
     PawSpinnerComponent
   ]
 })

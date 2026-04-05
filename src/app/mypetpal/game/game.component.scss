@@ -366,6 +366,165 @@
     }
 }
 
+.tutorial-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3200;
+    pointer-events: auto;
+    background: rgba(8, 10, 28, 0.52);
+}
+
+.tutorial-spot {
+    position: absolute;
+    border: 2px dashed rgba(255, 233, 180, 0.45);
+    border-radius: 14px;
+    opacity: 0.45;
+    transition: opacity 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tutorial-spot.active {
+    opacity: 1;
+    transform: scale(1.02);
+    box-shadow: 0 0 0 4px rgba(102, 240, 219, 0.2), 0 0 22px rgba(102, 240, 219, 0.45);
+    border-color: rgba(102, 240, 219, 0.9);
+}
+
+.tutorial-card {
+    position: absolute;
+    max-width: 420px;
+    width: calc(100% - 32px);
+    background: linear-gradient(180deg, #273067 0%, #1a1f48 100%);
+    border: 2px solid #ffbf52;
+    box-shadow: 0 6px 0 rgba(9, 11, 33, 0.9);
+    border-radius: 12px;
+    color: #f8f3dc;
+    padding: 16px 16px 14px;
+    font-family: var(--retro-font-body);
+}
+
+.tutorial-card::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid #ffbf52;
+    border-bottom: 2px solid #ffbf52;
+    background: #1a1f48;
+    transform: rotate(45deg);
+}
+
+.tutorial-card.pet-step {
+    left: 50%;
+    bottom: 138px;
+    transform: translateX(-50%);
+}
+
+.tutorial-card.pet-step::after {
+    top: -8px;
+    left: calc(50% - 6px);
+    transform: rotate(225deg);
+}
+
+.tutorial-card.decor-step {
+    left: 290px;
+    top: 122px;
+}
+
+.tutorial-card.decor-step::after {
+    left: -8px;
+    top: 34px;
+    transform: rotate(135deg);
+}
+
+.tutorial-card.friends-step {
+    right: 316px;
+    top: 122px;
+}
+
+.tutorial-card.friends-step::after {
+    right: -8px;
+    top: 34px;
+    transform: rotate(-45deg);
+}
+
+.tutorial-progress {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 233, 180, 0.82);
+    margin-bottom: 8px;
+    font-family: var(--retro-font-display);
+}
+
+.tutorial-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: #ffe9b4;
+    font-family: var(--retro-font-display);
+    letter-spacing: 0.03em;
+}
+
+.tutorial-card p {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 13px;
+    color: #f3f0dd;
+}
+
+.tutorial-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.tutorial-actions button {
+    border: 2px solid #0b1b31;
+    border-radius: 8px;
+    font-family: var(--retro-font-display);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(9, 11, 33, 0.9);
+}
+
+.tutorial-actions .skip-btn {
+    background: linear-gradient(180deg, #3a406f 0%, #2a305a 100%);
+    color: #ffe9b4;
+}
+
+.tutorial-actions .next-btn {
+    background: linear-gradient(180deg, #63ebd9 0%, #33ccb7 100%);
+    color: #0f1f38;
+}
+
+@media (max-width: 1100px) {
+    .tutorial-spot {
+        display: none;
+    }
+
+    .tutorial-card.decor-step,
+    .tutorial-card.friends-step,
+    .tutorial-card.pet-step {
+        left: 50%;
+        right: auto;
+        top: auto;
+        bottom: 130px;
+        transform: translateX(-50%);
+    }
+
+    .tutorial-card.decor-step::after,
+    .tutorial-card.friends-step::after,
+    .tutorial-card.pet-step::after {
+        top: -8px;
+        left: calc(50% - 6px);
+        right: auto;
+        transform: rotate(225deg);
+    }
+}
+
 @keyframes toastIn {
     from { opacity: 0; transform: translate(-50%, 20px); }
     to { opacity: 1; transform: translate(-50%, 0); }

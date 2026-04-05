@@ -26,6 +26,14 @@
       <mat-icon>person</mat-icon>
       <span>Profile</span>
     </button>
+    <button mat-menu-item class="replay-tutorial-item" (click)="replayTutorial()">
+      <mat-icon class="menu-help-icon">help_outline</mat-icon>
+      <span>Replay Tutorial</span>
+    </button>
+    <button mat-menu-item class="about-item" (click)="openAbout()">
+      <mat-icon class="menu-info-icon">info</mat-icon>
+      <span>About</span>
+    </button>
     <button mat-menu-item (click)="logoutUser()">
       <mat-icon>exit_to_app</mat-icon>
       <span>Logout</span>

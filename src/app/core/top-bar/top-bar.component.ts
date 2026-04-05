@@ -2,6 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { LoginStreamService } from '../../core/login/login-service/login-stream.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { AboutDialogComponent } from '../../shared/dialogs/about-dialog.component';
 
 @Component({
   selector: 'app-top-bar',
@@ -15,7 +17,8 @@ export class TopBarComponent implements OnInit, OnDestroy {
 
   constructor(
     private loginStreamService: LoginStreamService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -50,6 +53,26 @@ export class TopBarComponent implements OnInit, OnDestroy {
 
   public goHome() {
     this.router.navigate(['/game']);
+  }
+
+  public replayTutorial(): void {
+    const userId =
+      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+
+    if (userId) {
+      localStorage.setItem('firstTimeTutorialPendingFor', userId);
+      localStorage.removeItem(`firstTimeTutorialCompleted:${userId}`);
+    }
+
+    window.dispatchEvent(new CustomEvent('replay-tutorial'));
+    this.router.navigate(['/game']);
+  }
+
+  public openAbout(): void {
+    this.dialog.open(AboutDialogComponent, {
+      width: '420px',
+      panelClass: 'custom-dialog-panel'
+    });
   }
 
   public logoutUser() {

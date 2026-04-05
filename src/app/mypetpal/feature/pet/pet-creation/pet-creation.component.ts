@@ -130,6 +130,7 @@ export class PetCreationComponent implements OnInit {
       if (identifier) {
         try {
           await this.petStream.createUserPet(identifier, pet);
+          localStorage.setItem('firstTimeTutorialPendingFor', identifier);
           this.router.navigate(['/game']);
         } catch (error) {
           console.error('Error creating pet:', error);

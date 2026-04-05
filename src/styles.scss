@@ -82,3 +82,12 @@ img.pixelated {
 		padding: 10px 11px !important;
 	}
 }
+
+.mat-mdc-menu-panel .replay-tutorial-item .menu-help-icon,
+.mat-mdc-menu-panel .about-item .menu-info-icon {
+	font-size: 26px;
+	height: 26px;
+	width: 26px;
+	line-height: 26px;
+	flex: 0 0 26px;
+}

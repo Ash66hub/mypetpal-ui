@@ -36,8 +36,9 @@
   }
 
   <!-- Neighborhood Sidebars -->
-  <app-decor-panel [isVisiting]="isVisiting"></app-decor-panel>
+  <app-decor-panel #decorPanel [isVisiting]="isVisiting"></app-decor-panel>
   <app-social-panel
+    #socialPanel
     [isVisiting]="isVisiting"
     [isHosting]="isHosting"
     [visitingUsername]="visitingUsername"
@@ -99,4 +100,42 @@
       </button>
     </div>
   </div>
+
+  @if (showTutorial && currentTutorialStep) {
+    <div class="tutorial-overlay" role="dialog" aria-live="polite">
+      <div
+        class="tutorial-spot tutorial-spot-pet"
+        [ngStyle]="tutorialSpotStyles['pet']"
+        [class.active]="currentTutorialStep.target === 'pet'"></div>
+      <div
+        class="tutorial-spot tutorial-spot-decor"
+        [ngStyle]="tutorialSpotStyles['decor']"
+        [class.active]="currentTutorialStep.target === 'decor'"></div>
+      <div
+        class="tutorial-spot tutorial-spot-friends"
+        [ngStyle]="tutorialSpotStyles['friends']"
+        [class.active]="currentTutorialStep.target === 'friends'"></div>
+
+      <div
+        class="tutorial-card"
+        [class.pet-step]="currentTutorialStep.target === 'pet'"
+        [class.decor-step]="currentTutorialStep.target === 'decor'"
+        [class.friends-step]="currentTutorialStep.target === 'friends'">
+        <div class="tutorial-progress">
+          Step {{ tutorialStepIndex + 1 }} of 3
+        </div>
+        <h3>{{ currentTutorialStep.title }}</h3>
+        <p>{{ getTutorialMessage() }}</p>
+
+        <div class="tutorial-actions">
+          <button type="button" class="skip-btn" (click)="skipTutorial()">
+            Skip
+          </button>
+          <button type="button" class="next-btn" (click)="nextTutorialStep()">
+            {{ isTutorialLastStep ? 'Finish' : 'Next' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

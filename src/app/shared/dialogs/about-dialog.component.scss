@@ -1,0 +1,122 @@
+.about-dialog-container {
+  background: linear-gradient(180deg, #242b61 0%, #191f48 100%);
+  color: #f8f3dc;
+  padding: 24px;
+  border-radius: 12px;
+  border: 3px solid #4f57a8;
+  box-shadow: 0 6px 0 rgba(9, 11, 33, 0.9);
+  max-width: 420px;
+  font-family: var(--retro-font-body);
+}
+
+.dialog-title {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe9b4;
+  font-family: var(--retro-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dialog-content {
+  margin-bottom: 22px;
+  color: #d8d2b8;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.credits-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.credits-section h3 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-family: var(--retro-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffe9b4;
+}
+
+.credits-section p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.credits-section a {
+  color: #8be9ff;
+  text-decoration: none;
+}
+
+.credits-section a:hover {
+  text-decoration: underline;
+}
+
+.contact-links {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.contact-links a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #f8f3dc;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.contact-links a:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 233, 180, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.contact-links mat-icon {
+  color: #ffe9b4;
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+}
+
+.contact-links span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-close {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid #0c102d;
+  font-size: 10px;
+  font-family: var(--retro-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 3px 0 rgba(9, 11, 33, 0.9);
+  background: linear-gradient(180deg, #65ecda 0%, #36cdb8 100%);
+  color: #0b1b31;
+}
+
+.btn-close:hover {
+  transform: translateY(-1px);
+}

@@ -29,6 +29,8 @@ import { DecorManagerService } from './services/decor-manager.service';
 import { PlayerLevelService } from './services/player-level.service';
 import { RoomMultiplayerService } from './services/room-multiplayer.service';
 import { GameSceneService } from './services/game-scene.service';
+import { DecorPanelComponent } from '../feature/decor-panel/decor-panel.component';
+import { SocialPanelComponent } from '../feature/social-panel/social-panel.component';
 
 @Component({
   selector: 'app-game',
@@ -38,6 +40,8 @@ import { GameSceneService } from './services/game-scene.service';
 })
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('chatInput') chatInput!: ElementRef;
+  @ViewChild('decorPanel') decorPanel?: DecorPanelComponent;
+  @ViewChild('socialPanel') socialPanel?: SocialPanelComponent;
 
   private game!: Phaser.Game;
   private dog: any;
@@ -57,6 +61,39 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public currentPlayerLevel = 1;
   public currentPlayerExp = 0;
+  public showTutorial = false;
+  public tutorialStepIndex = 0;
+  public tutorialSpotStyles: Record<string, Record<string, string>> = {
+    pet: { display: 'none' },
+    decor: { display: 'none' },
+    friends: { display: 'none' }
+  };
+
+  private readonly tutorialSteps = [
+    {
+      target: 'pet',
+      title: 'Move Your Pet',
+      messageDesktop:
+        'Use the direction controls around your pet, or use your keyboard arrow keys to move.',
+      messageMobile: 'Tap the floor to guide your pet around your space.'
+    },
+    {
+      target: 'decor',
+      title: 'Customize Your Space',
+      messageDesktop:
+        'This is the Decor panel. Drag building assets onto the floor to customize your pet paradise and divide your space into rooms.',
+      messageMobile:
+        'This is the Decor panel. Drag and drop building assets onto the floor to customize your pet paradise and divide your space into rooms.'
+    },
+    {
+      target: 'friends',
+      title: 'Meet Pet Pals',
+      messageDesktop:
+        'Use the Friends panel to add pet pals, visit their spaces, or invite them over to hang out in your space.',
+      messageMobile:
+        'Use the Friends panel to add pet pals, visit their spaces, or invite them over to hang out in your space.'
+    }
+  ] as const;
 
   private currentZoom = 1.0;
   private settings: UserSettings | null = null;
@@ -148,6 +185,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       .filter(id => !Number.isNaN(id));
   }
 
+  get currentTutorialStep() {
+    return this.tutorialSteps[this.tutorialStepIndex] ?? null;
+  }
+
+  get isTutorialLastStep(): boolean {
+    return this.tutorialStepIndex >= this.tutorialSteps.length - 1;
+  }
+
   constructor(
     private petStreamService: PetStreamService,
     private petService: PetService,
@@ -218,6 +263,32 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.chatInput.nativeElement.blur();
       this.deselectDecor();
       this.hideKickToolbox();
+    }
+  }
+
+  @HostListener('window:replay-tutorial')
+  onReplayTutorialRequested(): void {
+    const currentUserId =
+      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+
+    if (currentUserId) {
+      localStorage.setItem('firstTimeTutorialPendingFor', currentUserId);
+      localStorage.removeItem(`firstTimeTutorialCompleted:${currentUserId}`);
+    }
+
+    if (this.isGameLoading || this.isVisiting) {
+      return;
+    }
+
+    this.tutorialStepIndex = 0;
+    this.showTutorial = true;
+    this.applyTutorialStepFocus();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.showTutorial) {
+      this.updateTutorialSpotStyles();
     }
   }
 
@@ -472,6 +543,29 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const item: DecorItem = JSON.parse(data);
     this.placeDecorAtClientPosition(item, event.clientX, event.clientY);
+  }
+
+  public nextTutorialStep(): void {
+    if (this.isTutorialLastStep) {
+      this.completeTutorial();
+      return;
+    }
+
+    this.tutorialStepIndex += 1;
+    this.applyTutorialStepFocus();
+  }
+
+  public skipTutorial(): void {
+    this.completeTutorial();
+  }
+
+  public getTutorialMessage(): string {
+    const step = this.currentTutorialStep;
+    if (!step) {
+      return '';
+    }
+
+    return this.isMobileViewport() ? step.messageMobile : step.messageDesktop;
   }
 
   @HostListener('window:decor-touch-drop', ['$event'])
@@ -909,6 +1003,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.loadSavedDecor();
         this.initRoomMultiplayer();
         this.isGameLoading = false;
+        this.startTutorialIfNeeded();
       }
     );
 
@@ -980,6 +1075,143 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       scene.tweens.killTweensOf(c);
       scene.tweens.add({ targets: c, alpha: 0.45, scale: 1, duration: 150 });
     });
+  }
+
+  private startTutorialIfNeeded(): void {
+    if (this.roomOwnerId) {
+      return;
+    }
+
+    const currentUserId =
+      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+    if (!currentUserId) {
+      return;
+    }
+
+    const pendingTutorialFor = localStorage.getItem(
+      'firstTimeTutorialPendingFor'
+    );
+    const completedKey = `firstTimeTutorialCompleted:${currentUserId}`;
+    const hasCompleted = localStorage.getItem(completedKey) === 'true';
+
+    if (hasCompleted || pendingTutorialFor !== currentUserId) {
+      return;
+    }
+
+    this.tutorialStepIndex = 0;
+    this.showTutorial = true;
+    this.applyTutorialStepFocus();
+  }
+
+  private completeTutorial(): void {
+    const currentUserId =
+      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+
+    if (currentUserId) {
+      localStorage.setItem(
+        `firstTimeTutorialCompleted:${currentUserId}`,
+        'true'
+      );
+    }
+
+    localStorage.removeItem('firstTimeTutorialPendingFor');
+    this.showTutorial = false;
+    this.tutorialSpotStyles = {
+      pet: { display: 'none' },
+      decor: { display: 'none' },
+      friends: { display: 'none' }
+    };
+  }
+
+  private applyTutorialStepFocus(): void {
+    const step = this.currentTutorialStep;
+    if (!step) {
+      return;
+    }
+
+    if (step.target === 'decor' && !this.isVisiting) {
+      this.decorPanel?.expandPanel();
+    }
+
+    if (step.target === 'friends') {
+      this.socialPanel?.expandPanel();
+    }
+
+    // Re-measure immediately and after panel animations for accurate responsive highlights.
+    this.updateTutorialSpotStyles();
+    window.setTimeout(() => this.updateTutorialSpotStyles(), 80);
+    window.setTimeout(() => this.updateTutorialSpotStyles(), 260);
+  }
+
+  private updateTutorialSpotStyles(): void {
+    const wrapper = document.querySelector('.game-wrapper') as HTMLElement | null;
+    const gameContainer = document.getElementById('game-container');
+    const decorContainer = document.querySelector('.decor-panel-container') as HTMLElement | null;
+    const friendsContainer = document.querySelector('.social-panel-container') as HTMLElement | null;
+
+    this.tutorialSpotStyles = {
+      pet: this.getPetSpotStyle(wrapper, gameContainer),
+      decor: this.getElementSpotStyle(wrapper, decorContainer, 4),
+      friends: this.getElementSpotStyle(wrapper, friendsContainer, 4)
+    };
+  }
+
+  private getPetSpotStyle(
+    wrapper: HTMLElement | null,
+    target: HTMLElement | null
+  ): Record<string, string> {
+    if (!wrapper || !target) {
+      return { display: 'none' };
+    }
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+
+    const width = targetRect.width * 0.4;
+    const height = targetRect.height * 0.38;
+    const left =
+      targetRect.left - wrapperRect.left + (targetRect.width - width) / 2;
+    const top =
+      targetRect.top - wrapperRect.top + (targetRect.height - height) / 2 - 4;
+
+    return {
+      left: `${Math.max(0, left)}px`,
+      top: `${Math.max(0, top)}px`,
+      width: `${Math.max(72, width)}px`,
+      height: `${Math.max(72, height)}px`
+    };
+  }
+
+  private getElementSpotStyle(
+    wrapper: HTMLElement | null,
+    target: HTMLElement | null,
+    padding: number
+  ): Record<string, string> {
+    if (!wrapper || !target) {
+      return { display: 'none' };
+    }
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+
+    const inset = Math.max(2, Math.floor(padding / 2));
+    const left = targetRect.left - wrapperRect.left - inset;
+    const top = targetRect.top - wrapperRect.top - inset;
+    const width = targetRect.width + inset * 2;
+    const height = targetRect.height + inset * 2;
+
+    return {
+      left: `${Math.max(0, left)}px`,
+      top: `${Math.max(0, top)}px`,
+      width: `${Math.max(24, width)}px`,
+      height: `${Math.max(24, height)}px`
+    };
+  }
+
+  private isMobileViewport(): boolean {
+    return (
+      window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768
+    );
   }
 
   private createArrow(

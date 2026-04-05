@@ -60,6 +60,10 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     this.isCollapsed = !this.isCollapsed;
   }
 
+  public expandPanel(): void {
+    this.isCollapsed = false;
+  }
+
   public setCategory(category: 'furniture' | 'plant' | 'wall'): void {
     this.activeCategory = category;
     this.updateFilteredItems();
