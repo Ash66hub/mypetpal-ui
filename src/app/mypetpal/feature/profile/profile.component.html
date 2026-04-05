@@ -1,81 +1,137 @@
 <div class="profile-page-wrapper">
-    <div class="content-container mat-elevation-z8">
-        <div class="header">
-            <button mat-icon-button (click)="goBack()" title="Back to Game">
-                <mat-icon>arrow_back</mat-icon>
-            </button>
-            <h2>My Account</h2>
-        </div>
-
-        <div class="profile-card">
-            <div class="user-display">
-                <div class="avatar-giant bg-primary">
-                    {{ (currentUser?.username || 'U')[0] | uppercase }}
-                </div>
-                <h3>{{ currentUser?.username || 'User' }}</h3>
-                <span class="user-email">{{ currentUser?.email || 'N/A' }}</span>
-            </div>
-
-            <mat-divider></mat-divider>
-
-            <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="password-form">
-                <h4>Change Password</h4>
-                
-                <mat-form-field appearance="outline">
-                    <mat-label>Current Password</mat-label>
-                    <input matInput [type]="hideOldPassword ? 'password' : 'text'" formControlName="oldPassword" required>
-                    <button mat-icon-button matSuffix (click)="hideOldPassword = !hideOldPassword" type="button">
-                        <mat-icon>{{hideOldPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-                    </button>
-                    @if (passwordForm.get('oldPassword')?.hasError('required')) {
-                        <mat-error>Required</mat-error>
-                    }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>New Password</mat-label>
-                    <input matInput [type]="hideNewPassword ? 'password' : 'text'" formControlName="newPassword" required>
-                    <button mat-icon-button matSuffix (click)="hideNewPassword = !hideNewPassword" type="button">
-                        <mat-icon>{{hideNewPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-                    </button>
-                    @if (passwordForm.get('newPassword')?.hasError('minlength')) {
-                        <mat-error>Must be at least 12 characters</mat-error>
-                    }
-                    @if (passwordForm.get('newPassword')?.hasError('weakPassword')) {
-                        <mat-error>Must include both letters and numbers</mat-error>
-                    }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>Confirm New Password</mat-label>
-                    <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="confirmPassword" required>
-                    <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
-                        <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-                    </button>
-                    @if (passwordForm.hasError('mismatch')) {
-                        <mat-error>Passwords do not match</mat-error>
-                    }
-                </mat-form-field>
-
-                <button mat-flat-button color="primary" type="submit" [disabled]="passwordForm.invalid || isLoading" class="update-btn">
-                    @if (!isLoading) {
-                        <span>Update Password</span>
-                    }
-                    @if (isLoading) {
-                        <app-paw-spinner [diameter]="20" color="#ffffff"></app-paw-spinner>
-                    }
-                </button>
-            </form>
-
-            <mat-divider></mat-divider>
-
-            <div class="danger-zone">
-                <h4>Danger Zone</h4>
-                <p>Once you delete your account, there is no going back. You will not be able to recover your Pets or other assets. Please be certain.</p>
-                <button mat-stroked-button color="warn" class="btn-delete" (click)="onDeleteAccount()" [disabled]="isLoading">
-                    Delete Account
-                </button>
-            </div>
-        </div>
+  <div class="content-container mat-elevation-z8">
+    <div class="header">
+      <button mat-icon-button (click)="goBack()" title="Back to Game">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h2>My Account</h2>
     </div>
+
+    <div class="profile-card">
+      <div class="user-display">
+        <div class="avatar-giant bg-primary">
+          {{ (currentUser?.username || 'U')[0] | uppercase }}
+        </div>
+        <h3>{{ currentUser?.username || 'User' }}</h3>
+        <span class="user-email">{{ currentUser?.email || 'N/A' }}</span>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <form
+        [formGroup]="passwordForm"
+        (ngSubmit)="onChangePassword()"
+        class="password-form">
+        <h4>{{ isGoogleOnlyAccount ? 'Set Password' : 'Change Password' }}</h4>
+        @if (isGoogleOnlyAccount) {
+          <p>
+            You're signed in with Google. Set aan app password if you'd like to
+            to use email/password login too.
+          </p>
+        }
+
+        @if (!isGoogleOnlyAccount) {
+          <mat-form-field appearance="outline">
+            <mat-label>Current Password</mat-label>
+            <input
+              matInput
+              [type]="hideOldPassword ? 'password' : 'text'"
+              formControlName="oldPassword"
+              required />
+            <button
+              mat-icon-button
+              matSuffix
+              (click)="hideOldPassword = !hideOldPassword"
+              type="button">
+              <mat-icon>{{
+                hideOldPassword ? 'visibility_off' : 'visibility'
+              }}</mat-icon>
+            </button>
+            @if (passwordForm.get('oldPassword')?.hasError('required')) {
+              <mat-error>Required</mat-error>
+            }
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>New Password</mat-label>
+          <input
+            matInput
+            [type]="hideNewPassword ? 'password' : 'text'"
+            formControlName="newPassword"
+            required />
+          <button
+            mat-icon-button
+            matSuffix
+            (click)="hideNewPassword = !hideNewPassword"
+            type="button">
+            <mat-icon>{{
+              hideNewPassword ? 'visibility_off' : 'visibility'
+            }}</mat-icon>
+          </button>
+          @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+            <mat-error>Must be at least 12 characters</mat-error>
+          }
+          @if (passwordForm.get('newPassword')?.hasError('weakPassword')) {
+            <mat-error>Must include both letters and numbers</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm New Password</mat-label>
+          <input
+            matInput
+            [type]="hideConfirmPassword ? 'password' : 'text'"
+            formControlName="confirmPassword"
+            required />
+          <button
+            mat-icon-button
+            matSuffix
+            (click)="hideConfirmPassword = !hideConfirmPassword"
+            type="button">
+            <mat-icon>{{
+              hideConfirmPassword ? 'visibility_off' : 'visibility'
+            }}</mat-icon>
+          </button>
+          @if (passwordForm.hasError('mismatch')) {
+            <mat-error>Passwords do not match</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="passwordForm.invalid || isLoading"
+          class="update-btn">
+          @if (!isLoading) {
+            <span>{{
+              isGoogleOnlyAccount ? 'Set Password' : 'Update Password'
+            }}</span>
+          }
+          @if (isLoading) {
+            <app-paw-spinner [diameter]="20" color="#ffffff"></app-paw-spinner>
+          }
+        </button>
+      </form>
+
+      <mat-divider></mat-divider>
+
+      <div class="danger-zone">
+        <h4>Danger Zone</h4>
+        <p>
+          Once you delete your account, there is no going back. You will not be
+          able to recover your Pets or other assets. Please be certain.
+        </p>
+        <button
+          mat-stroked-button
+          color="warn"
+          class="btn-delete"
+          (click)="onDeleteAccount()"
+          [disabled]="isLoading">
+          Delete Account
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

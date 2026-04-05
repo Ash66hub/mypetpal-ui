@@ -1,56 +1,104 @@
 <div class="login-container">
-
   <!-- Blurred room background -->
   <div class="bg-room"></div>
   <div class="bg-overlay"></div>
 
   @if (loading) {
     <div class="loading-centre">
-        <app-paw-spinner [diameter]="80"></app-paw-spinner>
+      <app-paw-spinner [diameter]="80"></app-paw-spinner>
     </div>
   }
 
   @if (!loading) {
     <div class="login-card">
-
       <!-- Logo -->
       <div class="logo-wrapper">
-        <img src="/assets/logo-with-text.png" alt="MyPetPal Logo" class="logo" />
+        <img
+          src="/assets/logo-with-text.png"
+          alt="MyPetPal Logo"
+          class="logo" />
         <p class="tagline">Your virtual pet awaits 🐾</p>
       </div>
 
       <mat-card>
         <mat-card-content>
-
           <!-- Login Form -->
           @if (!isSignUpMode) {
             <h2 class="form-title">Welcome back!</h2>
+            <p class="form-subtitle">
+              Continue with Google or sign in with email.
+            </p>
             <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
-              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+              <div class="button-stack">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="onGoogleLogin()">
+                  Continue with Google
+                </button>
+                <div class="auth-divider" aria-hidden="true">
+                  <span>OR</span>
+                </div>
+              </div>
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
                 <mat-label>Username or Email</mat-label>
                 <input matInput formControlName="usernameOrEmail" required />
                 @if (loginForm.get('usernameOrEmail')?.invalid) {
                   <mat-error>Please enter a valid username or email.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
                 <mat-label>Password</mat-label>
-                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
-                <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
-                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                <input
+                  matInput
+                  [type]="hidePassword ? 'password' : 'text'"
+                  formControlName="password"
+                  required />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="hidePassword = !hidePassword"
+                  type="button">
+                  <mat-icon>{{
+                    hidePassword ? 'visibility_off' : 'visibility'
+                  }}</mat-icon>
                 </button>
                 @if (loginForm.get('password')?.invalid) {
                   <mat-error>Please enter a valid password.</mat-error>
                 }
               </mat-form-field>
               @if (loginFailed) {
-                <mat-error class="form-error">Login failed. Check your username or password.</mat-error>
+                <mat-error class="form-error"
+                  >Login failed. Check your username or password.</mat-error
+                >
               }
-              <div class="button-group">
-                <button mat-raised-button class="primary-btn" type="submit" [disabled]="loginForm.invalid">
+              @if (googleLoginFailed) {
+                <mat-error class="form-error"
+                  >Google login failed. Try again.</mat-error
+                >
+              }
+              <div class="button-stack">
+                <button
+                  mat-raised-button
+                  class="primary-btn"
+                  type="submit"
+                  [disabled]="loginForm.invalid">
                   Login
                 </button>
-                <button mat-button class="link-btn" (click)="toggleMode()">
+              </div>
+              <div class="footer-action">
+                <span>New here?</span>
+                <button
+                  mat-button
+                  class="link-btn"
+                  type="button"
+                  (click)="toggleMode()">
                   Create Account
                 </button>
               </div>
@@ -60,55 +108,115 @@
           <!-- Signup Form -->
           @if (isSignUpMode) {
             <h2 class="form-title">Create your account</h2>
+            <p class="form-subtitle">
+              Continue with Google, or create one with email.
+            </p>
             <form [formGroup]="signUpForm" (ngSubmit)="onSignUp()">
-              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+              <div class="button-stack signup-google-cta">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="onGoogleLogin()">
+                  Continue with Google
+                </button>
+                <div class="auth-divider" aria-hidden="true">
+                  <span>OR CREATE WITH EMAIL</span>
+                </div>
+              </div>
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
                 <mat-label>Email</mat-label>
                 <input matInput formControlName="email" required />
                 @if (signUpForm.get('email')?.invalid) {
                   <mat-error>Please enter a valid email.</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
                 <mat-label>Username</mat-label>
                 <input matInput formControlName="username" required />
                 @if (signUpForm.get('username')?.invalid) {
-                  <mat-error>Username should be at least 5 characters.</mat-error>
+                  <mat-error
+                    >Username should be at least 5 characters.</mat-error
+                  >
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
                 <mat-label>Password</mat-label>
-                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required />
-                <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
-                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                <input
+                  matInput
+                  [type]="hidePassword ? 'password' : 'text'"
+                  formControlName="password"
+                  required />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="hidePassword = !hidePassword"
+                  type="button">
+                  <mat-icon>{{
+                    hidePassword ? 'visibility_off' : 'visibility'
+                  }}</mat-icon>
                 </button>
                 @if (signUpForm.get('password')?.hasError('minlength')) {
-                  <mat-error>Password must be at least 12 characters.</mat-error>
+                  <mat-error
+                    >Password must be at least 12 characters.</mat-error
+                  >
                 }
                 @if (signUpForm.get('password')?.hasError('weakPassword')) {
-                  <mat-error>Password must include both letters and numbers.</mat-error>
+                  <mat-error
+                    >Password must include both letters and numbers.</mat-error
+                  >
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
                 <mat-label>Confirm Password</mat-label>
-                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="confirmPassword" required />
+                <input
+                  matInput
+                  [type]="hidePassword ? 'password' : 'text'"
+                  formControlName="confirmPassword"
+                  required />
               </mat-form-field>
               @if (signUpForm.errors?.['passwordMismatch']) {
-                <mat-error class="form-error">Passwords do not match.</mat-error>
+                <mat-error class="form-error"
+                  >Passwords do not match.</mat-error
+                >
               }
               @if (signUpFailedDueToDuplicate) {
-                <mat-error class="form-error">Username or email already exists.</mat-error>
+                <mat-error class="form-error"
+                  >Username or email already exists.</mat-error
+                >
               }
-              <div class="button-group">
-                <button mat-raised-button class="primary-btn" type="submit" [disabled]="signUpForm.invalid">
+              <div class="button-stack">
+                <button
+                  mat-raised-button
+                  class="primary-btn"
+                  type="submit"
+                  [disabled]="signUpForm.invalid">
                   Sign Up
                 </button>
-                <button mat-button class="link-btn" (click)="toggleMode()">
-                  Back to Login
+              </div>
+              <div class="footer-action">
+                <span>Already have an account?</span>
+                <button
+                  mat-button
+                  class="link-btn"
+                  type="button"
+                  (click)="toggleMode()">
+                  Login
                 </button>
               </div>
             </form>
           }
-
         </mat-card-content>
       </mat-card>
     </div>

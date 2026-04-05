@@ -25,7 +25,12 @@ export class PetGuard implements CanActivate {
     const accessToken = localStorage.getItem('token');
 
     // Not authenticated at all → /login
-    if (!refreshToken || !userId || !accessToken) {
+    if (
+      !refreshToken ||
+      !userId ||
+      !accessToken ||
+      !this.loginStreamService.hasAuthenticatedSession()
+    ) {
       this.router.navigate(['/login']);
       return false;
     }

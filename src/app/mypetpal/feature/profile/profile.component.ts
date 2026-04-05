@@ -22,9 +22,12 @@ export class ProfileComponent implements OnInit {
   public currentUser: User | null = null;
   public passwordForm!: FormGroup;
   public isLoading = false;
+  public isGoogleOnlyAccount = false;
   public hideOldPassword = true;
   public hideNewPassword = true;
   public hideConfirmPassword = true;
+  private isGoogleSession = false;
+  private hasLocalPassword = false;
 
   constructor(
     private loginStreamService: LoginStreamService,
@@ -38,6 +41,24 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.loginStreamService.currentUserStream.subscribe((user: User) => {
       this.currentUser = user;
+      const provider = (
+        user?.authProvider ||
+        localStorage.getItem('authProvider') ||
+        ''
+      ).toLowerCase();
+
+      this.isGoogleSession = provider === 'google';
+
+      const storedHasLocal = localStorage.getItem('hasLocalPassword');
+      const hasLocalPassword =
+        user?.hasLocalPassword ??
+        (storedHasLocal !== null
+          ? storedHasLocal === 'true'
+          : provider !== 'google');
+
+      this.hasLocalPassword = hasLocalPassword;
+      this.isGoogleOnlyAccount = this.isGoogleSession && !hasLocalPassword;
+      this.updatePasswordFormValidators();
     });
 
     this.passwordForm = this.fb.group(
@@ -55,6 +76,8 @@ export class ProfileComponent implements OnInit {
       },
       { validators: this.passwordMatchValidator }
     );
+
+    this.updatePasswordFormValidators();
   }
 
   private passwordMatchValidator(g: FormGroup) {
@@ -73,12 +96,27 @@ export class ProfileComponent implements OnInit {
       newPassword: this.passwordForm.value.newPassword
     };
 
-    this.loginService
-      .changePassword(requestData)
+    const requestPromise = this.isGoogleOnlyAccount
+      ? this.loginService.setPassword({
+          userId: parseInt(this.currentUser.userId.toString(), 10),
+          newPassword: this.passwordForm.value.newPassword
+        })
+      : this.loginService.changePassword(requestData);
+
+    requestPromise
       .then(() => {
         this.snackbarService.openSnackbarWithAction(
-          'Password updated successfully!'
+          this.isGoogleOnlyAccount
+            ? 'Password set successfully!'
+            : 'Password updated successfully!'
         );
+        this.isGoogleOnlyAccount = false;
+        this.hasLocalPassword = true;
+        if (this.currentUser) {
+          this.currentUser.hasLocalPassword = true;
+        }
+        localStorage.setItem('hasLocalPassword', 'true');
+        this.updatePasswordFormValidators();
         this.passwordForm.reset();
         this.isLoading = false;
       })
@@ -90,6 +128,25 @@ export class ProfileComponent implements OnInit {
         this.snackbarService.openSnackbarWithAction(errorMsg);
         this.isLoading = false;
       });
+  }
+
+  private updatePasswordFormValidators(): void {
+    if (!this.passwordForm) {
+      return;
+    }
+
+    const oldPassword = this.passwordForm.get('oldPassword');
+    if (!oldPassword) {
+      return;
+    }
+
+    if (this.isGoogleOnlyAccount) {
+      oldPassword.clearValidators();
+    } else {
+      oldPassword.setValidators([Validators.required]);
+    }
+
+    oldPassword.updateValueAndValidity({ emitEvent: false });
   }
 
   public onDeleteAccount(): void {

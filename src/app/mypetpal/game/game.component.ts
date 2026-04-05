@@ -773,10 +773,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     let pet = this.petStreamService.currentPetStream.getValue();
 
     if (!pet.petId) {
+      const userPublicId = localStorage.getItem('userPublicId');
       const userId = localStorage.getItem('userId');
-      if (userId) {
+      const identifier = userPublicId || userId;
+      if (identifier) {
         try {
-          await this.petStreamService.getUserPets(userId);
+          await this.petStreamService.getUserPets(identifier);
           pet = this.petStreamService.currentPetStream.getValue();
         } catch (error) {
           console.error('Failed to fetch pet on reload:', error);
@@ -794,7 +796,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async loadSelectionContext(): Promise<void> {
-    const myId = localStorage.getItem('userId');
+    const myId =
+      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
     if (!myId || !this.currentPet) {
       return;
     }

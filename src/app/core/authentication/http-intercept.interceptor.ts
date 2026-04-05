@@ -15,12 +15,15 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
   const loginService = inject(LoginService);
   const router = inject(Router);
 
-  // Skip token injection only for endpoints that don't require auth; `GET Users/:id` must receive Authorization so UI login state stays consistent on reload.
-  const isAuthenticationRequest = req.url.includes('Authentication');
-  const isUserSignupRequest = req.url.includes('Users/signup');
-  const isAuthRequest = isAuthenticationRequest || isUserSignupRequest;
+  // Skip token injection only for truly anonymous endpoints.
+  const lowerUrl = req.url.toLowerCase();
+  const isAnonymousEndpoint =
+    lowerUrl.endsWith('/authentication') ||
+    lowerUrl.endsWith('/authentication/refreshtoken') ||
+    lowerUrl.endsWith('/authentication/google-signin') ||
+    lowerUrl.endsWith('/users/signup');
 
-  if (isAuthRequest) {
+  if (isAnonymousEndpoint) {
     return next(req);
   }
 

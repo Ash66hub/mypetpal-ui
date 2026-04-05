@@ -18,7 +18,12 @@ export class AuthGuard implements CanActivate {
     const userId = localStorage.getItem('userId');
     const accessToken = localStorage.getItem('token');
 
-    if (refreshToken && userId && accessToken) {
+    if (
+      refreshToken &&
+      userId &&
+      accessToken &&
+      this.loginStreamService.hasAuthenticatedSession()
+    ) {
       // Rehydrate user stream so header/components have the right state
       await this.loginStreamService.getCurrentUser(userId);
 

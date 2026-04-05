@@ -82,7 +82,7 @@
 }
 
 .form-title {
-    margin: 0 0 20px;
+    margin: 0;
     font-size: 20px;
     font-weight: 700;
     color: #ffe9b4;
@@ -90,6 +90,15 @@
     font-family: var(--retro-font-display);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+}
+
+.form-subtitle {
+    margin: 8px 0 18px;
+    color: #d5d2be;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+    letter-spacing: 0.02em;
 }
 
 // ===== FORM FIELDS =====
@@ -158,12 +167,59 @@
 }
 
 // ===== BUTTONS =====
-.button-group {
+.button-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.signup-google-cta {
+    margin-bottom: 12px;
+}
+
+.button-stack button {
+    width: 100%;
+    min-height: 46px;
+}
+
+.auth-divider {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 20px;
-    gap: 12px;
+    justify-content: center;
+    margin: 4px 0 2px;
+    color: rgba(248, 243, 220, 0.8);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 233, 180, 0.35), transparent);
+}
+
+.auth-divider span {
+    padding: 0 12px;
+    text-transform: uppercase;
+}
+
+.footer-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+    color: #d5d2be;
+    font-size: 13px;
+}
+
+.footer-action span {
+    opacity: 0.9;
 }
 
 .primary-btn {
@@ -187,6 +243,24 @@
 
     &:disabled {
         opacity: 0.45 !important;
+    }
+}
+
+:host ::ng-deep .button-stack .mat-mdc-stroked-button {
+    border-color: rgba(255, 233, 180, 0.45) !important;
+    color: #ffe9b4 !important;
+    background: rgba(17, 23, 55, 0.8) !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-family: var(--retro-font-display) !important;
+    letter-spacing: 0.04em;
+    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.7) !important;
+    transition: transform 0.2s ease, filter 0.2s ease, border-color 0.2s ease !important;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+        border-color: rgba(255, 233, 180, 0.7) !important;
     }
 }
 

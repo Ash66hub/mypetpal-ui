@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { LoginStreamService } from './core/login/login-service/login-stream.service';
 import { filter } from 'rxjs/operators';
+import { HealthService } from './core/health/health.service';
 
 @Component({
   selector: 'app-root',
@@ -12,10 +13,12 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   isLoggedIn = false;
   isLoginPage = true;
+  isServerDown = false;
 
   constructor(
     private router: Router,
-    private loginStream: LoginStreamService
+    private loginStream: LoginStreamService,
+    private healthService: HealthService
   ) {
     // Proactively check localStorage so the header doesn't flicker on load
     const token = localStorage.getItem('token');
@@ -25,6 +28,10 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.healthService.checkServerHealth().subscribe(isHealthy => {
+      this.isServerDown = !isHealthy;
+    });
+
     // Check if we are on the login page
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)

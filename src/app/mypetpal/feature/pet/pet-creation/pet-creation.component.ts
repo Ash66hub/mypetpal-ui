@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Pet, PetSelection, PetStatus, PetType, RoomKey } from '../pet';
 import { PetStreamService } from '../pet-service/pet-stream.service';
 import { Router } from '@angular/router';
+import { LoginStreamService } from '../../../../core/login/login-service/login-stream.service';
 
 interface PetPreviewOption {
   key: PetType;
@@ -68,6 +69,7 @@ export class PetCreationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private petStream: PetStreamService,
+    private loginStreamService: LoginStreamService,
     private router: Router
   ) {
     this.petForm = this.fb.group({
@@ -96,6 +98,11 @@ export class PetCreationComponent implements OnInit {
 
   public async onSubmit() {
     if (this.petForm.valid) {
+      if (!this.loginStreamService.hasAuthenticatedSession()) {
+        this.router.navigate(['/login']);
+        return;
+      }
+
       const petType = this.petForm.get('petType')?.value as PetType;
       const roomKey = this.petForm.get('roomKey')?.value as RoomKey;
 
@@ -117,16 +124,18 @@ export class PetCreationComponent implements OnInit {
         health: 100
       };
 
+      const userPublicId = localStorage.getItem('userPublicId');
       const userId = localStorage.getItem('userId');
-      if (userId) {
+      const identifier = userPublicId || userId;
+      if (identifier) {
         try {
-          await this.petStream.createUserPet(userId, pet);
+          await this.petStream.createUserPet(identifier, pet);
           this.router.navigate(['/game']);
         } catch (error) {
           console.error('Error creating pet:', error);
         }
       } else {
-        console.error('User ID not found in localStorage');
+        console.error('User identifier not found in localStorage');
         this.router.navigate(['/login']);
       }
     }

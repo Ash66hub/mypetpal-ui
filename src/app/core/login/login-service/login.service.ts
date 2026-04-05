@@ -9,11 +9,16 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   userId: string;
+  userPublicId?: string;
 }
 
 export interface RefreshResponse {
   token: string;
   refreshToken: string;
+}
+
+export interface SocialSignInRequest {
+  accessToken: string;
 }
 
 @Injectable()
@@ -37,6 +42,15 @@ export class LoginService {
 
     return lastValueFrom(this.http.get<User>(url)).catch(error => {
       console.error(`Error fetching user with ID: ${userId}`, error);
+      throw error;
+    });
+  }
+
+  public getUserByPublicId(publicId: string): Promise<User> {
+    const url = `${this.apiUrl}Users/public/${publicId}`;
+
+    return lastValueFrom(this.http.get<User>(url)).catch(error => {
+      console.error(`Error fetching user with PublicID: ${publicId}`, error);
       throw error;
     });
   }
@@ -69,6 +83,22 @@ export class LoginService {
       this.http.post(
         `${this.apiUrl}Authentication/change-password`,
         requestData
+      )
+    );
+  }
+
+  public setPassword(requestData: any): Promise<any> {
+    return lastValueFrom(
+      this.http.post(`${this.apiUrl}Authentication/set-password`, requestData)
+    );
+  }
+
+  public googleSignIn(accessToken: string): Promise<AuthResponse> {
+    const body: SocialSignInRequest = { accessToken };
+    return lastValueFrom(
+      this.http.post<AuthResponse>(
+        `${this.apiUrl}Authentication/google-signin`,
+        body
       )
     );
   }

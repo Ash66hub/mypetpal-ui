@@ -1,6 +1,15 @@
+@if (isServerDown) {
+  <div class="server-down-banner" role="status" aria-live="polite">
+    Server down, please try again in a couple minutes.
+  </div>
+}
+
 @if (isLoggedIn) {
   <app-top-bar></app-top-bar>
 }
-<div class="app-body" [class.full-screen]="!isLoggedIn">
+<div
+  class="app-body"
+  [class.full-screen]="!isLoggedIn"
+  [class.with-banner]="isServerDown">
   <router-outlet></router-outlet>
 </div>

@@ -3,4 +3,6 @@ export class User {
   username?: string;
   email?: string;
   password?: string;
+  authProvider?: string;
+  hasLocalPassword?: boolean;
 }

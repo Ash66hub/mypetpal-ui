@@ -4,10 +4,10 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
-    selector: 'app-top-bar',
-    templateUrl: './top-bar.component.html',
-    styleUrls: ['./top-bar.component.scss'],
-    standalone: false
+  selector: 'app-top-bar',
+  templateUrl: './top-bar.component.html',
+  styleUrls: ['./top-bar.component.scss'],
+  standalone: false
 })
 export class TopBarComponent implements OnInit, OnDestroy {
   public avatarLetter: string = 'U';
@@ -19,8 +19,11 @@ export class TopBarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    const userPublicId = localStorage.getItem('userPublicId');
     const userId = localStorage.getItem('userId');
-    if (userId) {
+    if (userPublicId) {
+      void this.loginStreamService.getCurrentUser(userPublicId);
+    } else if (userId) {
       void this.loginStreamService.getCurrentUser(userId);
     }
 

@@ -13,7 +13,10 @@ export class PetService {
   constructor(private http: HttpClient) {}
 
   public async getUserPet(userId: string): Promise<Pet | null> {
-    const url = `${this.apiUrl}Pets?userId=${userId}`;
+    const userPublicId = localStorage.getItem('userPublicId');
+    const url = userPublicId
+      ? `${this.apiUrl}Pets?userPublicId=${userPublicId}`
+      : `${this.apiUrl}Pets?userId=${userId}`;
 
     try {
       const result = await lastValueFrom(this.http.get<Pet | Pet[]>(url));
@@ -31,7 +34,10 @@ export class PetService {
   }
 
   public createPet(pet: Pet, userId: string): Promise<Pet> {
-    const url = `${this.apiUrl}Pets?userId=${userId}`;
+    const userPublicId = localStorage.getItem('userPublicId');
+    const url = userPublicId
+      ? `${this.apiUrl}Pets?userPublicId=${userPublicId}`
+      : `${this.apiUrl}Pets?userId=${userId}`;
     return lastValueFrom(this.http.post<Pet>(url, pet));
   }
 }
