@@ -134,6 +134,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly depthScale = 0.01;
   private readonly shadowDepthOffset = 0.2;
   private readonly spriteFootOffsetFactor = 0.35;
+  private readonly minZoomLevel = 2;
+  private readonly maxZoomLevel = 12;
+  private isPinchZooming = false;
+  private pinchStartDistance = 0;
+  private pinchStartZoom = 1;
 
   readonly emojis = [
     '😂',
@@ -390,8 +395,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private movePetToPoint(targetX: number, targetY: number): void {
-    if (!this.dog || !this.scene || this.isMoving) {
+    if (!this.dog || !this.scene) {
       return;
+    }
+
+    const wasMoving = this.isMoving;
+    if (wasMoving) {
+      this.cancelCurrentMovement();
     }
 
     if (
@@ -409,6 +419,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.remotePets
       )
     ) {
+      if (wasMoving) {
+        this.dog.play('idle');
+        this.saveUserSettings();
+      }
       return;
     }
 
@@ -459,6 +473,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       }
     });
+  }
+
+  private cancelCurrentMovement(): void {
+    if (!this.scene || !this.dog) {
+      return;
+    }
+
+    this.scene.tweens.killTweensOf(this.dog);
+    this.isMoving = false;
   }
 
   private getMovementAnimationKey(direction: string): string {
@@ -1017,12 +1040,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.gameScene.setupCameraPanning(
       scene,
       () => this.saveUserSettings(),
-      () => !this.isDraggingDecor
+      () => !this.isDraggingDecor && !this.isPinchZooming
     );
     this.gameScene.setupMouseWheelZoom(scene, dir => {
       if (dir === 'in') this.zoomIn();
       else this.zoomOut();
     });
+    this.setupPinchZoom(scene);
 
     const keyboardSetup = this.gameScene.setupKeyboardControls(scene, key =>
       this.moveStep(key)
@@ -1040,7 +1064,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           const isTouchInput =
             pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
 
-          if (isTouchInput) {
+          if (isTouchInput && !this.hasMultipleActiveTouchPointers(scene)) {
             const worldPoint = pointer.positionToCamera(
               scene.cameras.main
             ) as Phaser.Math.Vector2;
@@ -1144,10 +1168,16 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private updateTutorialSpotStyles(): void {
-    const wrapper = document.querySelector('.game-wrapper') as HTMLElement | null;
+    const wrapper = document.querySelector(
+      '.game-wrapper'
+    ) as HTMLElement | null;
     const gameContainer = document.getElementById('game-container');
-    const decorContainer = document.querySelector('.decor-panel-container') as HTMLElement | null;
-    const friendsContainer = document.querySelector('.social-panel-container') as HTMLElement | null;
+    const decorContainer = document.querySelector(
+      '.decor-panel-container'
+    ) as HTMLElement | null;
+    const friendsContainer = document.querySelector(
+      '.social-panel-container'
+    ) as HTMLElement | null;
 
     this.tutorialSpotStyles = {
       pet: this.getPetSpotStyle(wrapper, gameContainer),
@@ -1633,6 +1663,114 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.saveUserSettings()
       );
     }
+  }
+
+  private setupPinchZoom(scene: Phaser.Scene): void {
+    scene.input.addPointer(2);
+
+    scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!this.isTouchPointer(pointer)) {
+        return;
+      }
+
+      const pointers = this.getActiveTouchPointers(scene);
+      if (pointers.length >= 2) {
+        this.beginPinchZoom(pointers);
+      }
+    });
+
+    scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!this.isTouchPointer(pointer)) {
+        return;
+      }
+
+      const pointers = this.getActiveTouchPointers(scene);
+
+      if (pointers.length < 2) {
+        this.endPinchZoom();
+        return;
+      }
+
+      if (!this.isPinchZooming) {
+        this.beginPinchZoom(pointers);
+        return;
+      }
+
+      const currentDistance = Phaser.Math.Distance.Between(
+        pointers[0].x,
+        pointers[0].y,
+        pointers[1].x,
+        pointers[1].y
+      );
+
+      if (this.pinchStartDistance <= 0) {
+        return;
+      }
+
+      const scaleRatio = currentDistance / this.pinchStartDistance;
+      const nextZoom = Phaser.Math.Clamp(
+        this.pinchStartZoom * scaleRatio,
+        this.minZoomLevel,
+        this.maxZoomLevel
+      );
+
+      if (Math.abs(nextZoom - this.currentZoom) < 0.01) {
+        return;
+      }
+
+      this.currentZoom = nextZoom;
+      scene.cameras.main.zoom = nextZoom;
+      this.markLocalActivity();
+    });
+
+    scene.input.on('pointerup', () => {
+      if (!this.hasMultipleActiveTouchPointers(scene)) {
+        this.endPinchZoom();
+      }
+    });
+
+    scene.input.on('pointerupoutside', () => {
+      if (!this.hasMultipleActiveTouchPointers(scene)) {
+        this.endPinchZoom();
+      }
+    });
+  }
+
+  private beginPinchZoom(pointers: Phaser.Input.Pointer[]): void {
+    this.isPinchZooming = true;
+    this.pinchStartZoom = this.currentZoom;
+    this.pinchStartDistance = Phaser.Math.Distance.Between(
+      pointers[0].x,
+      pointers[0].y,
+      pointers[1].x,
+      pointers[1].y
+    );
+  }
+
+  private endPinchZoom(): void {
+    if (!this.isPinchZooming) {
+      return;
+    }
+
+    this.isPinchZooming = false;
+    this.pinchStartDistance = 0;
+    this.pinchStartZoom = this.currentZoom;
+    this.saveUserSettings();
+  }
+
+  private hasMultipleActiveTouchPointers(scene: Phaser.Scene): boolean {
+    return this.getActiveTouchPointers(scene).length >= 2;
+  }
+
+  private getActiveTouchPointers(scene: Phaser.Scene): Phaser.Input.Pointer[] {
+    return scene.input.manager.pointers.filter(
+      pointer => pointer.isDown && this.isTouchPointer(pointer)
+    );
+  }
+
+  private isTouchPointer(pointer: Phaser.Input.Pointer): boolean {
+    const pointerAny = pointer as any;
+    return pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
   }
 
   private onMoveComplete(): void {

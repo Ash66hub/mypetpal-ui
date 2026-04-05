@@ -15,11 +15,14 @@ export class DecorManagerService {
   private readonly DECOR_SCALE = 0.25;
   private readonly DECOR_PIXEL_BLOCK_SIZE = 1;
   private readonly SW_HORIZONTAL_SKEW_DEGREES = 15;
+  private readonly SE_WALL_HORIZONTAL_SKEW_DEGREES = -5;
   private readonly SE_LEFT_TILT_ANGLE = 2;
   private readonly SW_LEFT_TILT_ANGLE = -13;
+  private readonly SE_WALL_RIGHT_TILT_ANGLE = 7;
   private readonly LOUNGE_SOFA_CORNER_SW_RIGHT_TILT_ANGLE = -5;
   private readonly LOUNGE_SOFA_CORNER_DECOR_ID = 'f19';
-  private readonly BED_SW_RIGHT_TILT_ANGLE = -3;
+  private readonly BED_SW_RIGHT_TILT_ANGLE = 2;
+  private readonly BED_SW_HORIZONTAL_SKEW_DEGREES = -5;
   private readonly BED_DECOR_ID = 'f5';
   private readonly SELECTION_DEPTH = 9;
   private readonly SELECTION_HALO_SCALE = 1.04;
@@ -76,15 +79,32 @@ export class DecorManagerService {
       const swRenderKey = this.ensurePixelatedTexture(scene, swKey);
       const swSkewRenderKey = this.ensureHorizontallySkewedTexture(
         scene,
-        swRenderKey
+        swRenderKey,
+        this.SW_HORIZONTAL_SKEW_DEGREES
       );
+      const bedSwSkewRenderKey = this.ensureHorizontallySkewedTexture(
+        scene,
+        swRenderKey,
+        this.BED_SW_HORIZONTAL_SKEW_DEGREES
+      );
+      const swEffectiveRenderKey =
+        item.id === this.BED_DECOR_ID ? bedSwSkewRenderKey : swSkewRenderKey;
+      const seWallSkewRenderKey = this.ensureHorizontallySkewedTexture(
+        scene,
+        seRenderKey,
+        this.SE_WALL_HORIZONTAL_SKEW_DEGREES
+      );
+      const seEffectiveRenderKey =
+        item.category === 'wall' ? seWallSkewRenderKey : seRenderKey;
 
       const initialRenderKey =
-        initialRotation === 'SW' ? swSkewRenderKey : seRenderKey;
+        initialRotation === 'SW' ? swEffectiveRenderKey : seEffectiveRenderKey;
 
       const sprite = scene.physics.add.sprite(x, y, initialRenderKey);
       sprite.setScale(this.DECOR_SCALE);
-      sprite.setAngle(this.getAngleForRotation(initialRotation, item.id));
+      sprite.setAngle(
+        this.getAngleForRotation(initialRotation, item.id, item.category)
+      );
       this.applyOpaqueCollisionBounds(scene, sprite, initialRenderKey);
 
       sprite.setImmovable(true);
@@ -93,8 +113,8 @@ export class DecorManagerService {
       sprite.setData('decorId', item.id);
       sprite.setData('decorCategory', item.category);
       sprite.setData('rotation', initialRotation);
-      sprite.setData('seRenderKey', seRenderKey);
-      sprite.setData('swRenderKey', swSkewRenderKey);
+      sprite.setData('seRenderKey', seEffectiveRenderKey);
+      sprite.setData('swRenderKey', swEffectiveRenderKey);
 
       if (onSpriteAdded) {
         onSpriteAdded(sprite);
@@ -181,9 +201,10 @@ export class DecorManagerService {
 
   private ensureHorizontallySkewedTexture(
     scene: Phaser.Scene,
-    textureKey: string
+    textureKey: string,
+    skewDegrees: number
   ): string {
-    const skewKey = `${textureKey}_skx${this.SW_HORIZONTAL_SKEW_DEGREES}`;
+    const skewKey = `${textureKey}_skx${skewDegrees}`;
     if (scene.textures.exists(skewKey)) {
       return skewKey;
     }
@@ -200,13 +221,14 @@ export class DecorManagerService {
 
     const width = sourceImage.width;
     const height = sourceImage.height;
-    const shear = Math.tan(
-      Phaser.Math.DegToRad(this.SW_HORIZONTAL_SKEW_DEGREES)
-    );
-    const shiftX = Math.ceil(Math.abs(shear) * height);
+    const shear = Math.tan(Phaser.Math.DegToRad(skewDegrees));
+    const shearX = -shear * height;
+    const minShift = Math.min(0, shearX);
+    const maxShift = Math.max(0, shearX);
+    const translateX = -minShift;
 
     const output = document.createElement('canvas');
-    output.width = width + shiftX;
+    output.width = Math.ceil(width + (maxShift - minShift));
     output.height = height;
     const ctx = output.getContext('2d');
 
@@ -216,8 +238,8 @@ export class DecorManagerService {
 
     ctx.imageSmoothingEnabled = false;
 
-    // Keep the bottom edge anchored while shifting the top toward the right.
-    ctx.setTransform(1, 0, -shear, 1, shiftX, 0);
+    // Positive skew pulls the top toward the right; negative pulls it toward the left.
+    ctx.setTransform(1, 0, -shear, 1, translateX, 0);
     ctx.drawImage(sourceImage, 0, 0, width, height);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -319,7 +341,11 @@ export class DecorManagerService {
     sprite.setTexture(nextKey);
     sprite.setData('rotation', nextRotation);
     sprite.setAngle(
-      this.getAngleForRotation(nextRotation, sprite.getData('decorId'))
+      this.getAngleForRotation(
+        nextRotation,
+        sprite.getData('decorId'),
+        sprite.getData('decorCategory')
+      )
     );
     this.applyOpaqueCollisionBounds(
       sprite.scene,
@@ -410,7 +436,11 @@ export class DecorManagerService {
     return resolved;
   }
 
-  private getAngleForRotation(rotation: string, decorId?: string): number {
+  private getAngleForRotation(
+    rotation: string,
+    decorId?: string,
+    decorCategory?: string
+  ): number {
     if (rotation === 'SW') {
       if (decorId === this.LOUNGE_SOFA_CORNER_DECOR_ID) {
         return this.LOUNGE_SOFA_CORNER_SW_RIGHT_TILT_ANGLE;
@@ -422,6 +452,10 @@ export class DecorManagerService {
     }
 
     if (rotation === 'SE') {
+      if (decorCategory === 'wall') {
+        return this.SE_WALL_RIGHT_TILT_ANGLE;
+      }
+
       return decorId === this.BED_DECOR_ID ? -4 : this.SE_LEFT_TILT_ANGLE;
     }
 

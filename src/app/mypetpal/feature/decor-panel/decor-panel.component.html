@@ -1,6 +1,12 @@
 <div class="decor-panel-container" [class.collapsed]="isCollapsed">
   <!-- Toggle Button (Hammer) -->
-  <div class="drawer-handle" (click)="togglePanel()" title="Decorate Room">
+  <div
+    class="drawer-handle"
+    [style.top.px]="handleTop"
+    (click)="onHandleClick()"
+    (mousedown)="onHandleMouseDown($event)"
+    (touchstart)="onHandleTouchStart($event)"
+    title="Decorate Room">
     <div class="hammer-icon">🔨</div>
   </div>
 

@@ -9,6 +9,7 @@
 :host {
     display: block;
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
     overflow: hidden;
     background: linear-gradient(180deg, #10122b 0%, #15193b 100%);
@@ -43,6 +44,7 @@ app-top-bar{
 
 .app-body {
     height: calc(100vh - 68px);
+    height: calc(100dvh - 68px);
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -53,6 +55,7 @@ app-top-bar{
 
     &.full-screen {
         height: 100vh;
+        height: 100dvh;
         overflow-x: hidden;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -64,9 +67,11 @@ app-top-bar{
 
     &.with-banner {
         height: calc(100vh - 108px);
+        height: calc(100dvh - 108px);
     }
 
     &.full-screen.with-banner {
         height: calc(100vh - 40px);
+        height: calc(100dvh - 40px);
     }
 }

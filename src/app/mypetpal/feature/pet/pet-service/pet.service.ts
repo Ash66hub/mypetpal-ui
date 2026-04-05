@@ -13,10 +13,11 @@ export class PetService {
   constructor(private http: HttpClient) {}
 
   public async getUserPet(userId: string): Promise<Pet | null> {
-    const userPublicId = localStorage.getItem('userPublicId');
-    const url = userPublicId
-      ? `${this.apiUrl}Pets?userPublicId=${userPublicId}`
-      : `${this.apiUrl}Pets?userId=${userId}`;
+    const identifier = userId || localStorage.getItem('userPublicId') || '';
+    const usePublicId = identifier.length > 0 && !/^\d+$/.test(identifier);
+    const url = usePublicId
+      ? `${this.apiUrl}Pets?userPublicId=${identifier}`
+      : `${this.apiUrl}Pets?userId=${identifier}`;
 
     try {
       const result = await lastValueFrom(this.http.get<Pet | Pet[]>(url));
@@ -34,10 +35,11 @@ export class PetService {
   }
 
   public createPet(pet: Pet, userId: string): Promise<Pet> {
-    const userPublicId = localStorage.getItem('userPublicId');
-    const url = userPublicId
-      ? `${this.apiUrl}Pets?userPublicId=${userPublicId}`
-      : `${this.apiUrl}Pets?userId=${userId}`;
+    const identifier = userId || localStorage.getItem('userPublicId') || '';
+    const usePublicId = identifier.length > 0 && !/^\d+$/.test(identifier);
+    const url = usePublicId
+      ? `${this.apiUrl}Pets?userPublicId=${identifier}`
+      : `${this.apiUrl}Pets?userId=${identifier}`;
     return lastValueFrom(this.http.post<Pet>(url, pet));
   }
 }
