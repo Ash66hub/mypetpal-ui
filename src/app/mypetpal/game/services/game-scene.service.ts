@@ -8,7 +8,7 @@ export class GameSceneService {
   private readonly WORLD_SIZE = 2000;
   private readonly WORLD_CENTER = 1000;
   private readonly ROOM_CENTER = 1000;
-  private readonly TOUCH_PAN_SENSITIVITY = 0.35;
+  private readonly TOUCH_PAN_SENSITIVITY = 0.8;
 
   createGameConfig(
     parentId: string,

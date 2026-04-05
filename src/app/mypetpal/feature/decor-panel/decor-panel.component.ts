@@ -37,7 +37,6 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   ngOnInit(): void {
     this.updateFilteredItems();
     this.lastKnownUserLevel = this.decorService.userLevel();
-
   }
 
   ngDoCheck(): void {

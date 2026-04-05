@@ -2,7 +2,7 @@
     position: fixed;
     top: 68px;
     left: 0;
-    width: 320px;
+    width: 350px;
     height: calc(100vh - 68px);
     background: linear-gradient(180deg, rgba(34, 41, 92, 0.96), rgba(20, 25, 61, 0.96));
     border-right: 3px solid #0c102d;
@@ -392,7 +392,7 @@
 
 @media (max-width: 768px) {
     .left-panel-container {
-        width: 50vw;
+        width: 70vw;
 
         .panel-handle-rail {
             right: -50px;
