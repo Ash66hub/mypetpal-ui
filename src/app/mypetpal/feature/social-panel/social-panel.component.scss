@@ -577,22 +577,22 @@
 
 .toggle-btn {
     position: absolute;
-    left: -15px; // Anchor to the left side of the container so it sticks out
+    left: -26px; // Anchor to the left side of the container so it sticks out
     top: 50%;
     transform: translateY(-50%);
-    width: 15px;
-    height: 60px;
+    width: 26px;
+    height: 88px;
     background: #0c0c16;
     border: 1px solid rgba(124, 58, 237, 0.4);
     border-right: none;
-    border-radius: 12px 0 0 12px;
+    border-radius: 14px 0 0 14px;
     color: #a78bfa;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2001;
-    font-size: 14px;
+    font-size: 16px;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5);
     pointer-events: auto !important;
@@ -601,8 +601,8 @@
     &:hover {
         background: #1a1a2e;
         color: #fff;
-        width: 22px;
-        left: -22px;
+        width: 32px;
+        left: -32px;
         box-shadow: -6px 0 18px rgba(124, 58, 237, 0.2);
     }
 }

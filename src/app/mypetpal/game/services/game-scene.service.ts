@@ -8,6 +8,7 @@ export class GameSceneService {
   private readonly WORLD_SIZE = 2000;
   private readonly WORLD_CENTER = 1000;
   private readonly ROOM_CENTER = 1000;
+  private readonly TOUCH_PAN_SENSITIVITY = 0.35;
 
   createGameConfig(
     parentId: string,
@@ -230,10 +231,17 @@ export class GameSceneService {
     scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!pointer.isDown || !canPan()) return;
 
+      const pointerAny = pointer as any;
+      const isTouchInput =
+        pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
+      const panMultiplier = isTouchInput ? this.TOUCH_PAN_SENSITIVITY : 1;
+
       scene.cameras.main.scrollX -=
-        (pointer.x - pointer.prevPosition.x) / scene.cameras.main.zoom;
+        ((pointer.x - pointer.prevPosition.x) * panMultiplier) /
+        scene.cameras.main.zoom;
       scene.cameras.main.scrollY -=
-        (pointer.y - pointer.prevPosition.y) / scene.cameras.main.zoom;
+        ((pointer.y - pointer.prevPosition.y) * panMultiplier) /
+        scene.cameras.main.zoom;
       onCameraMove();
     });
   }
