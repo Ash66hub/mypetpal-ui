@@ -7,6 +7,30 @@
     background: rgba(14, 16, 40, 0.95);
     z-index: 1000;
     transition: opacity 0.5s ease;
+
+    .loading-content {
+        width: min(640px, calc(100vw - 40px));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        text-align: center;
+    }
+
+    .loading-tip {
+        margin: 0;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 2px solid rgba(99, 235, 217, 0.35);
+        background: rgba(20, 28, 68, 0.66);
+        color: #ffe9b4;
+        font-family: var(--retro-font-display);
+        font-size: 9px;
+        letter-spacing: 0.03em;
+        line-height: 1.4;
+        max-width: 70vw;
+        text-transform: uppercase;
+    }
 }
 
 .visit-mode-status {
@@ -109,6 +133,12 @@
 }
 
 @media (max-width: 640px) {
+    .game-loading-overlay .loading-tip {
+        font-size: 10px;
+        padding: 8px 10px;
+        max-width: 70vw;
+    }
+
     .visit-mode-status {
         top: 156px;
         max-width: calc(100vw - 24px);

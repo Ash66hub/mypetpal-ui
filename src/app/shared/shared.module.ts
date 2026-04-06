@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -42,6 +43,7 @@ import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.compon
     MatIconModule,
     MatToolbarModule,
     MatProgressSpinnerModule,
+    MatCheckboxModule,
     MatMenuModule,
     MatSelectModule,
     MatDialogModule,
@@ -63,6 +65,7 @@ import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.compon
     MatIconModule,
     MatToolbarModule,
     MatProgressSpinnerModule,
+    MatCheckboxModule,
     MatMenuModule,
     MatSelectModule,
     MatDialogModule,

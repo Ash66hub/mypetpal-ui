@@ -6,13 +6,21 @@
 
 @if (isGameLoading) {
   <div class="game-loading-overlay">
-    <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
+    <div class="loading-content">
+      <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
+      @if (selectedLoadingTip) {
+        <p class="loading-tip">{{ selectedLoadingTip }}</p>
+      }
+    </div>
   </div>
 }
 
 @if (isSavingRoom) {
   <div class="save-status">
-    <app-paw-spinner [diameter]="60" color="#7c3aed" icon="💾"></app-paw-spinner>
+    <app-paw-spinner
+      [diameter]="60"
+      color="#7c3aed"
+      icon="💾"></app-paw-spinner>
   </div>
 }
 

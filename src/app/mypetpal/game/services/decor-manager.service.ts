@@ -688,14 +688,16 @@ export class DecorManagerService {
     onRotate: () => void,
     onDelete: () => void
   ): Phaser.GameObjects.Container {
+    const iconSize = 48;
+
     const rotateIcon = scene.add
-      .image(-12, 0, 'rotate')
+      .image(-32, 0, 'rotate')
       .setOrigin(0.5)
-      .setDisplaySize(18, 18);
+      .setDisplaySize(iconSize, iconSize);
     const trashIcon = scene.add
-      .image(12, 0, 'trash')
+      .image(32, 0, 'trash')
       .setOrigin(0.5)
-      .setDisplaySize(18, 18);
+      .setDisplaySize(iconSize, iconSize);
 
     const toolbox = scene.add.container(0, 0, [rotateIcon, trashIcon]);
     toolbox.setDepth(this.TOOLBOX_DEPTH);

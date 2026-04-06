@@ -146,6 +146,109 @@ mat-divider {
     border-top-color: rgba(255, 255, 255, 0.1);
 }
 
+.music-preference-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px 16px;
+    border: 2px solid rgba(255, 233, 180, 0.18);
+    border-radius: 12px;
+    background: rgba(11, 27, 49, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+    .music-preference-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .panel-title {
+        display: block;
+        color: #ffe9b4;
+        font-family: var(--retro-font-display);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .panel-caption {
+        display: block;
+        margin-top: 3px;
+        color: #d7d3bb;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .music-toggle-btn {
+        flex: 0 0 auto;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(101, 236, 218, 0.12);
+        color: #ffe9b4;
+        border: 1px solid rgba(255, 233, 180, 0.22);
+    }
+
+    .music-volume-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ffe9b4;
+
+        mat-icon {
+            flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            font-size: 18px;
+            line-height: 18px;
+        }
+    }
+
+    .music-volume-slider {
+        flex: 1 1 auto;
+        height: 8px;
+        margin: 0;
+        border-radius: 999px;
+        appearance: none;
+        background: linear-gradient(90deg, #65ecda 0%, #36cdb8 100%);
+        outline: none;
+
+        &::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffe9b4;
+            border: 2px solid #0b1b31;
+            box-shadow: 0 2px 0 rgba(9, 11, 33, 0.8);
+            cursor: pointer;
+        }
+
+        &::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffe9b4;
+            border: 2px solid #0b1b31;
+            box-shadow: 0 2px 0 rgba(9, 11, 33, 0.8);
+            cursor: pointer;
+        }
+
+        &:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+    }
+
+    .music-volume-value {
+        align-self: flex-end;
+        color: #cfd9ff;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+    }
+}
+
 .password-form {
     display: flex;
     flex-direction: column;
@@ -164,6 +267,8 @@ mat-divider {
         width: 100%;
         margin-bottom: -1.25em; /* Trim material bottom padding */
     }
+
+    
 
     ::ng-deep .mat-mdc-form-field .mat-mdc-form-field-infix {
         padding-left: 12px !important;

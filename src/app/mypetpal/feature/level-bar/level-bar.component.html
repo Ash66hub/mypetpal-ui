@@ -1,4 +1,8 @@
-<div class="level-bar-container">
+<div
+  class="level-bar-container"
+  (pointerdown)="$event.stopPropagation(); $event.preventDefault()"
+  (touchstart)="$event.stopPropagation(); $event.preventDefault()"
+  (mousedown)="$event.stopPropagation(); $event.preventDefault()">
   <div class="level-bar-content">
     <div class="level-info">
       <span class="level-badge">Level {{ level }}</span>

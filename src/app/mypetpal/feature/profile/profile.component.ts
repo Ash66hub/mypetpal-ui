@@ -1,10 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { UpperCasePipe } from '@angular/common';
 import { LoginStreamService } from '../../../core/login/login-service/login-stream.service';
 import { LoginService } from '../../../core/login/login-service/login.service';
+import {
+  UserSettingsService,
+  UserSettings
+} from '../../../core/user-settings/user-settings.service';
+import { BackgroundMusicService } from '../../../core/audio/background-music.service';
 import { SnackbarService } from '../../../shared/snackbar/snackbar.service';
 import { User } from '../../../shared/user/user';
 import { ConfirmDialogComponent } from '../../../shared/dialogs/confirm-dialog.component';
@@ -19,14 +24,19 @@ import { passwordStrengthValidator } from '../../../shared/validators/custom-val
   imports: [SharedModule, UpperCasePipe]
 })
 export class ProfileComponent implements OnInit {
+  private readonly backgroundMusicService = inject(BackgroundMusicService);
   public currentUser: User | null = null;
   public passwordForm!: FormGroup;
   public isLoading = false;
+  public isSavingMusicPreference = false;
+  public isMusicPreferenceLoading = false;
   public isGoogleOnlyAccount = false;
   public hideOldPassword = true;
   public hideNewPassword = true;
   public hideConfirmPassword = true;
   public isUploadingProfilePicture = false;
+  public musicEnabled = false;
+  public musicVolume = 0.5;
   private readonly maxProfilePictureSizeInBytes = 5 * 1024 * 1024;
   private readonly allowedProfilePictureMimeTypes = new Set([
     'image/jpeg',
@@ -35,10 +45,12 @@ export class ProfileComponent implements OnInit {
   ]);
   private isGoogleSession = false;
   private hasLocalPassword = false;
+  private userSettings: UserSettings | null = null;
 
   constructor(
     private loginStreamService: LoginStreamService,
     private loginService: LoginService,
+    private userSettingsService: UserSettingsService,
     private snackbarService: SnackbarService,
     private fb: FormBuilder,
     private router: Router,
@@ -48,6 +60,10 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.loginStreamService.currentUserStream.subscribe((user: User) => {
       this.currentUser = user;
+      this.userSettings = null;
+      this.musicEnabled = false;
+      this.musicVolume = 0.5;
+      this.isMusicPreferenceLoading = false;
       const provider = (
         user?.authProvider ||
         localStorage.getItem('authProvider') ||
@@ -66,6 +82,10 @@ export class ProfileComponent implements OnInit {
       this.hasLocalPassword = hasLocalPassword;
       this.isGoogleOnlyAccount = this.isGoogleSession && !hasLocalPassword;
       this.updatePasswordFormValidators();
+
+      if (user?.userId) {
+        this.loadUserSettings(user.userId);
+      }
     });
 
     this.passwordForm = this.fb.group(
@@ -85,6 +105,118 @@ export class ProfileComponent implements OnInit {
     );
 
     this.updatePasswordFormValidators();
+  }
+
+  private loadUserSettings(userId: string): void {
+    const numericUserId = parseInt(userId, 10);
+    if (Number.isNaN(numericUserId)) {
+      return;
+    }
+
+    this.isMusicPreferenceLoading = true;
+    this.userSettingsService.getSettings(numericUserId).subscribe({
+      next: settings => {
+        this.userSettings = settings;
+        this.musicEnabled = settings.musicEnabled ?? false;
+        this.musicVolume = settings.musicVolume ?? 0.5;
+        this.isMusicPreferenceLoading = false;
+      },
+      error: err => {
+        console.warn('Failed to load user settings', err);
+        this.userSettings = null;
+        this.musicEnabled = false;
+        this.musicVolume = 0.5;
+        this.isMusicPreferenceLoading = false;
+      }
+    });
+  }
+
+  public onToggleInGameMusic(enabled: boolean): void {
+    if (!this.currentUser?.userId || this.isSavingMusicPreference) {
+      return;
+    }
+
+    this.musicEnabled = enabled;
+    this.backgroundMusicService.applyPreferences(
+      this.musicEnabled,
+      this.musicVolume
+    );
+    this.isSavingMusicPreference = true;
+
+    this.persistMusicPreference();
+  }
+
+  public onMusicVolumeInput(volume: number): void {
+    if (!this.currentUser?.userId || this.isSavingMusicPreference) {
+      return;
+    }
+
+    this.musicVolume = Math.max(0, Math.min(1, volume));
+    this.backgroundMusicService.applyPreferences(
+      this.musicEnabled,
+      this.musicVolume
+    );
+  }
+
+  public onMusicVolumeChanged(volume: number): void {
+    if (!this.currentUser?.userId || this.isSavingMusicPreference) {
+      return;
+    }
+
+    this.musicVolume = Math.max(0, Math.min(1, volume));
+    this.backgroundMusicService.applyPreferences(
+      this.musicEnabled,
+      this.musicVolume
+    );
+    this.isSavingMusicPreference = true;
+
+    this.persistMusicPreference();
+  }
+
+  private persistMusicPreference(): void {
+    if (!this.currentUser?.userId) {
+      this.isSavingMusicPreference = false;
+      return;
+    }
+
+    const settingsToSave: UserSettings = {
+      userId: parseInt(this.currentUser.userId.toString(), 10),
+      lastPetX: this.userSettings?.lastPetX ?? 1000,
+      lastPetY: this.userSettings?.lastPetY ?? 1027,
+      lastCameraX: this.userSettings?.lastCameraX ?? 1000,
+      lastCameraY: this.userSettings?.lastCameraY ?? 1000,
+      zoomLevel: this.userSettings?.zoomLevel ?? 5,
+      isMuted: this.userSettings?.isMuted ?? false,
+      musicVolume: this.musicVolume,
+      soundVolume: this.userSettings?.soundVolume ?? 0.5,
+      musicEnabled: this.musicEnabled,
+      neighborhoodPanelCollapsed:
+        this.userSettings?.neighborhoodPanelCollapsed ?? false
+    };
+
+    this.userSettingsService.saveSettings(settingsToSave).subscribe({
+      next: () => {
+        this.userSettings = settingsToSave;
+        this.backgroundMusicService.applyPreferences(
+          this.musicEnabled,
+          this.musicVolume
+        );
+        this.isSavingMusicPreference = false;
+      },
+      error: err => {
+        console.error('Failed to save music preference', err);
+        this.musicEnabled = this.userSettings?.musicEnabled ?? false;
+        this.musicVolume = this.userSettings?.musicVolume ?? 0.5;
+        this.backgroundMusicService.applyPreferences(
+          this.musicEnabled,
+          this.musicVolume
+        );
+        this.isSavingMusicPreference = false;
+        this.snackbarService.openSnackbarWithAction(
+          'Unable to save in-game music preference.'
+        );
+      }
+    });
   }
 
   private passwordMatchValidator(g: FormGroup) {
@@ -191,6 +323,7 @@ export class ProfileComponent implements OnInit {
   }
 
   public goBack(): void {
+    this.isLoading = true;
     this.router.navigate(['/game']);
   }
 

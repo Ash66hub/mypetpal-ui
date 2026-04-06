@@ -13,6 +13,8 @@ export interface UserSettings {
   isMuted: boolean;
   musicVolume: number;
   soundVolume: number;
+  musicEnabled: boolean;
+  neighborhoodPanelCollapsed: boolean;
 }
 
 @Injectable({
@@ -21,7 +23,7 @@ export interface UserSettings {
 export class UserSettingsService {
   private apiUrl = `${environment.apiUrl}api/UserSettings`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getSettings(userId: number): Observable<UserSettings> {
     return this.http.get<UserSettings>(`${this.apiUrl}/${userId}`);

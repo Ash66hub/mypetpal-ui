@@ -12,6 +12,8 @@ import { PlayerLevelService } from './services/player-level.service';
 import { RoomMultiplayerService } from './services/room-multiplayer.service';
 import { GameSceneService } from './services/game-scene.service';
 import { GameTutorialService } from './services/game-tutorial.service';
+import { BackgroundMusicService } from '../../core/audio/background-music.service';
+import { FriendService } from '../../core/social/friend.service';
 import { GameComponentCore } from './game.component.base';
 
 @Component({
@@ -35,6 +37,8 @@ export class GameComponent extends GameComponentCore {
     roomMultiplayer: RoomMultiplayerService,
     gameScene: GameSceneService,
     gameTutorialService: GameTutorialService,
+    backgroundMusicService: BackgroundMusicService,
+    friendService: FriendService,
     ngZone: NgZone
   ) {
     super(
@@ -51,6 +55,8 @@ export class GameComponent extends GameComponentCore {
       roomMultiplayer,
       gameScene,
       gameTutorialService,
+      backgroundMusicService,
+      friendService,
       ngZone
     );
   }

@@ -15,6 +15,7 @@ export class LevelBarComponent {
   public isExpInfoOpen = false;
 
   public toggleExpInfoBanner(event: MouseEvent): void {
+    event.preventDefault();
     event.stopPropagation();
     this.isExpInfoOpen = !this.isExpInfoOpen;
   }

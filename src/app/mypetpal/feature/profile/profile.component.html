@@ -49,8 +49,57 @@
           }
         </div>
         <small class="upload-hint">JPG, PNG, WEBP up to 5MB</small>
+
         <h3>{{ currentUser?.username || 'User' }}</h3>
         <span class="user-email">{{ currentUser?.email || 'N/A' }}</span>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="music-preference-panel">
+        <div class="music-preference-header">
+          <div>
+            <span class="panel-title">I-game music</span>
+            <span class="panel-caption">Loop the track while you play</span>
+          </div>
+
+          <button
+            mat-icon-button
+            type="button"
+            class="music-toggle-btn"
+            [disabled]="
+              isMusicPreferenceLoading || isSavingMusicPreference || isLoading
+            "
+            [attr.aria-label]="
+              musicEnabled ? 'Turn music off' : 'Turn music on'
+            "
+            (click)="onToggleInGameMusic(!musicEnabled)">
+            <mat-icon>{{ musicEnabled ? 'volume_up' : 'volume_off' }}</mat-icon>
+          </button>
+        </div>
+
+        <div class="music-volume-row">
+          <mat-icon aria-hidden="true">volume_down</mat-icon>
+          <input
+            class="music-volume-slider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            [disabled]="
+              isMusicPreferenceLoading || isSavingMusicPreference || isLoading
+            "
+            [value]="musicVolume"
+            (input)="onMusicVolumeInput($any($event.target).valueAsNumber)"
+            (change)="
+              onMusicVolumeChanged($any($event.target).valueAsNumber)
+            " />
+          <mat-icon aria-hidden="true">volume_up</mat-icon>
+        </div>
+
+        <div class="music-volume-value">
+          {{ musicVolume * 100 | number: '1.0-0' }}%
+        </div>
       </div>
 
       <mat-divider></mat-divider>
@@ -59,7 +108,6 @@
         [formGroup]="passwordForm"
         (ngSubmit)="onChangePassword()"
         class="password-form">
-        <h4>{{ isGoogleOnlyAccount ? 'Set Password' : 'Change Password' }}</h4>
         @if (isGoogleOnlyAccount) {
           <p>
             You're signed in with Google. Set aan app password if you'd like to
@@ -67,6 +115,7 @@
           </p>
         }
 
+        <h4>{{ isGoogleOnlyAccount ? 'Set Password' : 'Change Password' }}</h4>
         @if (!isGoogleOnlyAccount) {
           <mat-form-field appearance="outline">
             <mat-label>Current Password</mat-label>

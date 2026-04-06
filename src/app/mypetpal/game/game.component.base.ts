@@ -22,6 +22,8 @@ import {
   UserSettingsService,
   UserSettings
 } from '../../core/user-settings/user-settings.service';
+import { BackgroundMusicService } from '../../core/audio/background-music.service';
+import { FriendService } from '../../core/social/friend.service';
 import { ChatService } from './services/chat.service';
 import { PetMovementService } from './services/pet-movement.service';
 import { DecorManagerService } from './services/decor-manager.service';
@@ -189,6 +191,8 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     private roomMultiplayer: RoomMultiplayerService,
     private gameScene: GameSceneService,
     private gameTutorialService: GameTutorialService,
+    private backgroundMusicService: BackgroundMusicService,
+    private friendService: FriendService,
     private ngZone: NgZone
   ) {
     this.totalTutorialSteps = this.gameTutorialService.getStepCount();
@@ -933,6 +937,9 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
             s.zoomLevel ?? this.defaultZoomLevel,
             this.defaultZoomLevel
           );
+          this.friendService.isCollapsed.set(
+            s.neighborhoodPanelCollapsed ?? false
+          );
         }
       } catch (e) {
         console.warn('Settings load failed:', e);
@@ -1281,6 +1288,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.isGameLoading = false;
+        this.syncBackgroundMusic();
         this.startTutorialIfNeeded();
       }
     );
@@ -1878,10 +1886,20 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
           zoomLevel: this.currentZoom,
           isMuted: this.settings?.isMuted || false,
           musicVolume: this.settings?.musicVolume || 0.5,
-          soundVolume: this.settings?.soundVolume || 0.5
+          soundVolume: this.settings?.soundVolume || 0.5,
+          musicEnabled: this.settings?.musicEnabled ?? false,
+          neighborhoodPanelCollapsed: this.friendService.isCollapsed()
         })
         .subscribe();
     }, 5000);
+  }
+
+  private syncBackgroundMusic(): void {
+    const shouldPlayMusic =
+      !!this.settings?.musicEnabled && !this.settings?.isMuted;
+    const volume = this.settings?.musicVolume ?? 0.5;
+
+    this.backgroundMusicService.applyPreferences(shouldPlayMusic, volume);
   }
 
   private applyZoom(): void {
@@ -2046,6 +2064,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   private markLocalActivity(): void {
     this.lastLocalInteractionAt = Date.now();
     this.wakeDog();
+    this.backgroundMusicService.unlockPlayback();
     if (this.localRestIcon) {
       this.localRestIcon.destroy();
       this.localRestIcon = null;
