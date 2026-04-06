@@ -38,10 +38,31 @@ import { MatDialogRef } from '@angular/material/dialog';
         <div class="credits-section">
           <h3>Asset Credits</h3>
           <p>
-            Pet sprites: <a href="https://netherzapdos.itch.io" target="_blank" rel="noreferrer noopener">netherzapdos.itch.io</a>
+            Pet sprites:
+            <a
+              href="https://netherzapdos.itch.io"
+              target="_blank"
+              rel="noreferrer noopener"
+              >netherzapdos.itch.io</a
+            >
           </p>
           <p>
-            Building assets: <a href="https://kenney.nl" target="_blank" rel="noreferrer noopener">Kenney</a> and Nano banana
+            Building assets:
+            <a
+              href="https://kenney.nl"
+              target="_blank"
+              rel="noreferrer noopener"
+              >Kenney</a
+            >
+            and Nano banana
+          </p>
+
+          <h3 class="privacy-title">Privacy Policy</h3>
+          <p>
+            Read how MyPetPal collects and uses data:
+            <a routerLink="/privacy-policy" (click)="close()"
+              >View Privacy Policy</a
+            >
           </p>
         </div>
       </div>

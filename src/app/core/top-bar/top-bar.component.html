@@ -19,7 +19,10 @@
     [matMenuTriggerFor]="userMenu"
     aria-label="User menu"
     class="profile-trigger">
-    <span class="pet-thumb" [attr.aria-label]="'User avatar ' + avatarLetter" role="img">
+    <span
+      class="pet-thumb"
+      [attr.aria-label]="'User avatar ' + avatarLetter"
+      role="img">
       @if (avatarUrl) {
         <img [src]="avatarUrl" alt="Profile picture" class="pet-thumb-image" />
       }

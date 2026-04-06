@@ -23,7 +23,7 @@
       <mat-card>
         <mat-card-content>
           <!-- Login Form -->
-          @if (!isSignUpMode) {
+          @if (!isSignUpMode && !isForgotPasswordMode) {
             <h2 class="form-title">Welcome back!</h2>
             <p class="form-subtitle">
               Continue with Google or sign in with email.
@@ -92,6 +92,15 @@
                   Login
                 </button>
               </div>
+              <div class="forgot-password-row">
+                <button
+                  mat-button
+                  class="link-btn"
+                  type="button"
+                  (click)="openForgotPassword()">
+                  Forgot Password?
+                </button>
+              </div>
               <div class="footer-action">
                 <span>New here?</span>
                 <button
@@ -100,6 +109,160 @@
                   type="button"
                   (click)="toggleMode()">
                   Create Account
+                </button>
+              </div>
+            </form>
+          }
+
+          @if (isForgotPasswordMode && !resetCodeSent) {
+            <h2 class="form-title">Forgot password?</h2>
+            <p class="form-subtitle">
+              Enter your account email and we will send a 6-digit reset code.
+            </p>
+            <form
+              [formGroup]="forgotPasswordRequestForm"
+              (ngSubmit)="onRequestResetCode()">
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" required />
+                @if (forgotPasswordRequestForm.get('email')?.invalid) {
+                  <mat-error>Please enter a valid email.</mat-error>
+                }
+              </mat-form-field>
+
+              @if (forgotPasswordRequestFailed) {
+                <mat-error class="form-error"
+                  >{{ forgotPasswordRequestErrorMessage }}</mat-error
+                >
+              }
+
+              <div class="button-stack">
+                <button
+                  mat-raised-button
+                  class="primary-btn"
+                  type="submit"
+                  [disabled]="forgotPasswordRequestForm.invalid">
+                  Send Reset Code
+                </button>
+              </div>
+
+              <div class="footer-action">
+                <span>Remembered your password?</span>
+                <button
+                  mat-button
+                  class="link-btn"
+                  type="button"
+                  (click)="closeForgotPassword()">
+                  Back to Login
+                </button>
+              </div>
+            </form>
+          }
+
+          @if (isForgotPasswordMode && resetCodeSent) {
+            <h2 class="form-title">Reset password</h2>
+            <p class="form-subtitle">
+              Enter the 6-digit code from your email and choose a new password.
+            </p>
+            <form
+              [formGroup]="forgotPasswordResetForm"
+              (ngSubmit)="onResetPasswordWithCode()">
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" required />
+                @if (forgotPasswordResetForm.get('email')?.invalid) {
+                  <mat-error>Please enter a valid email.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
+                <mat-label>6-digit code</mat-label>
+                <input matInput formControlName="code" maxlength="6" required />
+                @if (forgotPasswordResetForm.get('code')?.invalid) {
+                  <mat-error>Please enter a valid 6-digit code.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
+                <mat-label>New Password</mat-label>
+                <input
+                  matInput
+                  [type]="hideResetPassword ? 'password' : 'text'"
+                  formControlName="password"
+                  required />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="hideResetPassword = !hideResetPassword"
+                  type="button">
+                  <mat-icon>{{
+                    hideResetPassword ? 'visibility_off' : 'visibility'
+                  }}</mat-icon>
+                </button>
+                @if (forgotPasswordResetForm.get('password')?.hasError('minlength')) {
+                  <mat-error
+                    >Password must be at least 12 characters.</mat-error
+                  >
+                }
+                @if (forgotPasswordResetForm.get('password')?.hasError('weakPassword')) {
+                  <mat-error
+                    >Password must include both letters and numbers.</mat-error
+                  >
+                }
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="full-width"
+                subscriptSizing="dynamic">
+                <mat-label>Confirm Password</mat-label>
+                <input
+                  matInput
+                  [type]="hideResetPassword ? 'password' : 'text'"
+                  formControlName="confirmPassword"
+                  required />
+              </mat-form-field>
+
+              @if (forgotPasswordResetForm.errors?.['passwordMismatch']) {
+                <mat-error class="form-error"
+                  >Passwords do not match.</mat-error
+                >
+              }
+
+              @if (resetPasswordFailed) {
+                <mat-error class="form-error">{{ resetPasswordErrorMessage }}</mat-error>
+              }
+
+              <div class="button-stack">
+                <button
+                  mat-raised-button
+                  class="primary-btn"
+                  type="submit"
+                  [disabled]="forgotPasswordResetForm.invalid">
+                  Reset Password
+                </button>
+              </div>
+
+              <div class="footer-action">
+                <span>Didn't get a code?</span>
+                <button
+                  mat-button
+                  class="link-btn"
+                  type="button"
+                  (click)="resetCodeSent = false">
+                  Resend Code
                 </button>
               </div>
             </form>

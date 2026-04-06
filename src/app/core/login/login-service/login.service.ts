@@ -9,7 +9,7 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   userId: string;
-  userPublicId?: string;
+  id?: string;
 }
 
 export interface RefreshResponse {
@@ -19,6 +19,16 @@ export interface RefreshResponse {
 
 export interface SocialSignInRequest {
   accessToken: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordWithCodeRequest {
+  email: string;
+  code: string;
+  newPassword: string;
 }
 
 @Injectable()
@@ -46,26 +56,21 @@ export class LoginService {
     });
   }
 
-  public getUserByPublicId(publicId: string): Promise<User> {
-    const url = `${this.apiUrl}Users/public/${publicId}`;
+  public getUserById(id: string): Promise<User> {
+    const url = `${this.apiUrl}Users/id/${id}`;
 
     return lastValueFrom(this.http.get<User>(url)).catch(error => {
-      console.error(`Error fetching user with PublicID: ${publicId}`, error);
+      console.error(`Error fetching user with ID: ${id}`, error);
       throw error;
     });
   }
 
-  public updateProfilePicture(
-    userId: string,
-    file: File
-  ): Promise<User> {
+  public updateProfilePicture(userId: string, file: File): Promise<User> {
     const url = `${this.apiUrl}Users/${userId}/profile-picture`;
     const formData = new FormData();
     formData.append('file', file, file.name);
 
-    return lastValueFrom(
-      this.http.post<User>(url, formData)
-    );
+    return lastValueFrom(this.http.post<User>(url, formData));
   }
 
   public getToken(
@@ -112,6 +117,27 @@ export class LoginService {
       this.http.post<AuthResponse>(
         `${this.apiUrl}Authentication/google-signin`,
         body
+      )
+    );
+  }
+
+  public requestPasswordResetCode(email: string): Promise<{ message: string }> {
+    const body: ForgotPasswordRequest = { email };
+    return lastValueFrom(
+      this.http.post<{ message: string }>(
+        `${this.apiUrl}Authentication/forgot-password/request`,
+        body
+      )
+    );
+  }
+
+  public resetPasswordWithCode(
+    requestData: ResetPasswordWithCodeRequest
+  ): Promise<{ message: string }> {
+    return lastValueFrom(
+      this.http.post<{ message: string }>(
+        `${this.apiUrl}Authentication/forgot-password/reset`,
+        requestData
       )
     );
   }

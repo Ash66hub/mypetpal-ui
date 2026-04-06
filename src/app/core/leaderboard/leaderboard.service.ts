@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 
 export interface LeaderboardPlayer {
   userId: number;
-  publicId?: string;
+  id?: string;
   username: string;
   profilePictureUrl?: string;
   level: number;

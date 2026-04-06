@@ -11,6 +11,7 @@ import { SnackbarService } from '../../shared/snackbar/snackbar.service';
 import { Router } from '@angular/router';
 import { PetStreamService } from '../../mypetpal/feature/pet/pet-service/pet-stream.service';
 import { SocialAuthService } from './login-service/social-auth.service';
+import { LoginService } from './login-service/login.service';
 
 @Component({
   selector: 'app-login',
@@ -19,19 +20,29 @@ import { SocialAuthService } from './login-service/social-auth.service';
   standalone: false
 })
 export class LoginComponent implements OnInit {
-  public loginForm: FormGroup;
-  public signUpForm: FormGroup;
+  public loginForm!: FormGroup;
+  public signUpForm!: FormGroup;
+  public forgotPasswordRequestForm!: FormGroup;
+  public forgotPasswordResetForm!: FormGroup;
   public hidePassword = true;
+  public hideResetPassword = true;
   public isSignUpMode = false;
+  public isForgotPasswordMode = false;
+  public resetCodeSent = false;
 
   public loginFailed = false;
   public signUpFailedDueToDuplicate = false;
+  public forgotPasswordRequestFailed = false;
+  public forgotPasswordRequestErrorMessage = '';
+  public resetPasswordFailed = false;
+  public resetPasswordErrorMessage = '';
   public loading = false;
   public googleLoginFailed = false;
 
   constructor(
     private fb: FormBuilder,
     private loginStreamService: LoginStreamService,
+    private loginService: LoginService,
     private socialAuthService: SocialAuthService,
     private petStreamService: PetStreamService,
     private snackbarService: SnackbarService,
@@ -61,11 +72,122 @@ export class LoginComponent implements OnInit {
       { validators: confirmPasswordValidator() }
     );
 
+    this.forgotPasswordRequestForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]]
+    });
+
+    this.forgotPasswordResetForm = this.fb.group(
+      {
+        email: ['', [Validators.required, Validators.email]],
+        code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+        password: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(12),
+            passwordStrengthValidator()
+          ]
+        ],
+        confirmPassword: ['', [Validators.required]]
+      },
+      { validators: confirmPasswordValidator() }
+    );
+
     void this.tryCompleteGoogleSignIn();
   }
 
   public toggleMode(): void {
     this.isSignUpMode = !this.isSignUpMode;
+    this.resetForgotPasswordState();
+  }
+
+  public openForgotPassword(): void {
+    this.isSignUpMode = false;
+    this.isForgotPasswordMode = true;
+    this.resetCodeSent = false;
+    this.forgotPasswordRequestFailed = false;
+    this.forgotPasswordRequestErrorMessage = '';
+    this.resetPasswordFailed = false;
+    this.resetPasswordErrorMessage = '';
+
+    const usernameOrEmail = this.loginForm.get('usernameOrEmail')?.value;
+    if (typeof usernameOrEmail === 'string' && usernameOrEmail.includes('@')) {
+      this.forgotPasswordRequestForm.patchValue({ email: usernameOrEmail });
+    }
+  }
+
+  public closeForgotPassword(): void {
+    this.resetForgotPasswordState();
+    this.isSignUpMode = false;
+  }
+
+  public async onRequestResetCode(): Promise<void> {
+    this.forgotPasswordRequestFailed = false;
+    this.forgotPasswordRequestErrorMessage = '';
+
+    if (this.forgotPasswordRequestForm.invalid) {
+      return;
+    }
+
+    const email = this.forgotPasswordRequestForm.value.email;
+    this.loading = true;
+
+    try {
+      await this.loginService.requestPasswordResetCode(email);
+      this.resetCodeSent = true;
+      this.forgotPasswordResetForm.patchValue({ email });
+      this.snackbarService.openSnackbarWithAction(
+        'If an account created with the email exists, a reset code has been sent.'
+      );
+    } catch (error) {
+      const httpError = error as HttpErrorResponse;
+      this.forgotPasswordRequestFailed = true;
+      this.forgotPasswordRequestErrorMessage =
+        (typeof httpError.error === 'string' && httpError.error) ||
+        'Could not send reset code. Please try again.';
+      console.error('Forgot password request failed', httpError);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  public async onResetPasswordWithCode(): Promise<void> {
+    this.resetPasswordFailed = false;
+    this.resetPasswordErrorMessage = '';
+
+    if (this.forgotPasswordResetForm.invalid) {
+      return;
+    }
+
+    const payload = {
+      email: this.forgotPasswordResetForm.value.email,
+      code: this.forgotPasswordResetForm.value.code,
+      newPassword: this.forgotPasswordResetForm.value.password
+    };
+
+    this.loading = true;
+
+    try {
+      await this.loginService.resetPasswordWithCode(payload);
+      this.snackbarService.openSnackbarWithAction(
+        'Password reset successful. You can log in now.'
+      );
+
+      this.loginForm.patchValue({
+        usernameOrEmail: payload.email,
+        password: ''
+      });
+
+      this.closeForgotPassword();
+    } catch (error) {
+      const httpError = error as HttpErrorResponse;
+      this.resetPasswordFailed = true;
+      this.resetPasswordErrorMessage =
+        (httpError.error as string) ||
+        'Failed to reset password. Please check the code and try again.';
+    } finally {
+      this.loading = false;
+    }
   }
 
   public async onLogin(): Promise<void> {
@@ -238,5 +360,16 @@ export class LoginComponent implements OnInit {
       this.signUpForm.get('password')?.value ===
       this.signUpForm.get('confirmPassword')?.value
     );
+  }
+
+  private resetForgotPasswordState(): void {
+    this.isForgotPasswordMode = false;
+    this.resetCodeSent = false;
+    this.forgotPasswordRequestFailed = false;
+    this.forgotPasswordRequestErrorMessage = '';
+    this.resetPasswordFailed = false;
+    this.resetPasswordErrorMessage = '';
+    this.forgotPasswordRequestForm?.reset();
+    this.forgotPasswordResetForm?.reset();
   }
 }

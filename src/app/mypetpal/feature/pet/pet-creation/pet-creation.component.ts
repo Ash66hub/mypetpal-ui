@@ -124,9 +124,9 @@ export class PetCreationComponent implements OnInit {
         health: 100
       };
 
-      const userPublicId = localStorage.getItem('userPublicId');
+      const id = localStorage.getItem('id');
       const userId = localStorage.getItem('userId');
-      const identifier = userPublicId || userId;
+      const identifier = id || userId;
       if (identifier) {
         try {
           await this.petStream.createUserPet(identifier, pet);

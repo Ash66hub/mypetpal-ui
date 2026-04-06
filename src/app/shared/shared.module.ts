@@ -16,6 +16,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatOptionModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { RouterModule } from '@angular/router';
 
 import { UserComponent } from './user/user.component';
 import { ConfirmDialogComponent } from './dialogs/confirm-dialog.component';
@@ -47,7 +48,8 @@ import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.compon
     MatSnackBarModule,
     MatOptionModule,
     MatTooltipModule,
-    MatDividerModule
+    MatDividerModule,
+    RouterModule
   ],
   exports: [
     CommonModule,
@@ -68,6 +70,7 @@ import { PawSpinnerComponent } from './components/paw-spinner/paw-spinner.compon
     MatOptionModule,
     MatTooltipModule,
     MatDividerModule,
+    RouterModule,
     ConfirmDialogComponent,
     AboutDialogComponent,
     PawSpinnerComponent

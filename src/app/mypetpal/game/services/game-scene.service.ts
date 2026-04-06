@@ -302,21 +302,48 @@ export class GameSceneService {
     scene: Phaser.Scene,
     onZoom: (direction: 'in' | 'out') => void
   ): void {
-    scene.input.on(
-      'wheel',
-      (
-        pointer: Phaser.Input.Pointer,
-        gameObjects: any,
-        deltaX: number,
-        deltaY: number
-      ) => {
-        if (deltaY > 0) {
-          onZoom('out');
-        } else if (deltaY < 0) {
-          onZoom('in');
-        }
+    let lastWheelAt = 0;
+    const invokeZoom = (deltaY: number) => {
+      const now = performance.now();
+      if (now - lastWheelAt < 16) {
+        return;
       }
-    );
+
+      lastWheelAt = now;
+
+      if (deltaY > 0) {
+        onZoom('out');
+      } else if (deltaY < 0) {
+        onZoom('in');
+      }
+    };
+
+    const phaserWheelHandler = (
+      pointer: Phaser.Input.Pointer,
+      gameObjects: any,
+      deltaX: number,
+      deltaY: number
+    ) => {
+      invokeZoom(deltaY);
+    };
+
+    scene.input.on('wheel', phaserWheelHandler);
+
+    // Keep zoom working after scene transitions by listening directly on the canvas as a fallback.
+    const wheelTarget = scene.input.mouse?.target as HTMLElement | null;
+    const domWheelHandler = (event: WheelEvent) => {
+      invokeZoom(event.deltaY);
+      event.preventDefault();
+    };
+
+    wheelTarget?.addEventListener('wheel', domWheelHandler, {
+      passive: false
+    });
+
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.input.off('wheel', phaserWheelHandler);
+      wheelTarget?.removeEventListener('wheel', domWheelHandler);
+    });
   }
 
   setupKeyboardControls(

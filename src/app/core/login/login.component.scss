@@ -222,6 +222,12 @@
     opacity: 0.9;
 }
 
+.forgot-password-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
 .primary-btn {
     background: linear-gradient(180deg, #5ce6d3, #2ec7b1) !important;
     color: #0b1b31 !important;

@@ -23,10 +23,10 @@ export class TopBarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const userPublicId = localStorage.getItem('userPublicId');
+    const id = localStorage.getItem('id');
     const userId = localStorage.getItem('userId');
-    if (userPublicId) {
-      void this.loginStreamService.getCurrentUser(userPublicId);
+    if (id) {
+      void this.loginStreamService.getCurrentUser(id);
     } else if (userId) {
       void this.loginStreamService.getCurrentUser(userId);
     }
@@ -58,8 +58,7 @@ export class TopBarComponent implements OnInit, OnDestroy {
   }
 
   public replayTutorial(): void {
-    const userId =
-      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+    const userId = localStorage.getItem('id') || localStorage.getItem('userId');
 
     if (userId) {
       localStorage.setItem('firstTimeTutorialPendingFor', userId);

@@ -5,6 +5,7 @@ import { AuthGuard } from './route-guard';
 import { PetGuard } from './pet-guard';
 import { PetCreationComponent } from '../../mypetpal/feature/pet/pet-creation/pet-creation.component';
 import { ProfileComponent } from '../../mypetpal/feature/profile/profile.component';
+import { PrivacyPolicyComponent } from '../../shared/pages/privacy-policy/privacy-policy.component';
 
 export const routes: Routes = [
   {
@@ -32,5 +33,9 @@ export const routes: Routes = [
     path: 'profile',
     component: ProfileComponent,
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'privacy-policy',
+    component: PrivacyPolicyComponent
   }
 ];

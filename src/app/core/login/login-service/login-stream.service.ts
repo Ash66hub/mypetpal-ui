@@ -25,11 +25,11 @@ export class LoginStreamService {
           response.token,
           response.refreshToken,
           response.userId,
-          response.userPublicId
+          response.id
         );
         localStorage.setItem('authProvider', 'local');
         localStorage.setItem('hasLocalPassword', 'true');
-        await this.getCurrentUser(response.userPublicId ?? response.userId);
+        await this.getCurrentUser(response.id ?? response.userId);
 
         await new Promise(resolve => setTimeout(resolve, 50));
       }
@@ -51,10 +51,10 @@ export class LoginStreamService {
         response.token,
         response.refreshToken,
         response.userId,
-        response.userPublicId
+        response.id
       );
       localStorage.setItem('authProvider', 'google');
-      await this.getCurrentUser(response.userPublicId ?? response.userId);
+      await this.getCurrentUser(response.id ?? response.userId);
       await new Promise(resolve => setTimeout(resolve, 50));
     }
   }
@@ -63,13 +63,13 @@ export class LoginStreamService {
     token: string,
     refreshToken: string,
     userId: string,
-    userPublicId?: string
+    id?: string
   ): void {
     localStorage.setItem('token', token);
     localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('userId', userId);
-    if (userPublicId) {
-      localStorage.setItem('userPublicId', userPublicId);
+    if (id) {
+      localStorage.setItem('id', id);
     }
     localStorage.setItem(this.authSessionKey, 'true');
 
@@ -108,9 +108,9 @@ export class LoginStreamService {
         userId: resolvedUserId
       });
 
-      const userPublicId = (user as any)?.publicId ?? (user as any)?.PublicId;
-      if (userPublicId) {
-        localStorage.setItem('userPublicId', userPublicId);
+      const userIdValue = (user as any)?.id ?? (user as any)?.Id;
+      if (userIdValue) {
+        localStorage.setItem('id', userIdValue);
       }
 
       const authProvider =
@@ -136,11 +136,11 @@ export class LoginStreamService {
     }
   }
 
-  private async resolveAndFetchCurrentUser(userIdOrPublicId: string) {
+  private async resolveAndFetchCurrentUser(userIdOrId: string) {
     try {
-      return await this.loginService.getUserByPublicId(userIdOrPublicId);
+      return await this.loginService.getUserById(userIdOrId);
     } catch {
-      return this.loginService.getUser(userIdOrPublicId);
+      return this.loginService.getUser(userIdOrId);
     }
   }
 
@@ -153,7 +153,7 @@ export class LoginStreamService {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userId');
-    localStorage.removeItem('userPublicId');
+    localStorage.removeItem('id');
     localStorage.removeItem('authProvider');
     localStorage.removeItem('hasLocalPassword');
     localStorage.removeItem('tokenExpiration');

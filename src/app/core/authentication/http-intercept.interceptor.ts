@@ -20,6 +20,8 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
   const isAnonymousEndpoint =
     lowerUrl.endsWith('/authentication') ||
     lowerUrl.endsWith('/authentication/refreshtoken') ||
+    lowerUrl.endsWith('/authentication/forgot-password/request') ||
+    lowerUrl.endsWith('/authentication/forgot-password/reset') ||
     lowerUrl.endsWith('/authentication/google-signin') ||
     lowerUrl.endsWith('/users/signup');
 

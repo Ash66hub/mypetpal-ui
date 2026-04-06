@@ -9,7 +9,9 @@
 
     <div class="profile-card">
       <div class="user-display">
-        <div class="avatar-giant bg-primary" [class.has-image]="!!currentUser?.profilePictureUrl">
+        <div
+          class="avatar-giant bg-primary"
+          [class.has-image]="!!currentUser?.profilePictureUrl">
           @if (currentUser?.profilePictureUrl) {
             <img
               [src]="currentUser?.profilePictureUrl"
@@ -40,7 +42,9 @@
 
           @if (isUploadingProfilePicture) {
             <div class="avatar-uploading-mask">
-              <app-paw-spinner [diameter]="28" color="#ffffff"></app-paw-spinner>
+              <app-paw-spinner
+                [diameter]="28"
+                color="#ffffff"></app-paw-spinner>
             </div>
           }
         </div>

@@ -80,11 +80,18 @@ export class GameTutorialService {
     const top =
       targetRect.top - wrapperRect.top + (targetRect.height - height) / 2 - 4;
 
+    const clamped = this.clampRectToWrapper(wrapperRect, {
+      left,
+      top,
+      width: Math.max(72, width),
+      height: Math.max(72, height)
+    });
+
     return {
-      left: `${Math.max(0, left)}px`,
-      top: `${Math.max(0, top)}px`,
-      width: `${Math.max(72, width)}px`,
-      height: `${Math.max(72, height)}px`
+      left: `${clamped.left}px`,
+      top: `${clamped.top}px`,
+      width: `${clamped.width}px`,
+      height: `${clamped.height}px`
     };
   }
 
@@ -106,11 +113,34 @@ export class GameTutorialService {
     const width = targetRect.width + inset * 2;
     const height = targetRect.height + inset * 2;
 
+    const clamped = this.clampRectToWrapper(wrapperRect, {
+      left,
+      top,
+      width: Math.max(24, width),
+      height: Math.max(24, height)
+    });
+
     return {
-      left: `${Math.max(0, left)}px`,
-      top: `${Math.max(0, top)}px`,
-      width: `${Math.max(24, width)}px`,
-      height: `${Math.max(24, height)}px`
+      left: `${clamped.left}px`,
+      top: `${clamped.top}px`,
+      width: `${clamped.width}px`,
+      height: `${clamped.height}px`
     };
+  }
+
+  private clampRectToWrapper(
+    wrapperRect: DOMRect,
+    rect: { left: number; top: number; width: number; height: number }
+  ): { left: number; top: number; width: number; height: number } {
+    const maxWidth = Math.max(24, wrapperRect.width);
+    const maxHeight = Math.max(24, wrapperRect.height);
+
+    const width = Math.min(rect.width, maxWidth);
+    const height = Math.min(rect.height, maxHeight);
+
+    const left = Math.min(Math.max(0, rect.left), Math.max(0, maxWidth - width));
+    const top = Math.min(Math.max(0, rect.top), Math.max(0, maxHeight - height));
+
+    return { left, top, width, height };
   }
 }

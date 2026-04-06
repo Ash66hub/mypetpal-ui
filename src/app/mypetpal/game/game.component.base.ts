@@ -235,7 +235,9 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   @HostListener('window:mousedown', ['$event'])
   onWindowClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    const clickedInsideChatControls = !!target.closest('app-game-chat-controls');
+    const clickedInsideChatControls = !!target.closest(
+      'app-game-chat-controls'
+    );
     const isButton = (event.target as HTMLElement).tagName === 'BUTTON';
 
     if (!clickedInsideChatControls && !isButton) {
@@ -251,7 +253,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   @HostListener('window:replay-tutorial')
   onReplayTutorialRequested(): void {
     const currentUserId =
-      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+      localStorage.getItem('id') || localStorage.getItem('userId');
 
     if (currentUserId) {
       localStorage.setItem('firstTimeTutorialPendingFor', currentUserId);
@@ -408,7 +410,12 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
       this.cancelCurrentMovement();
     }
 
-    const safeTarget = this.resolveSafeTouchTarget(startX, startY, targetX, targetY);
+    const safeTarget = this.resolveSafeTouchTarget(
+      startX,
+      startY,
+      targetX,
+      targetY
+    );
     const travelDistance = Phaser.Math.Distance.Between(
       startX,
       startY,
@@ -499,7 +506,11 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     let lastSafeX = startX;
     let lastSafeY = startY;
 
-    for (let distance = sampleStep; distance <= totalDistance; distance += sampleStep) {
+    for (
+      let distance = sampleStep;
+      distance <= totalDistance;
+      distance += sampleStep
+    ) {
       const t = Math.min(1, distance / totalDistance);
       const sampleX = startX + (targetX - startX) * t;
       const sampleY = startY + (targetY - startY) * t;
@@ -1075,7 +1086,9 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
     this.remoteRestIcons.forEach(icon => icon.destroy());
     this.remoteRestIcons.clear();
-    this.remoteChatBubbles.forEach(bubbles => bubbles.forEach(b => b.destroy()));
+    this.remoteChatBubbles.forEach(bubbles =>
+      bubbles.forEach(b => b.destroy())
+    );
     this.remoteChatBubbles.clear();
     this.remotePets.clear();
     this.chatBubbles = [];
@@ -1109,9 +1122,10 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     let petFetchFailed = false;
 
     if (!pet.petId) {
-      const userPublicId = localStorage.getItem('userPublicId');
+      const id = localStorage.getItem('id');
       const userId = localStorage.getItem('userId');
-      const identifier = userPublicId || userId;
+      const identifier =
+        localStorage.getItem('id') || localStorage.getItem('userId');
       if (identifier) {
         try {
           await this.petStreamService.getUserPets(identifier);
@@ -1139,8 +1153,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async loadSelectionContext(): Promise<void> {
-    const myId =
-      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+    const myId = localStorage.getItem('id') || localStorage.getItem('userId');
     if (!myId || !this.currentPet) {
       return;
     }
@@ -1355,7 +1368,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const currentUserId =
-      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+      localStorage.getItem('id') || localStorage.getItem('userId');
     if (!currentUserId) {
       return;
     }
@@ -1383,7 +1396,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
   private completeTutorial(): void {
     const currentUserId =
-      localStorage.getItem('userPublicId') || localStorage.getItem('userId');
+      localStorage.getItem('id') || localStorage.getItem('userId');
 
     if (currentUserId) {
       localStorage.setItem(
