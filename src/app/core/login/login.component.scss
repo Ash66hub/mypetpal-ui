@@ -59,6 +59,14 @@
         font-family: var(--retro-font-display);
         text-transform: uppercase;
     }
+
+    .home-blurb {
+        margin: 10px auto 0;
+        max-width: 360px;
+        color: #dcd7c2;
+        font-size: 12px;
+        line-height: 1.5;
+    }
 }
 
 // ===== CARD =====
@@ -276,6 +284,23 @@
     font-size: 13px !important;
     font-family: var(--retro-font-display) !important;
     letter-spacing: 0.03em;
+}
+
+.public-links {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 12px;
+}
+
+.link-separator {
+    color: rgba(248, 243, 220, 0.55);
+    margin: 0 8px;
+}
+
+.public-links a {
+    color: #8be9ff;
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 // ===== SPINNER =====

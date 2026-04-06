@@ -6,6 +6,7 @@ import { PetGuard } from './pet-guard';
 import { PetCreationComponent } from '../../mypetpal/feature/pet/pet-creation/pet-creation.component';
 import { ProfileComponent } from '../../mypetpal/feature/profile/profile.component';
 import { PrivacyPolicyComponent } from '../../shared/pages/privacy-policy/privacy-policy.component';
+import { AboutComponent } from '../../shared/pages/about/about.component';
 
 export const routes: Routes = [
   {
@@ -37,5 +38,9 @@ export const routes: Routes = [
   {
     path: 'privacy-policy',
     component: PrivacyPolicyComponent
+  },
+  {
+    path: 'about',
+    component: AboutComponent
   }
 ];

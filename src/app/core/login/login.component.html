@@ -134,9 +134,9 @@
               </mat-form-field>
 
               @if (forgotPasswordRequestFailed) {
-                <mat-error class="form-error"
-                  >{{ forgotPasswordRequestErrorMessage }}</mat-error
-                >
+                <mat-error class="form-error">{{
+                  forgotPasswordRequestErrorMessage
+                }}</mat-error>
               }
 
               <div class="button-stack">
@@ -211,12 +211,18 @@
                     hideResetPassword ? 'visibility_off' : 'visibility'
                   }}</mat-icon>
                 </button>
-                @if (forgotPasswordResetForm.get('password')?.hasError('minlength')) {
+                @if (
+                  forgotPasswordResetForm.get('password')?.hasError('minlength')
+                ) {
                   <mat-error
                     >Password must be at least 12 characters.</mat-error
                   >
                 }
-                @if (forgotPasswordResetForm.get('password')?.hasError('weakPassword')) {
+                @if (
+                  forgotPasswordResetForm
+                    .get('password')
+                    ?.hasError('weakPassword')
+                ) {
                   <mat-error
                     >Password must include both letters and numbers.</mat-error
                   >
@@ -242,7 +248,9 @@
               }
 
               @if (resetPasswordFailed) {
-                <mat-error class="form-error">{{ resetPasswordErrorMessage }}</mat-error>
+                <mat-error class="form-error">{{
+                  resetPasswordErrorMessage
+                }}</mat-error>
               }
 
               <div class="button-stack">
@@ -380,8 +388,15 @@
               </div>
             </form>
           }
+
         </mat-card-content>
       </mat-card>
+
+      <div class="public-links" aria-label="Public app links">
+        <a href="/about">About</a>
+        <span class="link-separator" aria-hidden="true">|</span>
+        <a href="/privacy-policy">Privacy Policy</a>
+      </div>
     </div>
   }
 </div>
