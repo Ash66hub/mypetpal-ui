@@ -7,153 +7,53 @@
       [expProgressPercent]="getExpProgressPercent()">
     </app-level-bar>
 
-    @if (isVisiting) {
-      <div class="visit-mode-status">
-        {{ visitingUsername }}
-      </div>
-    }
   }
+
+  <app-game-hud
+    [isGameLoading]="isGameLoading"
+    [isSavingRoom]="isSavingRoom"
+    [toastMessage]="toastMessage"
+    [isVisiting]="isVisiting"
+    [visitingUsername]="visitingUsername"
+    (zoomIn)="zoomIn()"
+    (zoomOut)="zoomOut()">
+  </app-game-hud>
 
   <div
     id="game-container"
     (dragover)="onDragOver($event)"
     (drop)="onDrop($event)"></div>
 
-  @if (isGameLoading) {
-    <div class="game-loading-overlay">
-      <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
-    </div>
-  }
-
-  @if (isSavingRoom) {
-    <div class="save-status">
-      <app-paw-spinner
-        [diameter]="60"
-        color="#7c3aed"
-        icon="💾"></app-paw-spinner>
-    </div>
-  }
-
-  @if (toastMessage) {
-    <div class="toast-notification">
-      <span class="warning-icon">⚠️</span>
-      {{ toastMessage }}
-    </div>
-  }
-
-  <!-- Neighborhood Sidebars -->
-  <app-decor-panel #decorPanel [isVisiting]="isVisiting"></app-decor-panel>
-  <app-social-panel
-    #socialPanel
+  <app-game-side-panels
+    #sidePanels
     [isVisiting]="isVisiting"
-    [isHomeView]="isHomeViewMode"
+    [isHomeViewMode]="isHomeViewMode"
     [isHosting]="isHosting"
     [visitingUsername]="visitingUsername"
     [hostingCount]="hostingCount"
-    [visitingUserIds]="currentVisitorIds"
-    (onReturnHome)="returnHome()">
-  </app-social-panel>
+    [currentVisitorIds]="currentVisitorIds"
+    (returnHome)="returnHome()">
+  </app-game-side-panels>
 
-  <div class="zoom-controls">
-    <button (click)="zoomIn()" title="Zoom In">+</button>
-    <button (click)="zoomOut()" title="Zoom Out">-</button>
-  </div>
+  <app-game-chat-controls
+    [isHomeViewMode]="isHomeViewMode"
+    [roomOwnerId]="roomOwnerId"
+    [emojis]="emojis"
+    (returnHome)="returnHome()"
+    (talk)="talk($event)"
+    (inputFocus)="onInputFocus()"
+    (inputBlur)="onInputBlur()">
+  </app-game-chat-controls>
 
-  <!-- Chat Controls -->
-  @if (isHomeViewMode) {
-    <div class="chat-controls home-view-controls">
-      <button
-        class="return-home-btn home-view-return-home"
-        (click)="returnHome()"
-        title="Return home">
-        <span class="icon">🏠</span>
-        <span class="label">Return Home</span>
-      </button>
-    </div>
-  } @else {
-    <div class="chat-controls">
-      @if (roomOwnerId) {
-        <button
-          class="return-home-btn visit-return-home"
-          (click)="returnHome()"
-          title="Return home">
-          <span class="label">Return Home</span>
-        </button>
-      }
-      <div class="chat-input-wrapper">
-        <input
-          #chatInput
-          type="text"
-          maxlength="100"
-          placeholder="Speak to the room..."
-          (focus)="onInputFocus()"
-          (blur)="onInputBlur()"
-          (keydown)="$event.stopPropagation()"
-          (keyup.enter)="talk(chatInput.value); chatInput.value = ''" />
-        <div class="emoji-selector-wrapper">
-          <button
-            class="emoji-toggle-btn"
-            (click)="$event.stopPropagation(); toggleEmojiPicker()"
-            title="Add Emoji">
-            🐾
-          </button>
-          @if (isEmojiPickerOpen) {
-            <div class="emoji-dropdown" (click)="$event.stopPropagation()">
-              <button
-                class="emoji-btn"
-                *ngFor="let emoji of emojis"
-                (click)="addEmoji(emoji)"
-                [title]="'Add ' + emoji">
-                {{ emoji }}
-              </button>
-            </div>
-          }
-        </div>
-        <span class="char-counter">{{ chatInput.value.length }}/100</span>
-        <button
-          class="talk-btn"
-          (click)="talk(chatInput.value); chatInput.value = ''">
-          Talk
-        </button>
-      </div>
-    </div>
-  }
-
-  @if (showTutorial && currentTutorialStep) {
-    <div class="tutorial-overlay" role="dialog" aria-live="polite">
-      <div
-        class="tutorial-spot tutorial-spot-pet"
-        [ngStyle]="tutorialSpotStyles['pet']"
-        [class.active]="currentTutorialStep.target === 'pet'"></div>
-      <div
-        class="tutorial-spot tutorial-spot-decor"
-        [ngStyle]="tutorialSpotStyles['decor']"
-        [class.active]="currentTutorialStep.target === 'decor'"></div>
-      <div
-        class="tutorial-spot tutorial-spot-friends"
-        [ngStyle]="tutorialSpotStyles['friends']"
-        [class.active]="currentTutorialStep.target === 'friends'"></div>
-
-      <div
-        class="tutorial-card"
-        [class.pet-step]="currentTutorialStep.target === 'pet'"
-        [class.decor-step]="currentTutorialStep.target === 'decor'"
-        [class.friends-step]="currentTutorialStep.target === 'friends'">
-        <div class="tutorial-progress">
-          Step {{ tutorialStepIndex + 1 }} of 3
-        </div>
-        <h3>{{ currentTutorialStep.title }}</h3>
-        <p>{{ getTutorialMessage() }}</p>
-
-        <div class="tutorial-actions">
-          <button type="button" class="skip-btn" (click)="skipTutorial()">
-            Skip
-          </button>
-          <button type="button" class="next-btn" (click)="nextTutorialStep()">
-            {{ isTutorialLastStep ? 'Finish' : 'Next' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
+  <app-game-tutorial-overlay
+    [visible]="showTutorial"
+    [tutorialStep]="currentTutorialStep"
+    [tutorialMessage]="getTutorialMessage()"
+    [tutorialSpotStyles]="tutorialSpotStyles"
+    [stepIndex]="tutorialStepIndex"
+    [totalSteps]="totalTutorialSteps"
+    [isLastStep]="isTutorialLastStep"
+    (skip)="skipTutorial()"
+    (next)="nextTutorialStep()">
+  </app-game-tutorial-overlay>
 </div>

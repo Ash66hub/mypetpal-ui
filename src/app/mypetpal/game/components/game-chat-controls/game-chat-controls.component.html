@@ -1,0 +1,63 @@
+@if (isHomeViewMode) {
+  <div class="chat-controls home-view-controls">
+    <button
+      class="return-home-btn home-view-return-home"
+      type="button"
+      (click)="onReturnHome()"
+      title="Return home">
+      <span class="icon">🏠</span>
+      <span class="label">Return Home</span>
+    </button>
+  </div>
+} @else {
+  <div class="chat-controls">
+    @if (roomOwnerId) {
+      <button
+        class="return-home-btn visit-return-home"
+        type="button"
+        (click)="onReturnHome()"
+        title="Return home">
+        <span class="label">Return Home</span>
+      </button>
+    }
+
+    <div class="chat-input-wrapper">
+      <input
+        #chatInput
+        type="text"
+        maxlength="100"
+        placeholder="Speak to the room..."
+        [(ngModel)]="messageText"
+        (focus)="onInputFocusInternal()"
+        (blur)="onInputBlurInternal()"
+        (keydown)="$event.stopPropagation()"
+        (keyup.enter)="onTalk()" />
+
+      <div class="emoji-selector-wrapper">
+        <button
+          class="emoji-toggle-btn"
+          type="button"
+          (click)="onToggleEmojiPicker($event)"
+          title="Add Emoji">
+          🐾
+        </button>
+
+        @if (isEmojiPickerOpen) {
+          <div class="emoji-dropdown" (click)="$event.stopPropagation()">
+            <button
+              class="emoji-btn"
+              type="button"
+              *ngFor="let emoji of emojis"
+              (click)="onAddEmoji(emoji)"
+              [title]="'Add ' + emoji">
+              {{ emoji }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <span class="char-counter">{{ messageText.length }}/100</span>
+      <button class="talk-btn" type="button" (click)="onTalk()">Talk</button>
+    </div>
+  </div>
+}

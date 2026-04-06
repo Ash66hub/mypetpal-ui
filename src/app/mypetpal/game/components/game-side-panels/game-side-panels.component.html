@@ -1,0 +1,12 @@
+<app-decor-panel #decorPanel [isVisiting]="isVisiting"></app-decor-panel>
+
+<app-social-panel
+  #socialPanel
+  [isVisiting]="isVisiting"
+  [isHomeView]="isHomeViewMode"
+  [isHosting]="isHosting"
+  [visitingUsername]="visitingUsername"
+  [hostingCount]="hostingCount"
+  [visitingUserIds]="currentVisitorIds"
+  (onReturnHome)="onReturnHome()">
+</app-social-panel>

@@ -12,6 +12,10 @@ import { SocialPanelComponent } from './feature/social-panel/social-panel.compon
 import { ProfileComponent } from './feature/profile/profile.component';
 import { DecorPanelComponent } from './feature/decor-panel/decor-panel.component';
 import { LevelBarComponent } from './feature/level-bar/level-bar.component';
+import { GameHudComponent } from './game/components/game-hud/game-hud.component';
+import { GameTutorialOverlayComponent } from './game/components/game-tutorial-overlay/game-tutorial-overlay.component';
+import { GameChatControlsComponent } from './game/components/game-chat-controls/game-chat-controls.component';
+import { GameSidePanelsComponent } from './game/components/game-side-panels/game-side-panels.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +31,11 @@ import { LevelBarComponent } from './feature/level-bar/level-bar.component';
     SharedModule,
     SocialPanelComponent,
     ProfileComponent,
-    DecorPanelComponent
+    DecorPanelComponent,
+    GameHudComponent,
+    GameTutorialOverlayComponent,
+    GameChatControlsComponent,
+    GameSidePanelsComponent
   ],
   exports: [TopBarComponent],
   schemas: [],

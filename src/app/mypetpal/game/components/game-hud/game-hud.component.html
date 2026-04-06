@@ -1,0 +1,29 @@
+@if (isVisiting && !isGameLoading) {
+  <div class="visit-mode-status">
+    {{ visitingUsername }}
+  </div>
+}
+
+@if (isGameLoading) {
+  <div class="game-loading-overlay">
+    <app-paw-spinner [diameter]="80" color="#7c3aed"></app-paw-spinner>
+  </div>
+}
+
+@if (isSavingRoom) {
+  <div class="save-status">
+    <app-paw-spinner [diameter]="60" color="#7c3aed" icon="💾"></app-paw-spinner>
+  </div>
+}
+
+@if (toastMessage) {
+  <div class="toast-notification">
+    <span class="warning-icon">⚠️</span>
+    {{ toastMessage }}
+  </div>
+}
+
+<div class="zoom-controls">
+  <button type="button" (click)="onZoomIn()" title="Zoom In">+</button>
+  <button type="button" (click)="onZoomOut()" title="Zoom Out">-</button>
+</div>

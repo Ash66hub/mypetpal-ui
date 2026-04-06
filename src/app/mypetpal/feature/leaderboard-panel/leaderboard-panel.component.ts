@@ -107,9 +107,12 @@ export class LeaderboardPanelComponent implements OnInit {
     const currentUrl = this.router.url.split('?')[0] ?? '';
 
     if (currentUrl === targetRoute) {
-      await this.router.navigate(['/game'], {
-        skipLocationChange: true
-      });
+      window.dispatchEvent(
+        new CustomEvent('mpp-switch-view-home', {
+          detail: state
+        })
+      );
+      return;
     }
 
     await this.router.navigate([targetRoute], { state });

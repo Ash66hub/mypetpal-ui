@@ -1,0 +1,37 @@
+@if (visible && tutorialStep) {
+  <div class="tutorial-overlay" role="dialog" aria-live="polite">
+    <div
+      class="tutorial-spot tutorial-spot-pet"
+      [ngStyle]="tutorialSpotStyles['pet']"
+      [class.active]="tutorialStep.target === 'pet'"></div>
+    <div
+      class="tutorial-spot tutorial-spot-decor"
+      [ngStyle]="tutorialSpotStyles['decor']"
+      [class.active]="tutorialStep.target === 'decor'"></div>
+    <div
+      class="tutorial-spot tutorial-spot-friends"
+      [ngStyle]="tutorialSpotStyles['friends']"
+      [class.active]="tutorialStep.target === 'friends'"></div>
+
+    <div
+      class="tutorial-card"
+      [class.pet-step]="tutorialStep.target === 'pet'"
+      [class.decor-step]="tutorialStep.target === 'decor'"
+      [class.friends-step]="tutorialStep.target === 'friends'">
+      <div class="tutorial-progress">
+        Step {{ stepIndex + 1 }} of {{ totalSteps }}
+      </div>
+      <h3>{{ tutorialStep.title }}</h3>
+      <p>{{ tutorialMessage }}</p>
+
+      <div class="tutorial-actions">
+        <button type="button" class="skip-btn" (click)="onSkip()">
+          Skip
+        </button>
+        <button type="button" class="next-btn" (click)="onNext()">
+          {{ isLastStep ? 'Finish' : 'Next' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
