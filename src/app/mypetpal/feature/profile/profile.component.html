@@ -9,9 +9,42 @@
 
     <div class="profile-card">
       <div class="user-display">
-        <div class="avatar-giant bg-primary">
-          {{ (currentUser?.username || 'U')[0] | uppercase }}
+        <div class="avatar-giant bg-primary" [class.has-image]="!!currentUser?.profilePictureUrl">
+          @if (currentUser?.profilePictureUrl) {
+            <img
+              [src]="currentUser?.profilePictureUrl"
+              alt="Profile picture"
+              class="avatar-image" />
+          }
+          @if (!currentUser?.profilePictureUrl) {
+            <span>{{ (currentUser?.username || 'U')[0] | uppercase }}</span>
+          }
+
+          <button
+            mat-mini-fab
+            type="button"
+            class="avatar-upload-overlay"
+            [disabled]="isUploadingProfilePicture || isLoading"
+            title="Change profile picture"
+            aria-label="Change profile picture"
+            (click)="profilePictureInput.click()">
+            <mat-icon>photo_camera</mat-icon>
+          </button>
+
+          <input
+            #profilePictureInput
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden-file-input"
+            (change)="onProfilePictureSelected($event)" />
+
+          @if (isUploadingProfilePicture) {
+            <div class="avatar-uploading-mask">
+              <app-paw-spinner [diameter]="28" color="#ffffff"></app-paw-spinner>
+            </div>
+          }
         </div>
+        <small class="upload-hint">JPG, PNG, WEBP up to 5MB</small>
         <h3>{{ currentUser?.username || 'User' }}</h3>
         <span class="user-email">{{ currentUser?.email || 'N/A' }}</span>
       </div>

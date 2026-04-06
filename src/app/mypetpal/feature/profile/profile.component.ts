@@ -26,6 +26,13 @@ export class ProfileComponent implements OnInit {
   public hideOldPassword = true;
   public hideNewPassword = true;
   public hideConfirmPassword = true;
+  public isUploadingProfilePicture = false;
+  private readonly maxProfilePictureSizeInBytes = 5 * 1024 * 1024;
+  private readonly allowedProfilePictureMimeTypes = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ]);
   private isGoogleSession = false;
   private hasLocalPassword = false;
 
@@ -185,5 +192,62 @@ export class ProfileComponent implements OnInit {
 
   public goBack(): void {
     this.router.navigate(['/game']);
+  }
+
+  public async onProfilePictureSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    if (!file) {
+      return;
+    }
+
+    if (!this.currentUser?.userId) {
+      this.snackbarService.openSnackbarWithAction('User session not found.');
+      input.value = '';
+      return;
+    }
+
+    if (!this.allowedProfilePictureMimeTypes.has(file.type)) {
+      this.snackbarService.openSnackbarWithAction(
+        'Invalid file type. Use JPG, PNG, or WEBP.'
+      );
+      input.value = '';
+      return;
+    }
+
+    if (file.size > this.maxProfilePictureSizeInBytes) {
+      this.snackbarService.openSnackbarWithAction('File must be 5MB or less.');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingProfilePicture = true;
+
+    try {
+      const userId = this.currentUser.userId;
+      const updatedUser = await this.loginService.updateProfilePicture(
+        userId,
+        file
+      );
+
+      const mergedUser: User = {
+        ...(this.currentUser || {}),
+        ...(updatedUser || {}),
+        profilePictureUrl: updatedUser?.profilePictureUrl
+      };
+
+      this.currentUser = mergedUser;
+      this.loginStreamService.currentUserStream.next(mergedUser);
+      this.snackbarService.openSnackbarWithAction('Profile picture updated.');
+    } catch (error) {
+      console.error('Profile picture upload failed', error);
+      this.snackbarService.openSnackbarWithAction(
+        'Unable to upload profile picture. Please try again.'
+      );
+    } finally {
+      this.isUploadingProfilePicture = false;
+      input.value = '';
+    }
   }
 }

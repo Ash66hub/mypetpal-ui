@@ -79,4 +79,11 @@ mat-menu .menu-help-icon {
     font-size: 16px;
     line-height: 1;
     text-transform: uppercase;
+
+    .pet-thumb-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
 }

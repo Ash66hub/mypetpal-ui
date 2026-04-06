@@ -35,6 +35,17 @@
         [class.top-three]="index < 3">
         <div class="leaderboard-top-row">
           <div class="rank">#{{ index + 1 }}</div>
+          <div class="leaderboard-avatar" [attr.aria-label]="player.username + ' avatar'" role="img">
+            @if (player.profilePictureUrl) {
+              <img
+                [src]="player.profilePictureUrl"
+                alt="{{ player.username }} profile picture"
+                class="leaderboard-avatar-image" />
+            }
+            @if (!player.profilePictureUrl) {
+              {{ player.username[0] | uppercase }}
+            }
+          </div>
           <div class="player-meta">
             <span class="username">{{ player.username }}</span>
           </div>

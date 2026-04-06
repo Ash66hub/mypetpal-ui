@@ -7,6 +7,7 @@ export interface LeaderboardPlayer {
   userId: number;
   publicId?: string;
   username: string;
+  profilePictureUrl?: string;
   level: number;
   experience: number;
 }

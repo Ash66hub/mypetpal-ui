@@ -16,6 +16,7 @@ export enum FriendshipStatus {
 export interface UserSearchResult {
   userId: number;
   username: string;
+  profilePictureUrl?: string;
   isFriend: boolean;
   isPending: boolean;
   isOnline: boolean;
@@ -24,6 +25,7 @@ export interface UserSearchResult {
 export interface Friend {
   userId: number;
   username: string;
+  profilePictureUrl?: string;
   isOnline: boolean;
 }
 
@@ -31,12 +33,14 @@ export interface FriendRequest {
   id: number;
   userId: number;
   senderUsername: string;
+  profilePictureUrl?: string;
 }
 
 export interface VisitInvite {
   id: number;
   senderId: number;
   senderUsername: string;
+  profilePictureUrl?: string;
   createdAt: string;
 }
 

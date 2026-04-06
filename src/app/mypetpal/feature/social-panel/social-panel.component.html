@@ -99,7 +99,15 @@
         <div *ngFor="let friend of friendService.friends()" class="social-item">
           <div class="user-info">
             <div class="avatar-sm">
-              {{ friend.username[0] | uppercase }}
+              @if (friend.profilePictureUrl) {
+                <img
+                  [src]="friend.profilePictureUrl"
+                  alt="{{ friend.username }} profile picture"
+                  class="avatar-image" />
+              }
+              @if (!friend.profilePictureUrl) {
+                {{ friend.username[0] | uppercase }}
+              }
               <div
                 class="online-indicator"
                 [class.online]="friend.isOnline"></div>
@@ -169,7 +177,15 @@
               class="social-item">
               <div class="user-info">
                 <div class="avatar-sm r-avatar">
-                  {{ req.senderUsername[0] | uppercase }}
+                  @if (req.profilePictureUrl) {
+                    <img
+                      [src]="req.profilePictureUrl"
+                      alt="{{ req.senderUsername }} profile picture"
+                      class="avatar-image" />
+                  }
+                  @if (!req.profilePictureUrl) {
+                    {{ req.senderUsername[0] | uppercase }}
+                  }
                 </div>
                 <span class="username">{{ req.senderUsername }}</span>
               </div>
@@ -198,7 +214,15 @@
               class="social-item visit-invite-item">
               <div class="user-info">
                 <div class="avatar-sm v-avatar">
-                  {{ invite.senderUsername[0] | uppercase }}
+                  @if (invite.profilePictureUrl) {
+                    <img
+                      [src]="invite.profilePictureUrl"
+                      alt="{{ invite.senderUsername }} profile picture"
+                      class="avatar-image" />
+                  }
+                  @if (!invite.profilePictureUrl) {
+                    {{ invite.senderUsername[0] | uppercase }}
+                  }
                 </div>
                 <div class="user-details">
                   <span class="username">{{ invite.senderUsername }}</span>
@@ -297,7 +321,15 @@
                 class="social-item search-item">
                 <div class="user-info">
                   <div class="avatar-sm s-avatar">
-                    {{ res.username[0] | uppercase }}
+                    @if (res.profilePictureUrl) {
+                      <img
+                        [src]="res.profilePictureUrl"
+                        alt="{{ res.username }} profile picture"
+                        class="avatar-image" />
+                    }
+                    @if (!res.profilePictureUrl) {
+                      {{ res.username[0] | uppercase }}
+                    }
                     <!-- Only show presence dot for confirmed friends -->
                     @if (res.isFriend) {
                       <div

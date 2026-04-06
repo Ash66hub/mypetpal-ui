@@ -13,6 +13,7 @@ import { AboutDialogComponent } from '../../shared/dialogs/about-dialog.componen
 })
 export class TopBarComponent implements OnInit, OnDestroy {
   public avatarLetter: string = 'U';
+  public avatarUrl?: string;
   private userSub?: Subscription;
 
   constructor(
@@ -32,6 +33,7 @@ export class TopBarComponent implements OnInit, OnDestroy {
 
     this.userSub = this.loginStreamService.currentUserStream.subscribe(user => {
       this.avatarLetter = this.resolveAvatarLetter(user?.username);
+      this.avatarUrl = user?.profilePictureUrl;
     });
   }
 

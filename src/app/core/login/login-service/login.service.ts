@@ -55,6 +55,19 @@ export class LoginService {
     });
   }
 
+  public updateProfilePicture(
+    userId: string,
+    file: File
+  ): Promise<User> {
+    const url = `${this.apiUrl}Users/${userId}/profile-picture`;
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return lastValueFrom(
+      this.http.post<User>(url, formData)
+    );
+  }
+
   public getToken(
     userId: string,
     refreshToken: string
