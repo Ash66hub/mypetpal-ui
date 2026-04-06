@@ -415,26 +415,23 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const startX = this.dog.x;
+    const startY = this.dog.y;
+
     const wasMoving = this.isMoving;
     if (wasMoving) {
       this.cancelCurrentMovement();
     }
 
-    if (
-      !this.isInsideFloor(targetX, targetY) ||
-      this.petMovementService.isCollidingWithDecor(
-        targetX,
-        targetY,
-        this.dog,
-        this.decorSprites,
-        this.scene
-      ) ||
-      this.petMovementService.isCollidingWithRemotePets(
-        targetX,
-        targetY,
-        this.remotePets
-      )
-    ) {
+    const safeTarget = this.resolveSafeTouchTarget(startX, startY, targetX, targetY);
+    const travelDistance = Phaser.Math.Distance.Between(
+      startX,
+      startY,
+      safeTarget.x,
+      safeTarget.y
+    );
+
+    if (travelDistance < 0.5) {
       if (wasMoving) {
         this.dog.play('idle');
         this.saveUserSettings();
@@ -442,8 +439,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const deltaX = targetX - this.dog.x;
-    const deltaY = targetY - this.dog.y;
+    const deltaX = safeTarget.x - this.dog.x;
+    const deltaY = safeTarget.y - this.dog.y;
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
 
@@ -461,14 +458,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const distance = Phaser.Math.Distance.Between(
       this.dog.x,
       this.dog.y,
-      targetX,
-      targetY
+      safeTarget.x,
+      safeTarget.y
     );
     const duration = Math.max(180, distance * 45);
 
     const fastPhaseRatio = 0.88;
-    const midX = this.dog.x + (targetX - this.dog.x) * fastPhaseRatio;
-    const midY = this.dog.y + (targetY - this.dog.y) * fastPhaseRatio;
+    const midX = this.dog.x + (safeTarget.x - this.dog.x) * fastPhaseRatio;
+    const midY = this.dog.y + (safeTarget.y - this.dog.y) * fastPhaseRatio;
     const fastDuration = Math.max(120, Math.floor(duration * fastPhaseRatio));
     const settleDuration = Math.max(70, duration - fastDuration);
 
@@ -481,14 +478,71 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       onComplete: () => {
         this.scene?.tweens.add({
           targets: this.dog,
-          x: targetX,
-          y: targetY,
+          x: safeTarget.x,
+          y: safeTarget.y,
           duration: settleDuration,
           ease: 'Sine.easeOut',
           onComplete: () => this.onMoveComplete()
         });
       }
     });
+  }
+
+  private resolveSafeTouchTarget(
+    startX: number,
+    startY: number,
+    targetX: number,
+    targetY: number
+  ): { x: number; y: number } {
+    if (!this.dog || !this.scene) {
+      return { x: startX, y: startY };
+    }
+
+    const totalDistance = Phaser.Math.Distance.Between(
+      startX,
+      startY,
+      targetX,
+      targetY
+    );
+
+    if (totalDistance < 0.001) {
+      return { x: startX, y: startY };
+    }
+
+    // Sample the path to avoid tunneling through decor when the touch target is far away.
+    const sampleStep = 2;
+    let lastSafeX = startX;
+    let lastSafeY = startY;
+
+    for (let distance = sampleStep; distance <= totalDistance; distance += sampleStep) {
+      const t = Math.min(1, distance / totalDistance);
+      const sampleX = startX + (targetX - startX) * t;
+      const sampleY = startY + (targetY - startY) * t;
+
+      const blocked =
+        !this.isInsideFloor(sampleX, sampleY) ||
+        this.petMovementService.isCollidingWithDecor(
+          sampleX,
+          sampleY,
+          this.dog,
+          this.decorSprites,
+          this.scene
+        ) ||
+        this.petMovementService.isCollidingWithRemotePets(
+          sampleX,
+          sampleY,
+          this.remotePets
+        );
+
+      if (blocked) {
+        break;
+      }
+
+      lastSafeX = sampleX;
+      lastSafeY = sampleY;
+    }
+
+    return { x: lastSafeX, y: lastSafeY };
   }
 
   private cancelCurrentMovement(): void {

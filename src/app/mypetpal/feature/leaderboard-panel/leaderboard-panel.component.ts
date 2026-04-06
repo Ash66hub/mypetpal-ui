@@ -83,22 +83,36 @@ export class LeaderboardPanelComponent implements OnInit {
 
   public viewHomeFromLeaderboard(player: LeaderboardPlayer): void {
     const roomOwnerId = String(player.userId);
+    const targetRoute = '/game/viewMode';
+    const navigationState = {
+      mode: 'viewMode',
+      roomOwnerId,
+      roomOwnerUsername: player.username
+    };
+
     sessionStorage.setItem(
       this.gameRouteContextStorageKey,
       JSON.stringify({
-        mode: 'viewMode',
-        roomOwnerId,
-        roomOwnerUsername: player.username
+        ...navigationState
       })
     );
 
-    this.router.navigate(['/game/viewMode'], {
-      state: {
-        mode: 'viewMode',
-        roomOwnerId,
-        roomOwnerUsername: player.username
-      }
-    });
+    void this.navigateWithRouteRefreshWhenNeeded(targetRoute, navigationState);
+  }
+
+  private async navigateWithRouteRefreshWhenNeeded(
+    targetRoute: string,
+    state: { mode: string; roomOwnerId: string; roomOwnerUsername: string }
+  ): Promise<void> {
+    const currentUrl = this.router.url.split('?')[0] ?? '';
+
+    if (currentUrl === targetRoute) {
+      await this.router.navigate(['/game'], {
+        skipLocationChange: true
+      });
+    }
+
+    await this.router.navigate([targetRoute], { state });
   }
 
   public canSendFriendRequest(player: LeaderboardPlayer): boolean {

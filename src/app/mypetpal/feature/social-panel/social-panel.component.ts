@@ -150,22 +150,36 @@ export class SocialPanelComponent implements OnInit {
 
   public viewHome(friendId: number, friendUsername: string): void {
     const roomOwnerId = String(friendId);
+    const targetRoute = '/game/viewMode';
+    const navigationState = {
+      mode: 'viewMode',
+      roomOwnerId,
+      roomOwnerUsername: friendUsername
+    };
+
     sessionStorage.setItem(
       this.gameRouteContextStorageKey,
       JSON.stringify({
-        mode: 'viewMode',
-        roomOwnerId,
-        roomOwnerUsername: friendUsername
+        ...navigationState
       })
     );
 
-    this.router.navigate(['/game/viewMode'], {
-      state: {
-        mode: 'viewMode',
-        roomOwnerId,
-        roomOwnerUsername: friendUsername
-      }
-    });
+    void this.navigateWithRouteRefreshWhenNeeded(targetRoute, navigationState);
+  }
+
+  private async navigateWithRouteRefreshWhenNeeded(
+    targetRoute: string,
+    state: { mode: string; roomOwnerId: string; roomOwnerUsername: string }
+  ): Promise<void> {
+    const currentUrl = this.router.url.split('?')[0] ?? '';
+
+    if (currentUrl === targetRoute) {
+      await this.router.navigate(['/game'], {
+        skipLocationChange: true
+      });
+    }
+
+    await this.router.navigate([targetRoute], { state });
   }
 
   public sendRequest(targetId: number) {
