@@ -148,15 +148,23 @@ export class SocialPanelComponent implements OnInit {
     this.onReturnHome.emit();
   }
 
-  public viewHome(friendId: number): void {
+  public viewHome(friendId: number, friendUsername: string): void {
     const roomOwnerId = String(friendId);
     sessionStorage.setItem(
       this.gameRouteContextStorageKey,
-      JSON.stringify({ mode: 'viewMode', roomOwnerId })
+      JSON.stringify({
+        mode: 'viewMode',
+        roomOwnerId,
+        roomOwnerUsername: friendUsername
+      })
     );
 
     this.router.navigate(['/game/viewMode'], {
-      state: { mode: 'viewMode', roomOwnerId }
+      state: {
+        mode: 'viewMode',
+        roomOwnerId,
+        roomOwnerUsername: friendUsername
+      }
     });
   }
 
@@ -232,7 +240,8 @@ export class SocialPanelComponent implements OnInit {
   public respondToVisitInvite(
     inviteId: number,
     accept: boolean,
-    senderId?: number
+    senderId?: number,
+    senderUsername?: string
   ) {
     this.friendService.respondToVisitInvite(inviteId, accept).subscribe(() => {
       this.friendService.refreshSocialData();
@@ -240,11 +249,19 @@ export class SocialPanelComponent implements OnInit {
         const roomOwnerId = String(senderId);
         sessionStorage.setItem(
           this.gameRouteContextStorageKey,
-          JSON.stringify({ mode: 'visitMode', roomOwnerId })
+          JSON.stringify({
+            mode: 'visitMode',
+            roomOwnerId,
+            roomOwnerUsername: senderUsername
+          })
         );
 
         this.router.navigate(['/game/visitMode'], {
-          state: { mode: 'visitMode', roomOwnerId }
+          state: {
+            mode: 'visitMode',
+            roomOwnerId,
+            roomOwnerUsername: senderUsername
+          }
         });
       } else {
         const msg = accept ? 'Invitation accepted!' : 'Invitation declined.';

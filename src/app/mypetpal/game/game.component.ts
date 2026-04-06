@@ -90,9 +90,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       target: 'friends',
       title: 'Meet Pet Pals',
       messageDesktop:
-        'Use the Friends panel to add pet pals, visit their spaces, or invite them over to hang out in your space.',
+        'Use the Neighborhood panel to add pet pals, visit their spaces, or invite them over to hang out in your space.',
       messageMobile:
-        'Use the Friends panel to add pet pals, visit their spaces, or invite them over to hang out in your space.'
+        'Use the Neighborhood panel to add pet pals, visit their spaces, or invite them over to hang out in your space.'
     }
   ] as const;
 
@@ -103,6 +103,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private selectedRoomKey: RoomKey = 'room1';
 
   public roomOwnerId: string | null = null;
+  public roomOwnerUsername: string | null = null;
   public isHomeViewMode = false;
   public activeRoomId: string | null = null;
   private remotePets: Map<string, Phaser.GameObjects.Sprite> = new Map();
@@ -187,7 +188,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get visitingUsername(): string {
     if (!this.roomOwnerId) return '';
-    return this.isHomeViewMode ? "a User's pet home" : 'a Pal';
+    const ownerName = this.roomOwnerUsername?.trim() || 'User';
+    return `${this.isHomeViewMode ? 'Viewing' : 'Visiting'} ${ownerName}'s pet home`;
   }
 
   get hostingCount(): number {
@@ -849,9 +851,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async initialize(): Promise<void> {
-    const { isHomeViewMode, roomOwnerId } = this.resolveRouteContext();
+    const { isHomeViewMode, roomOwnerId, roomOwnerUsername } =
+      this.resolveRouteContext();
     this.isHomeViewMode = isHomeViewMode;
     this.roomOwnerId = roomOwnerId;
+    this.roomOwnerUsername = roomOwnerUsername;
     const myId = localStorage.getItem('userId');
     this.activeRoomId = this.isHomeViewMode ? null : this.roomOwnerId || myId;
 
@@ -922,6 +926,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private resolveRouteContext(): {
     isHomeViewMode: boolean;
     roomOwnerId: string | null;
+    roomOwnerUsername: string | null;
   } {
     const urlWithoutQuery = this.router.url.split('?')[0] ?? '';
     const isViewModeRoute = urlWithoutQuery.endsWith('/game/viewMode');
@@ -935,13 +940,18 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       const legacyOwnerId = this.route.snapshot.paramMap.get('roomOwnerId');
       return {
         isHomeViewMode: legacyIsViewMode,
-        roomOwnerId: legacyOwnerId
+        roomOwnerId: legacyOwnerId,
+        roomOwnerUsername: null
       };
     }
 
     const mode = isViewModeRoute ? 'viewMode' : 'visitMode';
     const state = history.state as
-      | { roomOwnerId?: string | number; mode?: string }
+      | {
+          roomOwnerId?: string | number;
+          roomOwnerUsername?: string;
+          mode?: string;
+        }
       | undefined;
 
     if (
@@ -950,7 +960,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     ) {
       return {
         isHomeViewMode: isViewModeRoute,
-        roomOwnerId: String(state.roomOwnerId)
+        roomOwnerId: String(state.roomOwnerId),
+        roomOwnerUsername: state.roomOwnerUsername || null
       };
     }
 
@@ -960,12 +971,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         const stored = JSON.parse(rawStored) as {
           mode?: string;
           roomOwnerId?: string | number;
+          roomOwnerUsername?: string;
         };
 
         if (stored.mode === mode && stored.roomOwnerId != null) {
           return {
             isHomeViewMode: isViewModeRoute,
-            roomOwnerId: String(stored.roomOwnerId)
+            roomOwnerId: String(stored.roomOwnerId),
+            roomOwnerUsername: stored.roomOwnerUsername || null
           };
         }
       } catch {
@@ -975,7 +988,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return {
       isHomeViewMode: isViewModeRoute,
-      roomOwnerId: null
+      roomOwnerId: null,
+      roomOwnerUsername: null
     };
   }
 

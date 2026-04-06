@@ -85,11 +85,19 @@ export class LeaderboardPanelComponent implements OnInit {
     const roomOwnerId = String(player.userId);
     sessionStorage.setItem(
       this.gameRouteContextStorageKey,
-      JSON.stringify({ mode: 'viewMode', roomOwnerId })
+      JSON.stringify({
+        mode: 'viewMode',
+        roomOwnerId,
+        roomOwnerUsername: player.username
+      })
     );
 
     this.router.navigate(['/game/viewMode'], {
-      state: { mode: 'viewMode', roomOwnerId }
+      state: {
+        mode: 'viewMode',
+        roomOwnerId,
+        roomOwnerUsername: player.username
+      }
     });
   }
 

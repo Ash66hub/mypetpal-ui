@@ -75,6 +75,7 @@
                 [class.draggable]="!isLocked(item)"
                 [draggable]="!isLocked(item)"
                 (dragstart)="onDragStart($event, item)"
+                (dragend)="onDragEnd()"
                 (touchstart)="onTouchDragStart($event, item)"
                 (touchmove)="onTouchDragMove($event)"
                 (touchend)="onTouchDragEnd($event)"

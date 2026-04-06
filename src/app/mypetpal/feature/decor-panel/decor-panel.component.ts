@@ -29,6 +29,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   private pendingClientX = 0;
   private pendingClientY = 0;
   private readonly longPressDurationMs = 260;
+  private shouldRestoreAfterMobileDrag = false;
 
   @Input() isVisiting: boolean = false;
 
@@ -128,6 +129,12 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
 
       // Optional: Set drag image if needed, but default is usually fine
     }
+
+    this.collapsePanelForMobileDrag();
+  }
+
+  public onDragEnd(): void {
+    this.restorePanelAfterMobileDrag();
   }
 
   public onTouchDragStart(event: TouchEvent, item: DecorItem): void {
@@ -159,6 +166,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
       this.touchDraggingItemId = this.pendingTouchItem.id;
       this.isLongTouchDragging = true;
       this.updateTouchGhostFromPoint(this.pendingClientX, this.pendingClientY);
+      this.collapsePanelForMobileDrag();
     }, this.longPressDurationMs);
   }
 
@@ -259,6 +267,33 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     this.touchGhostCanDrop = false;
     this.isLongTouchDragging = false;
     this.activeMouseHold = false;
+    this.restorePanelAfterMobileDrag();
+  }
+
+  private collapsePanelForMobileDrag(): void {
+    if (!this.isMobileViewport() || this.isCollapsed) {
+      return;
+    }
+
+    this.shouldRestoreAfterMobileDrag = true;
+    this.isCollapsed = true;
+  }
+
+  private restorePanelAfterMobileDrag(): void {
+    if (!this.shouldRestoreAfterMobileDrag) {
+      return;
+    }
+
+    this.isCollapsed = false;
+    this.activePanel = 'decor';
+    this.shouldRestoreAfterMobileDrag = false;
+  }
+
+  private isMobileViewport(): boolean {
+    return (
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.innerWidth <= 768
+    );
   }
 
   private clearLongPressTimer(): void {

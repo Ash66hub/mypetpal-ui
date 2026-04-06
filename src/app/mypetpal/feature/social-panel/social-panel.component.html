@@ -30,8 +30,7 @@
         <div class="visit-status">
           @if (isVisiting) {
             <span>
-              You are currently {{ isHomeView ? 'viewing' : 'visiting' }}
-              {{ visitingUsername }}.
+                You are currently {{ visitingUsername }}.
               @if (isHomeView) {
                 <br />
                 To hang out with them, you have to be invited to visit!
@@ -131,7 +130,7 @@
             </span>
             <button
               class="icon-btn"
-              (click)="viewHome(friend.userId)"
+              (click)="viewHome(friend.userId, friend.username)"
               [matTooltip]="'View home snapshot'"
               matTooltipShowDelay="0">
               <i class="action-icon">👁️</i>
@@ -212,7 +211,12 @@
                 <button
                   class="btn-sm btn-accept"
                   (click)="
-                    respondToVisitInvite(invite.id, true, invite.senderId)
+                    respondToVisitInvite(
+                      invite.id,
+                      true,
+                      invite.senderId,
+                      invite.senderUsername
+                    )
                   ">
                   Accept
                 </button>

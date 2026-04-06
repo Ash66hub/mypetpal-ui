@@ -6,6 +6,12 @@
       [expForNextLevel]="getExpForNextLevel()"
       [expProgressPercent]="getExpProgressPercent()">
     </app-level-bar>
+
+    @if (isVisiting) {
+      <div class="visit-mode-status">
+        {{ visitingUsername }}
+      </div>
+    }
   }
 
   <div
