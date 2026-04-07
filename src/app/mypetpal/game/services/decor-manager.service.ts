@@ -10,7 +10,7 @@ import {
   providedIn: 'root'
 })
 export class DecorManagerService {
-  private readonly MAX_WALLS_PER_TYPE = 50;
+  private readonly MAX_WALLS_PER_TYPE = 20;
   private readonly MAX_ITEMS_PER_TYPE = 10;
   private readonly DECOR_SCALE = 0.25;
   private readonly DECOR_PIXEL_BLOCK_SIZE = 1;

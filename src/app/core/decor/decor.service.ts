@@ -124,6 +124,111 @@ export class DecorService {
       imagePath: 'assets/decor/furniture/TV_SE.png',
       levelRequired: 3
     },
+    {
+      id: 'f31',
+      name: 'Bathtub',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/bathtub_SE.png',
+      levelRequired: 6
+    },
+    {
+      id: 'f33',
+      name: 'Modern Cushion Chair',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/chairModernCushion_SE.png',
+      levelRequired: 5
+    },
+    {
+      id: 'f35',
+      name: 'Rounded Chair',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/chairRounded_SE.png',
+      levelRequired: 4
+    },
+    {
+      id: 'f37',
+      name: 'Electric Stove',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenStoveElectric_SE.png',
+      levelRequired: 9
+    },
+    {
+      id: 'f39',
+      name: 'Floor Lamp',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/lampRoundFloor_SE.png',
+      levelRequired: 2
+    },
+    {
+      id: 'f41',
+      name: 'Design Lounge Chair',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/loungeDesignChair_SE.png',
+      levelRequired: 7
+    },
+    {
+      id: 'f43',
+      name: 'Design Lounge Sofa',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/loungeDesignSofa_SE.png',
+      levelRequired: 8
+    },
+    {
+      id: 'f45',
+      name: 'Lounge Ottoman',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/loungeSofaOttoman_SE.png',
+      levelRequired: 6
+    },
+    {
+      id: 'f47',
+      name: 'Round Shower',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/showerRound_SE.png',
+      levelRequired: 11
+    },
+    {
+      id: 'f49',
+      name: 'Glass Coffee Table',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/tableCoffeeGlassSquare_SE.png',
+      levelRequired: 5
+    },
+    {
+      id: 'f51',
+      name: 'Coffee Table',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/tableCoffeeSquare_SE.png',
+      levelRequired: 3
+    },
+    {
+      id: 'f53',
+      name: 'Square Toilet',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/toiletSquare_SE.png',
+      levelRequired: 4
+    },
+    {
+      id: 'f55',
+      name: 'Trash Can',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/trashcan_SE.png',
+      levelRequired: 1
+    },
+    {
+      id: 'f57',
+      name: 'Stacked Washer Dryer',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/washerDryerStacked_SE.png',
+      levelRequired: 7
+    },
+    {
+      id: 'f59',
+      name: 'Washer',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/washer_SE.png',
+      levelRequired: 5
+    },
 
     // Plants
     {
@@ -176,6 +281,27 @@ export class DecorService {
       category: 'wall',
       imagePath: 'assets/decor/wall/wall_SE.png',
       levelRequired: 1
+    },
+    {
+      id: 'w9',
+      name: 'Doorway',
+      category: 'wall',
+      imagePath: 'assets/decor/wall/doorway_SE.png',
+      levelRequired: 2
+    },
+    {
+      id: 'w11',
+      name: 'Open Doorway',
+      category: 'wall',
+      imagePath: 'assets/decor/wall/doorwayOpen_SE.png',
+      levelRequired: 2
+    },
+    {
+      id: 'w13',
+      name: 'Sliding Wall Window',
+      category: 'wall',
+      imagePath: 'assets/decor/wall/wallWindowSlide_SE.png',
+      levelRequired: 3
     }
   ]);
 

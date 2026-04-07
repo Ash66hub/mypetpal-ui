@@ -721,7 +721,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (!this.decorManagerService.canAddMoreDecor(item, this.decorSprites)) {
       this.showToast(
         item.category === 'wall'
-          ? 'Max 50 walls allowed!'
+          ? 'Max 20 wall items allowed!'
           : `Max 10 ${item.name} allowed!`
       );
       if (this.scene) {
