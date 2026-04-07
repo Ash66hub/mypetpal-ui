@@ -76,13 +76,14 @@
                 [draggable]="!isLocked(item)"
                 (dragstart)="onDragStart($event, item)"
                 (dragend)="onDragEnd()"
+                (drag)="onDrag($event)"
                 (touchstart)="onTouchDragStart($event, item)"
                 (touchmove)="onTouchDragMove($event)"
                 (touchend)="onTouchDragEnd($event)"
                 (touchcancel)="onTouchDragCancel()"
                 [title]="
                   isLocked(item)
-                    ? 'Unlock at Level ' + item.levelRequired
+                    ? (item.levelRequired === 99 ? 'Coming soon' : 'Unlock at Level ' + item.levelRequired)
                     : item.name
                 ">
                 <div class="tile-card">
@@ -102,7 +103,7 @@
                   @if (isLocked(item)) {
                     <div class="lock-overlay">
                       <div class="lock-icon">🔒</div>
-                      <span class="lvl-req">Lv. {{ item.levelRequired }}</span>
+                      <span class="lvl-req">{{ item.levelRequired === 99 ? 'Coming soon' : 'Lv. ' + item.levelRequired }}</span>
                     </div>
                   }
                 </div>
@@ -125,12 +126,17 @@
   <div
     class="touch-drag-ghost"
     [class.can-drop]="touchGhostCanDrop"
+    [class.invalid-drop]="touchGhostCanDrop && !touchGhostIsValid"
     [style.left.px]="touchGhostX"
     [style.top.px]="touchGhostY">
-    <img
-      [src]="touchGhostItem.imagePath"
-      [alt]="touchGhostItem.name"
-      class="ghost-thumb" />
-    <span class="ghost-label">Drop in room</span>
+    @if (!touchGhostCanDrop) {
+      <img
+        [src]="touchGhostItem.imagePath"
+        [alt]="touchGhostItem.name"
+        class="ghost-thumb" />
+    }
+    <span class="ghost-label">
+      {{ touchGhostCanDrop && !touchGhostIsValid ? '❌ Cannot overlap' : 'Drop in room' }}
+    </span>
   </div>
 }

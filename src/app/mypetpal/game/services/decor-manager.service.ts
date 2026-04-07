@@ -602,6 +602,121 @@ export class DecorManagerService {
     return name.includes('wall');
   }
 
+  updateDecorPreview(
+    scene: Phaser.Scene,
+    ghost: Phaser.Physics.Arcade.Sprite,
+    item: DecorItem,
+    worldX: number,
+    worldY: number,
+    rotation: string = 'SE',
+    isValid: boolean
+  ): void {
+    const seKey = `${item.id}_SE`;
+    const swKey = `${item.id}_SW`;
+
+    // Ensure assets are loaded for the ghost
+    if (!scene.textures.exists(seKey)) {
+      scene.load.image(seKey, item.imagePath);
+      const swPath = item.imagePath.replace('_SE.png', '_SW.png');
+      scene.load.image(swKey, swPath);
+      scene.load.start();
+      return; 
+    }
+
+    const seRenderKey = this.ensurePixelatedTexture(scene, seKey);
+    const swRenderKey = this.ensurePixelatedTexture(scene, swKey);
+    
+    // Simplified key rotation logic for preview
+    const swSkewRenderKey = this.ensureHorizontallySkewedTexture(scene, swRenderKey, this.SW_HORIZONTAL_SKEW_DEGREES);
+    const bedSwSkewRenderKey = this.ensureHorizontallySkewedTexture(scene, swRenderKey, this.BED_SW_HORIZONTAL_SKEW_DEGREES);
+    const swKeyEff = (item.id === this.BED_DECOR_ID || item.id === 'f61') ? bedSwSkewRenderKey : swSkewRenderKey;
+    
+    const seWallSkewRenderKey = this.ensureHorizontallySkewedTexture(scene, seRenderKey, this.SE_WALL_HORIZONTAL_SKEW_DEGREES);
+    const seKeyEff = item.category === 'wall' ? seWallSkewRenderKey : seRenderKey;
+
+    const textureKey = rotation === 'SW' ? swKeyEff : seKeyEff;
+    
+    ghost.setTexture(textureKey);
+    ghost.setPosition(worldX, worldY);
+    ghost.setScale(this.DECOR_SCALE);
+    ghost.setAngle(this.getAngleForRotation(rotation, item.id, item.category));
+    ghost.setAlpha(0.6);
+    ghost.setDepth(100); 
+    ghost.setVisible(true);
+    ghost.setData('item', item);
+    ghost.setData('rotation', rotation);
+
+    if (!isValid) {
+      ghost.setTint(0xff0000);
+    } else {
+      ghost.clearTint();
+    }
+    
+    this.applyOpaqueCollisionBounds(scene, ghost, textureKey);
+  }
+
+  checkDecorOverlap(
+    sprite: Phaser.Physics.Arcade.Sprite,
+    decorSprites: Phaser.GameObjects.Group
+  ): boolean {
+    const movingBody = sprite.body as Phaser.Physics.Arcade.Body | null;
+    if (!movingBody) return false;
+
+    movingBody.updateFromGameObject();
+
+    const isMovingWall = this.isWallDecor(sprite);
+    const movingRotation = (sprite.getData('rotation') as string) || '';
+    const movingItem = sprite.getData('item') as DecorItem | undefined;
+    const isMovingRug = movingItem?.name.toLowerCase().includes('rug') || movingItem?.imagePath.toLowerCase().includes('rug');
+
+    if (isMovingRug) return false;
+
+    for (const item of decorSprites.getChildren()) {
+      if (item === sprite) continue;
+
+      const otherSprite = item as Phaser.Physics.Arcade.Sprite;
+      const otherItem = otherSprite.getData('item') as DecorItem | undefined;
+      const isOtherRug = otherItem?.name.toLowerCase().includes('rug') || otherItem?.imagePath.toLowerCase().includes('rug');
+      
+      if (isOtherRug) continue;
+
+      const otherBody = otherSprite.body as Phaser.Physics.Arcade.Body | null;
+      if (!otherBody) continue;
+
+      const isOtherWall = this.isWallDecor(otherSprite);
+      const otherRotation = (otherSprite.getData('rotation') as string) || '';
+      
+      const wallPair = isMovingWall && isOtherWall;
+      const decorWallPair = (isMovingWall && !isOtherWall) || (!isMovingWall && isOtherWall);
+
+      if (wallPair) continue;
+
+      otherBody.updateFromGameObject();
+
+      const isOverlapping =
+        movingBody.right > otherBody.x &&
+        movingBody.x < otherBody.right &&
+        movingBody.bottom > otherBody.y &&
+        movingBody.y < otherBody.bottom;
+
+      if (!isOverlapping) continue;
+
+      if (decorWallPair) {
+        const wallSprite = isMovingWall ? sprite : otherSprite;
+        const decorSprite = isMovingWall ? otherSprite : sprite;
+
+        // If decor is visually behind the wall, allow overlap.
+        if (decorSprite.depth < wallSprite.depth) {
+          continue;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
   refreshDecorCounts(decorSprites: Phaser.GameObjects.Group | null): void {
     if (!decorSprites) return;
 

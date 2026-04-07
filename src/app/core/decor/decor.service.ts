@@ -334,6 +334,83 @@ export class DecorService {
       imagePath: 'assets/decor/furniture/tableCoffeeGlass_SE.png',
       levelRequired: 4
     },
+    {
+      id: 'f91',
+      name: 'Kitchen Bar',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenBar_SE.png',
+      levelRequired: 4
+    },
+    {
+      id: 'f93',
+      name: 'Inner Corner Kitchen Cabinet',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenCabinetCornerInner_SE.png',
+      levelRequired: 6
+    },
+    {
+      id: 'f95',
+      name: 'Round Corner Kitchen Cabinet',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenCabinetCornerRound_SE.png',
+      levelRequired: 7
+    },
+    {
+      id: 'f97',
+      name: 'Kitchen Cabinet Drawer',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenCabinetDrawer_SE.png',
+      levelRequired: 6
+    },
+    {
+      id: 'f99',
+      name: 'Double Upper Kitchen Cabinet',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenCabinetUpperDouble_SE.png',
+      levelRequired: 9
+    },
+    {
+      id: 'f101',
+      name: 'Kitchen Cabinet',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenCabinet_SE.png',
+      levelRequired: 6
+    },
+    {
+      id: 'f103',
+      name: 'Large Refrigerator',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenFridgeLarge_SE.png',
+      levelRequired: 10
+    },
+    {
+      id: 'f105',
+      name: 'Floor 2',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/stairs_SE.png',
+      levelRequired: 99
+    },
+    {
+      id: 'f107',
+      name: 'Coffee Table',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/tableCoffee_SE.png',
+      levelRequired: 3
+    },
+    {
+      id: 'f109',
+      name: 'Cross Table with Cloth',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/tableCrossCloth_SE.png',
+      levelRequired: 5
+    },
+    {
+      id: 'f111',
+      name: 'Cross Table',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/tableCross_SE.png',
+      levelRequired: 4
+    },
 
     // Plants
     {

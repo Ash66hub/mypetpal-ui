@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, DoCheck, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, DoCheck, OnDestroy, HostListener } from '@angular/core';
 import { DecorService, DecorItem } from '../../../core/decor/decor.service';
 import { LeaderboardPanelComponent } from '../leaderboard-panel/leaderboard-panel.component';
 import { SharedModule } from '../../../shared/shared.module';
@@ -19,6 +19,8 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   public touchGhostX = 0;
   public touchGhostY = 0;
   public touchGhostCanDrop = false;
+  public touchGhostIsValid = true;
+  private transparentDragImage: HTMLImageElement | null = null;
   private lastKnownUserLevel: number = -1;
   private touchDraggingItem: DecorItem | null = null;
   private pendingTouchItem: DecorItem | null = null;
@@ -33,7 +35,12 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
 
   @Input() isVisiting: boolean = false;
 
-  constructor(public decorService: DecorService) {}
+  constructor(public decorService: DecorService) {
+    if (typeof document !== 'undefined') {
+      this.transparentDragImage = new Image();
+      this.transparentDragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+  }
 
   ngOnInit(): void {
     this.updateFilteredItems();
@@ -69,6 +76,12 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     }
 
     this.togglePanel();
+  }
+
+  @HostListener('window:decor-drag-validation', ['$event'])
+  public onDragValidation(event: Event): void {
+    const customEvent = event as CustomEvent<{ isValid: boolean }>;
+    this.touchGhostIsValid = customEvent.detail.isValid;
   }
 
   public onLeaderboardHandleClick(): void {
@@ -127,13 +140,27 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
       event.dataTransfer.setData('decorItem', JSON.stringify(item));
       event.dataTransfer.effectAllowed = 'copy';
 
-      // Optional: Set drag image if needed, but default is usually fine
+      if (this.transparentDragImage) {
+        event.dataTransfer.setDragImage(this.transparentDragImage, 0, 0);
+      }
     }
 
+    this.touchDraggingItem = item;
+    this.updateTouchGhostFromPoint(event.clientX, event.clientY);
+    window.dispatchEvent(new CustomEvent('decor-html5-drag-start', { detail: { item } }));
     this.collapsePanelForMobileDrag();
   }
 
+  public onDrag(event: DragEvent): void {
+    if (!this.touchDraggingItem) return;
+    if (event.clientX === 0 && event.clientY === 0) return; // Ignore final drag tick before drop
+    this.updateTouchGhostFromPoint(event.clientX, event.clientY);
+  }
+
+  @HostListener('window:dragend')
   public onDragEnd(): void {
+    this.touchDraggingItem = null;
+    window.dispatchEvent(new CustomEvent('decor-html5-drag-end'));
     this.restorePanelAfterMobileDrag();
   }
 
@@ -185,6 +212,8 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
 
     this.updateTouchGhostFromPoint(touch.clientX, touch.clientY);
 
+    this.dispatchDragMoveEvent(this.touchDraggingItem, touch.clientX, touch.clientY);
+
     event.preventDefault();
   }
 
@@ -208,6 +237,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
       touch.clientY
     );
 
+    window.dispatchEvent(new CustomEvent('decor-drag-end'));
     this.clearTouchDragState();
     event.preventDefault();
   }
@@ -319,6 +349,14 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
       clientX <= rect.right &&
       clientY >= rect.top &&
       clientY <= rect.bottom;
+  }
+
+  private dispatchDragMoveEvent(item: DecorItem | null, clientX: number, clientY: number): void {
+    if (!item) return;
+
+    window.dispatchEvent(new CustomEvent('decor-drag-move', {
+      detail: { item, clientX, clientY }
+    }));
   }
 
   public get touchGhostItem(): DecorItem | null {

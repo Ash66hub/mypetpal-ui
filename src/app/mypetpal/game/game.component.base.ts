@@ -85,6 +85,8 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   private decorToolbox: Phaser.GameObjects.Container | null = null;
   private selectionBorder: Phaser.GameObjects.Graphics | null = null;
   private isDraggingDecor = false;
+  private touchDragGhost: Phaser.Physics.Arcade.Sprite | null = null;
+  private html5DragItem: DecorItem | null = null;
 
   private arrowGroup: Phaser.GameObjects.Group | null = null;
   private arrowsVisible = false;
@@ -640,10 +642,17 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'copy';
     }
+
+    if (this.html5DragItem) {
+      this.updateDragGhost(this.html5DragItem, event.clientX, event.clientY);
+    }
   }
 
   public onDrop(event: DragEvent): void {
     event.preventDefault();
+    if (this.touchDragGhost) {
+      this.touchDragGhost.setVisible(false);
+    }
     const data = event.dataTransfer?.getData('decorItem');
     if (!data || !this.scene) return;
 
@@ -677,8 +686,107 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
+  @HostListener('window:decor-html5-drag-start', ['$event'])
+  public onHtml5DragStart(event: Event): void {
+    const customEvent = event as CustomEvent<{ item: DecorItem }>;
+    this.html5DragItem = customEvent.detail.item;
+  }
+
+  @HostListener('window:decor-html5-drag-end')
+  public onHtml5DragEnd(): void {
+    this.html5DragItem = null;
+    if (this.touchDragGhost) {
+      this.touchDragGhost.setVisible(false);
+    }
+  }
+
+  @HostListener('window:decor-drag-move', ['$event'])
+  public onDecorDragMove(event: Event): void {
+    const customEvent = event as CustomEvent<{
+      item?: DecorItem;
+      clientX?: number;
+      clientY?: number;
+    }>;
+
+    const item = customEvent.detail?.item;
+    const clientX = customEvent.detail?.clientX;
+    const clientY = customEvent.detail?.clientY;
+
+    this.updateDragGhost(item, clientX, clientY);
+  }
+
+  private updateDragGhost(item?: DecorItem | null, clientX?: number, clientY?: number): void {
+    if (!item || clientX === undefined || clientY === undefined || !this.scene || !this.decorSprites) {
+      return;
+    }
+
+    const container = document.getElementById('game-container');
+    if (!container) return;
+
+    if (!this.touchDragGhost) {
+      this.touchDragGhost = this.scene.physics.add.sprite(-1000, -1000, '');
+    }
+
+    const rect = container.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    const gameX = (x / container.offsetWidth) * (this.scene.game.config.width as number);
+    const gameY = (y / container.offsetHeight) * (this.scene.game.config.height as number);
+
+    const worldPoint = this.scene.cameras.main.getWorldPoint(gameX, gameY);
+
+    const isInside = this.isInsideFloor(worldPoint.x, worldPoint.y);
+    const limitReached = !this.decorManagerService.canAddMoreDecor(item, this.decorSprites);
+
+    // We must apply the texture and bounds BEFORE checking overlap!
+    this.decorManagerService.updateDecorPreview(
+      this.scene,
+      this.touchDragGhost,
+      item,
+      worldPoint.x,
+      worldPoint.y,
+      'SE',
+      true // Assume valid for now so it gets textured properly
+    );
+
+    // Force physics body sync with the NEW bounds from updateDecorPreview
+    const body = this.touchDragGhost.body as Phaser.Physics.Arcade.Body | null;
+    if (body) {
+      body.updateFromGameObject();
+    }
+
+    let isOverlapping = false;
+    if (isInside && !limitReached) {
+      isOverlapping = this.decorManagerService.checkDecorOverlap(this.touchDragGhost, this.decorSprites);
+    }
+    
+    const isValid = isInside && !limitReached && !isOverlapping;
+
+    if (!isValid) {
+      this.touchDragGhost.setTint(0xff0000);
+    } else {
+      this.touchDragGhost.clearTint();
+    }
+    
+    // Dispatch an event so the Angular UI can show a red cross on mobile
+    window.dispatchEvent(new CustomEvent('decor-drag-validation', { detail: { isValid } }));
+  }
+
+  @HostListener('window:decor-drag-end', ['$event'])
+
+  public onDecorDragEnd(event: Event): void {
+    if (this.touchDragGhost) {
+      this.touchDragGhost.setVisible(false);
+    }
+  }
+
   @HostListener('window:decor-touch-drop', ['$event'])
   public onTouchDrop(event: Event): void {
+    if (this.touchDragGhost) {
+      this.touchDragGhost.setVisible(false);
+    }
+
     const customEvent = event as CustomEvent<{
       item?: DecorItem;
       clientX?: number;
@@ -725,6 +833,28 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
       if (this.scene) {
         this.scene.input.activePointer.isDown = false;
         this.scene.input.activePointer.buttons = 0;
+        this.scene.input.resetPointers();
+      }
+      return;
+    }
+
+    let isOverlapping = false;
+    if (this.decorSprites && this.touchDragGhost) {
+      this.touchDragGhost.setPosition(worldPoint.x, worldPoint.y);
+      this.touchDragGhost.setData('item', item);
+      this.touchDragGhost.setData('rotation', 'SE');
+      const body = this.touchDragGhost.body as Phaser.Physics.Arcade.Body | null;
+      if (body) {
+        body.updateFromGameObject();
+      }
+      isOverlapping = this.decorManagerService.checkDecorOverlap(
+        this.touchDragGhost,
+        this.decorSprites
+      );
+    }
+
+    if (isOverlapping) {
+      if (this.scene) {
         this.scene.input.resetPointers();
       }
       return;
@@ -1673,6 +1803,19 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
         if (this.isInsideFloor(dragX, dragY)) {
           sprite.setPosition(dragX, dragY);
+          
+          const body = sprite.body as Phaser.Physics.Arcade.Body | null;
+          if (body) {
+            body.updateFromGameObject();
+          }
+
+          const isOverlapping = this.decorManagerService.checkDecorOverlap(sprite, this.decorSprites!);
+          if (isOverlapping) {
+            sprite.setTint(0xff0000);
+          } else {
+            sprite.clearTint();
+          }
+
           this.decorManagerService.refreshSelectionFeedback(
             sprite,
             this.scene!
@@ -1684,14 +1827,19 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
     sprite.on('dragend', () => {
       this.isDraggingDecor = false;
+      sprite.clearTint();
       sprite.setAlpha(1.0);
       sprite.setImmovable(true);
 
-      this.decorManagerService.resolveDecorOverlap(
-        sprite,
-        this.scene!,
-        this.decorSprites!
-      );
+      const body = sprite.body as Phaser.Physics.Arcade.Body | null;
+      if (body) {
+        body.updateFromGameObject();
+      }
+
+      if (this.decorManagerService.checkDecorOverlap(sprite, this.decorSprites!)) {
+        sprite.setPosition(sprite.getData('origX'), sprite.getData('origY'));
+      }
+
       this.decorManagerService.refreshSelectionFeedback(sprite, this.scene!);
       this.updateToolboxPosition();
 

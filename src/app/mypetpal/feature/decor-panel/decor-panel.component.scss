@@ -373,6 +373,16 @@
         }
     }
 
+    &.invalid-drop {
+        border-color: #ef4444;
+        background: rgba(45, 15, 20, 0.95);
+
+        .ghost-label {
+            color: #fca5a5;
+            font-weight: bold;
+        }
+    }
+
     .ghost-thumb {
         width: 24px;
         height: 24px;
