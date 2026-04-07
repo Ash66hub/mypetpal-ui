@@ -10,8 +10,6 @@ import {
   providedIn: 'root'
 })
 export class DecorManagerService {
-  private readonly MAX_WALLS_PER_TYPE = 20;
-  private readonly MAX_ITEMS_PER_TYPE = 10;
   private readonly DECOR_SCALE = 0.25;
   private readonly DECOR_PIXEL_BLOCK_SIZE = 1;
   private readonly SW_HORIZONTAL_SKEW_DEGREES = 15;
@@ -47,17 +45,15 @@ export class DecorManagerService {
     if (!decorSprites) return true;
 
     const children = decorSprites.getChildren();
-    if (item.category === 'wall') {
-      const sameWallTypeCount = children.filter(
-        (c: any) => this.getDecorId(c) === item.id
-      ).length;
-      return sameWallTypeCount < this.MAX_WALLS_PER_TYPE;
-    } else {
-      const sameItemCount = children.filter(
-        (c: any) => this.getDecorId(c) === item.id
-      ).length;
-      return sameItemCount < this.MAX_ITEMS_PER_TYPE;
-    }
+    const sameTypeCount = children.filter(
+      (c: any) => this.getDecorId(c) === item.id
+    ).length;
+
+    return sameTypeCount < this.getLimitForItem(item);
+  }
+
+  getLimitForItem(item: DecorItem): number {
+    return this.decorService.getLimitForItem(item);
   }
 
   addDecorToGame(
@@ -720,11 +716,17 @@ export class DecorManagerService {
       e.stopPropagation();
       onRotate();
     });
+    rotateIcon.on('pointerup', (p: any, lx: any, ly: any, e: any) => {
+      e.stopPropagation();
+    });
 
     trashIcon.setInteractive({ useHandCursor: true });
     trashIcon.on('pointerdown', (p: any, lx: any, ly: any, e: any) => {
       e.stopPropagation();
       onDelete();
+    });
+    trashIcon.on('pointerup', (p: any, lx: any, ly: any, e: any) => {
+      e.stopPropagation();
     });
 
     return toolbox;

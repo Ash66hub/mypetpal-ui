@@ -242,9 +242,10 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     const clickedInsideChatControls = !!target.closest(
       'app-game-chat-controls'
     );
-    const isButton = (event.target as HTMLElement).tagName === 'BUTTON';
+    const isButton = target.tagName === 'BUTTON';
+    const clickedInsideGame = !!target.closest('#game-container');
 
-    if (!clickedInsideChatControls && !isButton) {
+    if (!clickedInsideChatControls && !isButton && !clickedInsideGame) {
       const activeElement = document.activeElement as HTMLElement | null;
       if (activeElement?.tagName === 'INPUT') {
         activeElement.blur();
@@ -719,10 +720,11 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!this.decorManagerService.canAddMoreDecor(item, this.decorSprites)) {
+      const limit = this.decorManagerService.getLimitForItem(item);
       this.showToast(
         item.category === 'wall'
-          ? 'Max 20 wall items allowed!'
-          : `Max 10 ${item.name} allowed!`
+          ? `Max ${limit} wall items allowed!`
+          : `Max ${limit} ${item.name} allowed!`
       );
       if (this.scene) {
         this.scene.input.resetPointers();

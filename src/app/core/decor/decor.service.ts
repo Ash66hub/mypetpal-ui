@@ -441,4 +441,11 @@ export class DecorService {
   ): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}?userId=${userId}`, instances);
   }
+
+  public getLimitForItem(item: DecorItem): number {
+    if (item.category === 'wall') {
+      return item.id === 'w7' || item.id === 'w3' ? 50 : 20;
+    }
+    return 10;
+  }
 }

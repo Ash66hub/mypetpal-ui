@@ -359,10 +359,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
 
   public getRemaining(item: DecorItem): number {
     const counts = this.decorService.activeCounts();
-    if (item.category === 'wall') {
-      return Math.max(0, 20 - (counts[item.id] || 0));
-    } else {
-      return Math.max(0, 10 - (counts[item.id] || 0));
-    }
+    const limit = this.decorService.getLimitForItem(item);
+    return Math.max(0, limit - (counts[item.id] || 0));
   }
 }
