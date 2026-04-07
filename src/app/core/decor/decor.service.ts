@@ -189,7 +189,7 @@ export class DecorService {
     },
     {
       id: 'f49',
-      name: 'Glass Coffee Table',
+      name: 'Square Glass Coffee Table',
       category: 'furniture',
       imagePath: 'assets/decor/furniture/tableCoffeeGlassSquare_SE.png',
       levelRequired: 5
@@ -228,6 +228,111 @@ export class DecorService {
       category: 'furniture',
       imagePath: 'assets/decor/furniture/washer_SE.png',
       levelRequired: 5
+    },
+    {
+      id: 'f61',
+      name: 'Double Bed',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/bedDouble_SE.png',
+      levelRequired: 5
+    },
+    {
+      id: 'f63',
+      name: 'Closed Bookcase',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/bookcaseClosedDoors_SE.png',
+      levelRequired: 3
+    },
+    {
+      id: 'f65',
+      name: 'Open Bookcase',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/bookcaseOpen_SE.png',
+      levelRequired: 3
+    },
+    {
+      id: 'f67',
+      name: 'Desk Chair',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/chairDesk_SE.png',
+      levelRequired: 2
+    },
+    {
+      id: 'f69',
+      name: 'Standing Coat Rack',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/coatRackStanding_SE.png',
+      levelRequired: 1
+    },
+    {
+      id: 'f71',
+      name: 'Desk',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/desk_SE.png',
+      levelRequired: 2
+    },
+    {
+      id: 'f73',
+      name: 'Refrigerator',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/kitchenFridge_SE.png',
+      levelRequired: 4
+    },
+    {
+      id: 'f75',
+      name: 'Square Floor Lamp',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/lampSquareFloor_SE.png',
+      levelRequired: 2
+    },
+    {
+      id: 'f77',
+      name: 'Rectangle Rug',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/rugRectangle_SE.png',
+      levelRequired: 1
+    },
+    {
+      id: 'f79',
+      name: 'Round Rug',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/rugRound_SE.png',
+      levelRequired: 1
+    },
+    {
+      id: 'f81',
+      name: 'Rounded Rug',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/rugRounded_SE.png',
+      levelRequired: 1
+    },
+    {
+      id: 'f83',
+      name: 'Square Rug',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/rugSquare_SE.png',
+      levelRequired: 1
+    },
+    {
+      id: 'f85',
+      name: 'Square Bar Stool',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/stoolBarSquare_SE.png',
+      levelRequired: 3
+    },
+    {
+      id: 'f87',
+      name: 'Bar Stool',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/stoolBar_SE.png',
+      levelRequired: 3
+    },
+    {
+      id: 'f89',
+      name: 'Glass Coffee Table',
+      category: 'furniture',
+      imagePath: 'assets/decor/furniture/tableCoffeeGlass_SE.png',
+      levelRequired: 4
     },
 
     // Plants

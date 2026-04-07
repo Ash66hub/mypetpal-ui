@@ -1603,13 +1603,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
               const sa = a as Phaser.Physics.Arcade.Sprite;
               const sb = b as Phaser.Physics.Arcade.Sprite;
 
-              // Avoid passive Arcade pushback for any pair that involves a wall.
-              // Wall interactions are handled by explicit drop resolution logic instead.
-              if (this.isWallLikeDecor(sa) || this.isWallLikeDecor(sb)) {
-                return false;
-              }
-
-              return true;
+              return false;
             },
             this
           );
@@ -1887,7 +1881,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
           isMuted: this.settings?.isMuted || false,
           musicVolume: this.settings?.musicVolume || 0.5,
           soundVolume: this.settings?.soundVolume || 0.5,
-          musicEnabled: this.settings?.musicEnabled ?? false,
+          musicEnabled: this.settings?.musicEnabled ?? true,
           neighborhoodPanelCollapsed: this.friendService.isCollapsed()
         })
         .subscribe();
@@ -2566,7 +2560,12 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (this.decorSprites) {
       this.decorSprites.getChildren().forEach(child => {
         const decor = child as Phaser.GameObjects.Sprite;
-        this.updateSpriteDepth(decor);
+        const item = decor.getData('item') as DecorItem | undefined;
+        const isRug = item?.name.toLowerCase().includes('rug') || item?.imagePath.toLowerCase().includes('rug');
+        
+        if (!isRug) {
+          this.updateSpriteDepth(decor);
+        }
       });
     }
 

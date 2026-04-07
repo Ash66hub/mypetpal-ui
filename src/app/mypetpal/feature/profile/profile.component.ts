@@ -35,7 +35,7 @@ export class ProfileComponent implements OnInit {
   public hideNewPassword = true;
   public hideConfirmPassword = true;
   public isUploadingProfilePicture = false;
-  public musicEnabled = false;
+  public musicEnabled = true;
   public musicVolume = 0.5;
   private readonly maxProfilePictureSizeInBytes = 5 * 1024 * 1024;
   private readonly allowedProfilePictureMimeTypes = new Set([
@@ -61,7 +61,7 @@ export class ProfileComponent implements OnInit {
     this.loginStreamService.currentUserStream.subscribe((user: User) => {
       this.currentUser = user;
       this.userSettings = null;
-      this.musicEnabled = false;
+      this.musicEnabled = true;
       this.musicVolume = 0.5;
       this.isMusicPreferenceLoading = false;
       const provider = (
@@ -117,14 +117,14 @@ export class ProfileComponent implements OnInit {
     this.userSettingsService.getSettings(numericUserId).subscribe({
       next: settings => {
         this.userSettings = settings;
-        this.musicEnabled = settings.musicEnabled ?? false;
+        this.musicEnabled = settings.musicEnabled ?? true;
         this.musicVolume = settings.musicVolume ?? 0.5;
         this.isMusicPreferenceLoading = false;
       },
       error: err => {
         console.warn('Failed to load user settings', err);
         this.userSettings = null;
-        this.musicEnabled = false;
+        this.musicEnabled = true;
         this.musicVolume = 0.5;
         this.isMusicPreferenceLoading = false;
       }

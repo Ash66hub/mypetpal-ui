@@ -87,7 +87,7 @@
             max="1"
             step="0.01"
             [disabled]="
-              isMusicPreferenceLoading || isSavingMusicPreference || isLoading
+              isMusicPreferenceLoading || isSavingMusicPreference || isLoading || !musicEnabled
             "
             [value]="musicVolume"
             (input)="onMusicVolumeInput($any($event.target).valueAsNumber)"

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DecorManagerService } from './decor-manager.service';
 import * as Phaser from 'phaser';
+import { DecorItem } from '../../../core/decor/decor.service';
 
 @Injectable({
   providedIn: 'root'
@@ -175,8 +176,11 @@ export class PetMovementService {
 
     for (const child of decorSprites.getChildren()) {
       const decor = child as Phaser.GameObjects.Sprite;
-      // Skip collision for 'Open Doorway' (id: 'w11')
-      if (decor.getData && decor.getData('decorId') === 'w11') {
+      // Skip collision for 'Open Doorway' (id: 'w11') or Rugs
+      const decorId = decor.getData ? decor.getData('decorId') : '';
+      const item = (decor.getData ? decor.getData('item') : null) as DecorItem | null;
+      const isRug = item?.name.toLowerCase().includes('rug') || item?.imagePath.toLowerCase().includes('rug') || item?.id.toLowerCase().startsWith('rug');
+      if (decorId === 'w11' || isRug) {
         continue;
       }
       // If pet is visually behind this decor, do not treat it as blocking.

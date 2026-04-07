@@ -32,7 +32,7 @@ export class DecorManagerService {
   private readonly ALPHA_THRESHOLD = 10;
   private readonly WALL_OVERLAP_RATIO = 0.1;
   private readonly MIXED_WALL_OVERLAP_RATIO = 0.03;
-  private readonly DECOR_WALL_OVERLAP_RATIO = 0.5;
+  private readonly DECOR_WALL_OVERLAP_RATIO = 0.25;
   private readonly opaqueBoundsCache = new Map<
     string,
     { x: number; y: number; width: number; height: number }
@@ -88,7 +88,9 @@ export class DecorManagerService {
         this.BED_SW_HORIZONTAL_SKEW_DEGREES
       );
       const swEffectiveRenderKey =
-        item.id === this.BED_DECOR_ID ? bedSwSkewRenderKey : swSkewRenderKey;
+        (item.id === this.BED_DECOR_ID || item.id === 'f61')
+          ? bedSwSkewRenderKey
+          : swSkewRenderKey;
       const seWallSkewRenderKey = this.ensureHorizontallySkewedTexture(
         scene,
         seRenderKey,
@@ -108,7 +110,8 @@ export class DecorManagerService {
       this.applyOpaqueCollisionBounds(scene, sprite, initialRenderKey);
 
       sprite.setImmovable(true);
-      sprite.setDepth(10);
+      const isRug = item.name.toLowerCase().includes('rug') || item.id.toLowerCase().startsWith('rug') || item.imagePath.toLowerCase().includes('rug');
+      sprite.setDepth(isRug ? 0.001 : 10);
       sprite.setData('item', item);
       sprite.setData('decorId', item.id);
       sprite.setData('decorCategory', item.category);
@@ -288,6 +291,9 @@ export class DecorManagerService {
       selectionOverlay.setTexture(sprite.texture.key);
     }
 
+    const item = sprite.getData('item') as DecorItem | undefined;
+    const isRug = item?.name.toLowerCase().includes('rug') || item?.imagePath.toLowerCase().includes('rug');
+
     selectionOverlay
       .setPosition(sprite.x, sprite.y)
       .setOrigin(sprite.originX, sprite.originY)
@@ -299,7 +305,7 @@ export class DecorManagerService {
       .setAlpha(this.SELECTION_HALO_ALPHA)
       .setTint(this.SELECTION_HALO_COLOR)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(this.SELECTION_DEPTH)
+      .setDepth(isRug ? 0.005 : this.SELECTION_DEPTH)
       .setVisible(true);
 
     selectionOverlay.setFlip(sprite.flipX, sprite.flipY);
@@ -446,7 +452,7 @@ export class DecorManagerService {
         return this.LOUNGE_SOFA_CORNER_SW_RIGHT_TILT_ANGLE;
       }
 
-      return decorId === this.BED_DECOR_ID
+      return (decorId === this.BED_DECOR_ID || decorId === 'f61')
         ? this.BED_SW_RIGHT_TILT_ANGLE
         : this.SW_LEFT_TILT_ANGLE;
     }
@@ -456,7 +462,7 @@ export class DecorManagerService {
         return this.SE_WALL_RIGHT_TILT_ANGLE;
       }
 
-      return decorId === this.BED_DECOR_ID ? -4 : this.SE_LEFT_TILT_ANGLE;
+      return (decorId === this.BED_DECOR_ID || decorId === 'f61') ? -4 : this.SE_LEFT_TILT_ANGLE;
     }
 
     return 0;
@@ -477,7 +483,7 @@ export class DecorManagerService {
 
     let attempts = 0;
     const maxAttempts = 60;
-    const defaultEdgePadding = 0.5;
+    const defaultEdgePadding = 0;
 
     while (attempts < maxAttempts) {
       movingBody.updateFromGameObject();
@@ -488,6 +494,12 @@ export class DecorManagerService {
         if (item === sprite) continue;
 
         const otherSprite = item as Phaser.Physics.Arcade.Sprite;
+        
+        // Rugs don't cause or receive push-back
+        const isRug = (sprite.getData('item') as DecorItem)?.name.toLowerCase().includes('rug');
+        const isOtherRug = (otherSprite.getData('item') as DecorItem)?.name.toLowerCase().includes('rug');
+        if (isRug || isOtherRug) continue;
+
         const otherBody = otherSprite.body as Phaser.Physics.Arcade.Body | null;
         if (!otherBody) continue;
 

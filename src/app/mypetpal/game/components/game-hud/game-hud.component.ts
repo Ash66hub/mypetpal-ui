@@ -29,8 +29,8 @@ export class GameHudComponent implements OnInit, OnChanges {
   public selectedLoadingTip = '';
   private readonly loadingTips: Array<{ text: string; weight: number }> = [
     {
-      text: 'Tip: Turn on in-game music in the profile menu.',
-      weight: 5
+      text: 'Tip: Toggle in-game music in the profile menu.',
+      weight: 4
     },
     {
       text: "Tip: You can see the top players on the leaderboard by opening the 🏆 'trophy' panel.",

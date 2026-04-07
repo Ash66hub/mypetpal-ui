@@ -7,7 +7,7 @@ export class BackgroundMusicService {
   private readonly trackUrl =
     'https://awntqvnovwpwyxiqexfr.supabase.co/storage/v1/object/public/mypetpal-music/lofi-track-1.ogg';
   private audio: HTMLAudioElement | null = null;
-  private enabled = false;
+  private enabled = true;
   private volume = 0.5;
 
   public applyPreferences(enabled: boolean, volume: number): void {
