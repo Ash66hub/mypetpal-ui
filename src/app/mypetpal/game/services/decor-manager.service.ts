@@ -28,9 +28,10 @@ export class DecorManagerService {
   private readonly SELECTION_HALO_COLOR = 0x7c3aed;
   private readonly TOOLBOX_DEPTH = 30;
   private readonly ALPHA_THRESHOLD = 10;
-  private readonly WALL_OVERLAP_RATIO = 0.1;
-  private readonly MIXED_WALL_OVERLAP_RATIO = 0.03;
-  private readonly DECOR_WALL_OVERLAP_RATIO = 0.25;
+  private readonly WALL_OVERLAP_RATIO = 0.5;
+  private readonly MIXED_WALL_OVERLAP_RATIO = 0.5;
+  private readonly DECOR_WALL_OVERLAP_RATIO = 0.5;
+  private readonly GENERAL_OVERLAP_RATIO = 0.5;
   private readonly opaqueBoundsCache = new Map<
     string,
     { x: number; y: number; width: number; height: number }
@@ -521,13 +522,16 @@ export class DecorManagerService {
         const decorWallOverlapPadding =
           -Math.min(movingBody.width, otherBody.width) *
           this.DECOR_WALL_OVERLAP_RATIO;
+        const generalOverlapPadding =
+          -Math.min(movingBody.width, otherBody.width) *
+          this.GENERAL_OVERLAP_RATIO;
         const edgePadding = sameWallOrientation
           ? wallOverlapPadding
           : mixedWallPair
             ? mixedWallOverlapPadding
             : decorWallPair
               ? decorWallOverlapPadding
-              : defaultEdgePadding;
+              : generalOverlapPadding;
 
         otherBody.updateFromGameObject();
 
