@@ -255,6 +255,17 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  @HostListener('window:debug-toggled')
+  onDebugToggled(): void {
+    if (this.game) {
+      this.game.destroy(true);
+    }
+    this.decorSprites = null;
+    this.decorToolbox = null;
+    this.selectedDecor = null;
+    setTimeout(() => this.initializeGame(), 300);
+  }
+
   @HostListener('window:replay-tutorial')
   onReplayTutorialRequested(): void {
     const currentUserId =

@@ -5,6 +5,7 @@ import {
   DecorService,
   DecorInstance
 } from '../../../core/decor/decor.service';
+import { DebugService } from '../../../core/debug/debug.service';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +38,12 @@ export class DecorManagerService {
     { x: number; y: number; width: number; height: number }
   >();
 
-  constructor(private decorService: DecorService) {}
+  private debugGraphics: Phaser.GameObjects.Graphics | null = null;
+
+  constructor(
+    private decorService: DecorService,
+    private debugService: DebugService
+  ) {}
 
   canAddMoreDecor(
     item: DecorItem,
@@ -364,8 +370,15 @@ export class DecorManagerService {
   ): void {
     const bounds = this.getOpaqueBounds(scene, textureKey);
 
-    sprite.setBodySize(bounds.width, bounds.height);
-    sprite.setOffset(bounds.x, bounds.y);
+    // Shrink the body by the overlap ratio so the debug bounds
+    // reflect the actual effective collision area.
+    const shrinkX = bounds.width * this.GENERAL_OVERLAP_RATIO * 0.5;
+    const shrinkY = bounds.height * this.GENERAL_OVERLAP_RATIO * 0.5;
+    const effectiveWidth = Math.max(1, bounds.width - shrinkX * 2);
+    const effectiveHeight = Math.max(1, bounds.height - shrinkY * 2);
+
+    sprite.setBodySize(effectiveWidth, effectiveHeight);
+    sprite.setOffset(bounds.x + shrinkX, bounds.y + shrinkY);
   }
 
   private getOpaqueBounds(
@@ -513,25 +526,9 @@ export class DecorManagerService {
         const sameWallOrientation =
           wallPair && movingRotation === otherRotation;
         const mixedWallPair = wallPair && movingRotation !== otherRotation;
-        const wallOverlapPadding =
-          -Math.min(movingBody.width, otherBody.width) *
-          this.WALL_OVERLAP_RATIO;
-        const mixedWallOverlapPadding =
-          -Math.min(movingBody.width, otherBody.width) *
-          this.MIXED_WALL_OVERLAP_RATIO;
-        const decorWallOverlapPadding =
-          -Math.min(movingBody.width, otherBody.width) *
-          this.DECOR_WALL_OVERLAP_RATIO;
-        const generalOverlapPadding =
-          -Math.min(movingBody.width, otherBody.width) *
-          this.GENERAL_OVERLAP_RATIO;
-        const edgePadding = sameWallOrientation
-          ? wallOverlapPadding
-          : mixedWallPair
-            ? mixedWallOverlapPadding
-            : decorWallPair
-              ? decorWallOverlapPadding
-              : generalOverlapPadding;
+        // Bodies are already shrunk by the general overlap ratio,
+        // so no additional negative padding is needed.
+        const edgePadding = 0;
 
         otherBody.updateFromGameObject();
 
@@ -735,4 +732,72 @@ export class DecorManagerService {
 
     return toolbox;
   }
+
+  drawDebugBounds(
+    scene: Phaser.Scene,
+    decorSprites: Phaser.GameObjects.Group | null
+  ): void {
+    if (!this.debugService.debugMode) {
+      if (this.debugGraphics) {
+        this.debugGraphics.clear();
+      }
+      return;
+    }
+
+    if (!decorSprites) return;
+
+    if (!this.debugGraphics) {
+      this.debugGraphics = scene.add.graphics();
+    }
+    this.debugGraphics.clear();
+    this.debugGraphics.setDepth(999);
+
+    for (const child of decorSprites.getChildren()) {
+      const sprite = child as Phaser.Physics.Arcade.Sprite;
+      const textureKey = sprite.texture.key;
+      const bounds = this.opaqueBoundsCache.get(textureKey);
+      if (!bounds) continue;
+
+      // Calculate the four corners of the opaque bounds in local space
+      // (relative to sprite origin)
+      const originX = sprite.originX * sprite.width;
+      const originY = sprite.originY * sprite.height;
+
+      const localX = bounds.x - originX;
+      const localY = bounds.y - originY;
+
+      const corners = [
+        { x: localX, y: localY },
+        { x: localX + bounds.width, y: localY },
+        { x: localX + bounds.width, y: localY + bounds.height },
+        { x: localX, y: localY + bounds.height }
+      ];
+
+      // Transform each corner by the sprite's scale and rotation
+      const cos = Math.cos(sprite.rotation);
+      const sin = Math.sin(sprite.rotation);
+      const sx = sprite.scaleX;
+      const sy = sprite.scaleY;
+
+      const worldCorners = corners.map(c => {
+        const scaledX = c.x * sx;
+        const scaledY = c.y * sy;
+        return {
+          x: sprite.x + (scaledX * cos - scaledY * sin),
+          y: sprite.y + (scaledX * sin + scaledY * cos)
+        };
+      });
+
+      // Draw the rotated rectangle
+      this.debugGraphics.lineStyle(1, 0x00ff00, 0.8);
+      this.debugGraphics.beginPath();
+      this.debugGraphics.moveTo(worldCorners[0].x, worldCorners[0].y);
+      for (let i = 1; i < worldCorners.length; i++) {
+        this.debugGraphics.lineTo(worldCorners[i].x, worldCorners[i].y);
+      }
+      this.debugGraphics.closePath();
+      this.debugGraphics.strokePath();
+    }
+  }
 }
+

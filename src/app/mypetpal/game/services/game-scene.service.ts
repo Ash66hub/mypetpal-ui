@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as Phaser from 'phaser';
+import { DebugService } from '../../../core/debug/debug.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,8 @@ export class GameSceneService {
   private readonly WORLD_CENTER = 1000;
   private readonly ROOM_CENTER = 1000;
   private readonly TOUCH_PAN_SENSITIVITY = 0.8;
+
+  constructor(private debugService: DebugService) {}
 
   createGameConfig(
     parentId: string,
@@ -47,8 +50,8 @@ export class GameSceneService {
         default: 'arcade',
         arcade: {
           gravity: { x: 0, y: 0 },
-          debug: false
-        }
+          debug: this.debugService.debugMode
+        } 
       },
       input: {
         keyboard: {
@@ -96,6 +99,10 @@ export class GameSceneService {
       .setScale(0.9);
     dog.setCollideWorldBounds(true);
     dog.setBounce(0);
+    if (dog.body) {
+      (dog.body as Phaser.Physics.Arcade.Body).debugShowBody = false;
+      (dog.body as Phaser.Physics.Arcade.Body).debugShowVelocity = false;
+    }
 
     const shadow = scene.add
       .container(dogStartX - 3, dogStartY + 8)

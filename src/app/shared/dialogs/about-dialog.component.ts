@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
+import { DebugService } from '../../core/debug/debug.service';
 
 @Component({
   selector: 'app-about-dialog',
@@ -9,7 +10,7 @@ import { MatDialogRef } from '@angular/material/dialog';
       <h2 class="dialog-title">About</h2>
       <div class="dialog-content">
         <p>
-          MyPetPal is developed and maintained solely by me. Drop me a message
+          <span class="secret-tap" (click)="onSecretTap()">MyPetPal</span> is developed and maintained solely by me. Drop me a message
           if you'd like to chat about the game, have suggestions, or just want
           to say hi!
         </p>
@@ -75,9 +76,35 @@ import { MatDialogRef } from '@angular/material/dialog';
   styleUrls: ['./about-dialog.component.scss']
 })
 export class AboutDialogComponent {
-  constructor(private dialogRef: MatDialogRef<AboutDialogComponent>) {}
+  private tapCount = 0;
+  private tapTimer: any = null;
+
+  constructor(
+    private dialogRef: MatDialogRef<AboutDialogComponent>,
+    private debugService: DebugService
+  ) {}
+
+  onSecretTap(): void {
+    this.tapCount++;
+
+    if (this.tapTimer) {
+      clearTimeout(this.tapTimer);
+    }
+
+    // Reset counter after 3 seconds of inactivity
+    this.tapTimer = setTimeout(() => {
+      this.tapCount = 0;
+    }, 3000);
+
+    if (this.tapCount >= 5) {
+      this.tapCount = 0;
+      const isOn = this.debugService.toggle();
+      this.dialogRef.close({ debugToggled: true, debugMode: isOn });
+    }
+  }
 
   close(): void {
     this.dialogRef.close();
   }
 }
+

@@ -70,9 +70,17 @@ export class TopBarComponent implements OnInit, OnDestroy {
   }
 
   public openAbout(): void {
-    this.dialog.open(AboutDialogComponent, {
+    const ref = this.dialog.open(AboutDialogComponent, {
       width: '420px',
       panelClass: 'custom-dialog-panel'
+    });
+
+    ref.afterClosed().subscribe(result => {
+      if (result?.debugToggled) {
+        window.dispatchEvent(new CustomEvent('debug-toggled', {
+          detail: { debugMode: result.debugMode }
+        }));
+      }
     });
   }
 

@@ -124,3 +124,8 @@
 .btn-close:hover {
   transform: translateY(-1px);
 }
+
+.secret-tap {
+  cursor: text;
+  user-select: none;
+}
