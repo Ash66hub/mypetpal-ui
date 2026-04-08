@@ -32,6 +32,15 @@
 }
 
 <div class="zoom-controls">
+  <button type="button" class="camera-lock-toggle" [class.active]="isCameraLockedToPet" (click)="onToggleCameraLock()" title="Lock camera to pet">
+    <img src="assets/lock-camera.png" alt="Lock camera to pet" />
+  </button>
   <button type="button" (click)="onZoomIn()" title="Zoom In">+</button>
   <button type="button" (click)="onZoomOut()" title="Zoom Out">-</button>
 </div>
+
+@if (!isHomeViewMode) {
+  <div class="mobile-joystick-container">
+    <app-mobile-joystick (joystickUpdate)="onJoystickUpdate($event)"></app-mobile-joystick>
+  </div>
+}

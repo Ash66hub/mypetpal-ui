@@ -253,15 +253,19 @@ export class GameSceneService {
       if (isTouchCapableDevice || this.isTouchPointer(pointer)) {
         const activeTouchPointers = getActiveTouchPointers();
 
-        if (activeTouchPointers.length < 2) {
+        if (activeTouchPointers.length === 0) {
           resetTouchPan();
           return;
         }
 
-        const centerX =
-          (activeTouchPointers[0].x + activeTouchPointers[1].x) / 2;
-        const centerY =
-          (activeTouchPointers[0].y + activeTouchPointers[1].y) / 2;
+        // Support both single-finger and multi-finger panning
+        const centerX = activeTouchPointers.length === 1 
+          ? activeTouchPointers[0].x 
+          : (activeTouchPointers[0].x + activeTouchPointers[1].x) / 2;
+          
+        const centerY = activeTouchPointers.length === 1 
+          ? activeTouchPointers[0].y 
+          : (activeTouchPointers[0].y + activeTouchPointers[1].y) / 2;
 
         if (!lastTouchPanCenter) {
           lastTouchPanCenter = { x: centerX, y: centerY };
@@ -287,19 +291,20 @@ export class GameSceneService {
     });
 
     scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (this.isTouchPointer(pointer) && getActiveTouchPointers().length < 2) {
+      // Always reset on new finger to prevent jumps when finger count changes
+      if (this.isTouchPointer(pointer)) {
         resetTouchPan();
       }
     });
 
-    scene.input.on('pointerup', () => {
-      if (getActiveTouchPointers().length < 2) {
+    scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (this.isTouchPointer(pointer)) {
         resetTouchPan();
       }
     });
 
-    scene.input.on('pointerupoutside', () => {
-      if (getActiveTouchPointers().length < 2) {
+    scene.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => {
+      if (this.isTouchPointer(pointer)) {
         resetTouchPan();
       }
     });

@@ -24,9 +24,9 @@ export class GameTutorialService {
       target: 'pet',
       title: 'Move Your Pet',
       messageDesktop:
-        'Use the direction controls around your pet, or use your keyboard arrow keys to move.',
+        'Use the direction controls around your pet, or use your keyboard arrow keys to move. Use the camera toggle at the bottom right to lock/unlock the view to your pet!',
       messageMobile:
-        'Tap the floor to guide your pet around your space. On touch devices, use two fingers to move the room and pinch to zoom.'
+        'Use the joystick on the bottom left to guide your pet around your space. Swipe to move the room and pinch to zoom. You can also toggle the camera lock button at the bottom right to lock/unlock the view to your pet!'
     },
     {
       target: 'decor',

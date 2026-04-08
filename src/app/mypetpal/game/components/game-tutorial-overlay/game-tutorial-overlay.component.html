@@ -27,7 +27,7 @@
         Step {{ stepIndex + 1 }} of {{ totalSteps }}
       </div>
       <h3>{{ tutorialStep.title }}</h3>
-      <p>{{ tutorialMessage }}</p>
+      <p [innerHTML]="tutorialMessage"></p>
 
       <div class="tutorial-actions">
         <button type="button" class="skip-btn" (click)="onSkip()">

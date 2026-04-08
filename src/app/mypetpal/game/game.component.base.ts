@@ -32,6 +32,7 @@ import { RoomMultiplayerService } from './services/room-multiplayer.service';
 import { GameSceneService } from './services/game-scene.service';
 import { GameSidePanelsComponent } from './components/game-side-panels/game-side-panels.component';
 import { GameTutorialService } from './services/game-tutorial.service';
+import { JoystickEvent } from './components/mobile-joystick/mobile-joystick.component';
 
 @Directive()
 export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
@@ -49,6 +50,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
   public isGameLoading = true;
   public isSavingRoom = false;
+  public isCameraLockedToPet = true;
   public toastMessage: string | null = null;
   private toastTimeout: any;
 
@@ -95,6 +97,8 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   private pressedArrowKeys: Set<string> = new Set();
   private arrowHoverSources = 0;
   private arrowHideTimer: ReturnType<typeof setTimeout> | null = null;
+  private currentJoystickDirection: string | null = null;
+  private currentJoystickIntensity: number = 0;
 
   private selectedVisitor: string | null = null;
   private currentlyKickingUserId: string | null = null;
@@ -341,6 +345,20 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     this.applyZoom();
   }
 
+  public toggleCameraLock(): void {
+    this.isCameraLockedToPet = !this.isCameraLockedToPet;
+    this.updateCameraFollow();
+  }
+
+  private updateCameraFollow(): void {
+    if (!this.scene) return;
+    if (this.isCameraLockedToPet && this.dog) {
+      this.scene.cameras.main.startFollow(this.dog, false, 0.08, 0.08);
+    } else {
+      this.scene.cameras.main.stopFollow();
+    }
+  }
+
   public moveStep(direction: string): void {
     if (this.isHomeViewMode) return;
     if (!this.dog || !this.scene || this.isMoving) return;
@@ -349,8 +367,14 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
     let targetX = this.dog.x;
     let targetY = this.dog.y;
-    const stepDist = 4.4;
-    const animKey = this.getMovementAnimationKey(direction);
+    
+    let stepDist = 4.4;
+    if (this.currentJoystickDirection && this.currentJoystickIntensity > 0) {
+      // Use intensity to scale speed (from ~30% speed to 100% speed)
+      stepDist = 4.4 * Math.max(0.3, this.currentJoystickIntensity);
+    }
+    const animSuffix = this.getMovementAnimationKey(direction);
+    const animKey = this.resolvePetAnimationKey(this.dog, animSuffix) || animSuffix;
 
     switch (direction) {
       case 'up':
@@ -413,10 +437,15 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
         x: targetX,
         y: targetY,
         duration: 150,
-        ease: 'Cubic.easeOut',
+        ease: 'Linear',
         onComplete: () => this.onMoveComplete()
       });
     }
+  }
+
+  public handleJoystickUpdate(event: JoystickEvent): void {
+    this.currentJoystickDirection = event.direction;
+    this.currentJoystickIntensity = event.intensity;
   }
 
   private movePetToPoint(targetX: number, targetY: number): void {
@@ -1437,6 +1466,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
         this.isGameLoading = false;
         this.syncBackgroundMusic();
         this.startTutorialIfNeeded();
+        this.updateCameraFollow();
       }
     );
 
@@ -1470,20 +1500,8 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
         if (gameObjects.length === 0) {
           this.deselectDecor();
 
-          const pointerAny = pointer as any;
-          const isTouchInput =
-            pointerAny.pointerType === 'touch' || !!pointerAny.wasTouch;
-
-          if (
-            isTouchInput &&
-            !this.isHomeViewMode &&
-            !this.hasMultipleActiveTouchPointers(scene)
-          ) {
-            const worldPoint = pointer.positionToCamera(
-              scene.cameras.main
-            ) as Phaser.Math.Vector2;
-            this.movePetToPoint(worldPoint.x, worldPoint.y);
-          }
+          // Click-to-move is disabled globally as requested.
+          // The pet only moves via Joystick, Keyboard, or Pet Arrows.
         }
       }
     );
@@ -1682,7 +1700,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onArrowHoverStart(scene: Phaser.Scene): void {
-    if (this.isHomeViewMode) {
+    if (this.isHomeViewMode || window.innerWidth <= 1024) {
       return;
     }
 
@@ -2184,8 +2202,13 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
       // Delay the idle animation for a smoother transition from walk
       // Only switch to idle if no keys are currently held
       setTimeout(() => {
-        if (this.dog && this.pressedArrowKeys.size === 0) {
-          this.dog.play('idle');
+        if (
+          this.dog &&
+          this.pressedArrowKeys.size === 0 &&
+          !this.currentJoystickDirection
+        ) {
+          const idleAnim = this.resolvePetAnimationKey(this.dog, 'idle') || 'idle';
+          this.dog.play(idleAnim);
         }
       }, 200);
     }
@@ -2553,33 +2576,37 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
     this.updateRenderDepths();
 
-    // Handle continuous movement from held arrow keys
-    if (!this.isMoving && this.pressedArrowKeys.size > 0) {
-      // Check for diagonal movements first
-      const hasUp = this.pressedArrowKeys.has('up');
-      const hasDown = this.pressedArrowKeys.has('down');
-      const hasLeft = this.pressedArrowKeys.has('left');
-      const hasRight = this.pressedArrowKeys.has('right');
+    // Handle continuous movement from held arrow keys or joystick
+    if (!this.isMoving) {
+      if (this.currentJoystickDirection) {
+        this.moveStep(this.currentJoystickDirection);
+      } else if (this.pressedArrowKeys.size > 0) {
+        // Check for diagonal movements first
+        const hasUp = this.pressedArrowKeys.has('up');
+        const hasDown = this.pressedArrowKeys.has('down');
+        const hasLeft = this.pressedArrowKeys.has('left');
+        const hasRight = this.pressedArrowKeys.has('right');
 
-      // Diagonal movements
-      if (hasUp && hasLeft) {
-        this.moveStep('up-left');
-      } else if (hasUp && hasRight) {
-        this.moveStep('up-right');
-      } else if (hasDown && hasLeft) {
-        this.moveStep('down-left');
-      } else if (hasDown && hasRight) {
-        this.moveStep('down-right');
-      }
-      // Single direction movements (with priority)
-      else if (hasDown) {
-        this.moveStep('down');
-      } else if (hasUp) {
-        this.moveStep('up');
-      } else if (hasRight) {
-        this.moveStep('right');
-      } else if (hasLeft) {
-        this.moveStep('left');
+        // Diagonal movements
+        if (hasUp && hasLeft) {
+          this.moveStep('up-left');
+        } else if (hasUp && hasRight) {
+          this.moveStep('up-right');
+        } else if (hasDown && hasLeft) {
+          this.moveStep('down-left');
+        } else if (hasDown && hasRight) {
+          this.moveStep('down-right');
+        }
+        // Single direction movements (with priority)
+        else if (hasDown) {
+          this.moveStep('down');
+        } else if (hasUp) {
+          this.moveStep('up');
+        } else if (hasRight) {
+          this.moveStep('right');
+        } else if (hasLeft) {
+          this.moveStep('left');
+        }
       }
     }
 

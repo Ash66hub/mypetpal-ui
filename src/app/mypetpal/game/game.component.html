@@ -15,8 +15,12 @@
     [toastMessage]="toastMessage"
     [isVisiting]="isVisiting"
     [visitingUsername]="visitingUsername"
+    [isHomeViewMode]="isHomeViewMode"
+    [isCameraLockedToPet]="isCameraLockedToPet"
+    (toggleCameraLock)="toggleCameraLock()"
     (zoomIn)="zoomIn()"
-    (zoomOut)="zoomOut()">
+    (zoomOut)="zoomOut()"
+    (joystickUpdate)="handleJoystickUpdate($event)">
   </app-game-hud>
 
   <div

@@ -5,26 +5,32 @@ import {
   Output,
   OnChanges,
   OnInit,
+  OnDestroy,
   SimpleChanges
 } from '@angular/core';
 import { SharedModule } from '../../../../shared/shared.module';
+import { MobileJoystickComponent, JoystickEvent } from '../mobile-joystick/mobile-joystick.component';
 
 @Component({
   selector: 'app-game-hud',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, MobileJoystickComponent],
   templateUrl: './game-hud.component.html',
   styleUrls: ['./game-hud.component.scss']
 })
-export class GameHudComponent implements OnInit, OnChanges {
+export class GameHudComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isGameLoading = true;
   @Input() isSavingRoom = false;
   @Input() toastMessage: string | null = null;
   @Input() isVisiting = false;
   @Input() visitingUsername = '';
+  @Input() isHomeViewMode = false;
+  @Input() isCameraLockedToPet = false;
 
   @Output() zoomIn = new EventEmitter<void>();
   @Output() zoomOut = new EventEmitter<void>();
+  @Output() toggleCameraLock = new EventEmitter<void>();
+  @Output() joystickUpdate = new EventEmitter<JoystickEvent>();
 
   public selectedLoadingTip = '';
   private readonly loadingTips: Array<{ text: string; weight: number }> = [
@@ -74,6 +80,16 @@ export class GameHudComponent implements OnInit, OnChanges {
   public onZoomOut(): void {
     this.zoomOut.emit();
   }
+
+  public onToggleCameraLock(): void {
+    this.toggleCameraLock.emit();
+  }
+
+  public onJoystickUpdate(event: JoystickEvent): void {
+    this.joystickUpdate.emit(event);
+  }
+
+  ngOnDestroy(): void {}
 
   private pickLoadingTip(): void {
     const totalWeight = this.loadingTips.reduce(

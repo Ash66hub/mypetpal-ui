@@ -1,0 +1,10 @@
+<div 
+  class="joystick-base" 
+  #base 
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)"
+  (pointercancel)="onPointerUp($event)">
+  
+  <div class="joystick-knob" #knob></div>
+</div>
