@@ -45,6 +45,17 @@
     transform: rotate(45deg);
 }
 
+.tutorial-card.welcome-step {
+    left: 50%;
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+}
+
+.tutorial-card.welcome-step::after {
+    display: none;
+}
+
 .tutorial-card.pet-step {
     left: 50%;
     top: 78px;

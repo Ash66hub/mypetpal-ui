@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export interface TutorialStep {
-  target: 'pet' | 'decor' | 'friends';
+  target: 'welcome' | 'pet' | 'decor' | 'friends';
   title: string;
   messageDesktop: string;
   messageMobile: string;
@@ -12,6 +12,14 @@ export interface TutorialStep {
 })
 export class GameTutorialService {
   private readonly tutorialSteps: readonly TutorialStep[] = [
+    {
+      target: 'welcome',
+      title: 'Welcome Home!',
+      messageDesktop:
+        "Congratulations! You've just unlocked your very own pet home. Take a look around and start making it yours - one pixel at a time!",
+      messageMobile:
+        "Congratulations! You've just unlocked your very own pet home. Take a look around and start making it yours - one pixel at a time!"
+    },
     {
       target: 'pet',
       title: 'Move Your Pet',
@@ -56,6 +64,7 @@ export class GameTutorialService {
 
   public getHiddenSpotStyles(): Record<string, Record<string, string>> {
     return {
+      welcome: { display: 'none' },
       pet: { display: 'none' },
       decor: { display: 'none' },
       friends: { display: 'none' }

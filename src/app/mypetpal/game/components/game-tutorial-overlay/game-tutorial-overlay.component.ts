@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SharedModule } from '../../../../shared/shared.module';
 
 export interface TutorialStepViewModel {
-  target: 'pet' | 'decor' | 'friends';
+  target: 'welcome' | 'pet' | 'decor' | 'friends';
   title: string;
 }
 

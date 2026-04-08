@@ -58,6 +58,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   public tutorialStepIndex = 0;
   public readonly totalTutorialSteps: number;
   public tutorialSpotStyles: Record<string, Record<string, string>> = {
+    welcome: { display: 'none' },
     pet: { display: 'none' },
     decor: { display: 'none' },
     friends: { display: 'none' }
@@ -247,11 +248,14 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     const isButton = target.tagName === 'BUTTON';
     const clickedInsideGame = !!target.closest('#game-container');
 
-    if (!clickedInsideChatControls && !isButton && !clickedInsideGame) {
+    if (!clickedInsideChatControls && !isButton) {
       const activeElement = document.activeElement as HTMLElement | null;
       if (activeElement?.tagName === 'INPUT') {
         activeElement.blur();
       }
+    }
+
+    if (!clickedInsideChatControls && !isButton && !clickedInsideGame) {
       this.deselectDecor();
       this.hideKickToolbox();
     }
@@ -1598,6 +1602,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     ) as HTMLElement | null;
 
     this.tutorialSpotStyles = {
+      welcome: { display: 'none' },
       pet: this.gameTutorialService.getPetSpotStyle(wrapper, gameContainer),
       decor: this.gameTutorialService.getElementSpotStyle(
         wrapper,

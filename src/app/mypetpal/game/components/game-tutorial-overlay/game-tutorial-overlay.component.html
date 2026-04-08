@@ -1,6 +1,10 @@
 @if (visible && tutorialStep) {
   <div class="tutorial-overlay" role="dialog" aria-live="polite">
     <div
+      class="tutorial-spot tutorial-spot-welcome"
+      [ngStyle]="tutorialSpotStyles['welcome']"
+      [class.active]="tutorialStep.target === 'welcome'"></div>
+    <div
       class="tutorial-spot tutorial-spot-pet"
       [ngStyle]="tutorialSpotStyles['pet']"
       [class.active]="tutorialStep.target === 'pet'"></div>
@@ -15,6 +19,7 @@
 
     <div
       class="tutorial-card"
+      [class.welcome-step]="tutorialStep.target === 'welcome'"
       [class.pet-step]="tutorialStep.target === 'pet'"
       [class.decor-step]="tutorialStep.target === 'decor'"
       [class.friends-step]="tutorialStep.target === 'friends'">
