@@ -1,5 +1,15 @@
 <div class="game-wrapper" oncontextmenu="return false;">
+  @if (activeMinigame === 'avoid-the-junk') {
+    <app-avoid-the-junk
+      [petSprite]="getPetSpriteAsset()"
+      [musicEnabled]="isMusicEnabled()"
+      [musicVolume]="getMusicVolume()"
+      (gameClosed)="handleMinigameClosed($event)">
+    </app-avoid-the-junk>
+  }
+
   @if (!isGameLoading) {
+
     <app-level-bar
       [level]="currentPlayerLevel"
       [currentLevelExp]="getCurrentLevelExp()"
@@ -23,6 +33,7 @@
     (joystickUpdate)="handleJoystickUpdate($event)">
   </app-game-hud>
 
+
   <div
     id="game-container"
     (dragover)="onDragOver($event)"
@@ -36,8 +47,10 @@
     [visitingUsername]="visitingUsername"
     [hostingCount]="hostingCount"
     [currentVisitorIds]="currentVisitorIds"
-    (returnHome)="returnHome()">
+    (returnHome)="returnHome()"
+    (launchMinigame)="handleLaunchMinigame($event)">
   </app-game-side-panels>
+
 
   <app-game-chat-controls
     [isHomeViewMode]="isHomeViewMode"

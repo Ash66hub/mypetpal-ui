@@ -1,0 +1,21 @@
+<div class="minigame-wrapper">
+  <div class="header">
+    <div class="title">
+      <span class="icon">🍩</span>
+      <h2>Save the Junk</h2>
+    </div>
+    <div class="actions" style="display: flex; gap: 8px;">
+      <button class="mute-btn" (click)="toggleMute()" [title]="isMuted ? 'Unmute' : 'Mute'"
+        style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+        {{ isMuted ? '🔇' : '🔊' }}
+      </button>
+      <button class="close-btn" (click)="gameClosed.emit({score: 0, exp: 0})">×</button>
+    </div>
+  </div>
+  
+  <div id="avoid-the-junk-container" class="game-container"></div>
+  
+  <div class="footer">
+    <p>Guide the pet away from your unhealthy snacks!</p>
+  </div>
+</div>

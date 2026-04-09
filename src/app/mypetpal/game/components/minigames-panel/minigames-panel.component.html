@@ -1,0 +1,33 @@
+<div class="minigames-panel-container" [class.collapsed]="isCollapsed">
+  <div class="minigames-panel">
+    <div class="panel-header">
+      <h3>Mini Games</h3>
+      <p>Play minigames to gain EXP!</p>
+    </div>
+
+    <div class="games-list">
+      <div class="game-card" (click)="onLaunch('avoid-the-junk')" [class.disabled]="isVisiting">
+        <div class="game-icon">🍩</div>
+        <div class="game-info">
+          <span class="game-title">Save the Junk</span>
+          <span class="game-desc">Don't let the pet eat your snacks!</span>
+        </div>
+      </div>
+      
+      <!-- Placeholder for future games -->
+      <div class="game-card coming-soon">
+        <div class="game-icon">🔒</div>
+        <div class="game-info">
+          <span class="game-title">More Games</span>
+          <span class="game-desc">Coming soon!</span>
+        </div>
+      </div>
+    </div>
+    
+    @if (isVisiting) {
+      <div class="visit-warning">
+        Mini games are only available in your own space!
+      </div>
+    }
+  </div>
+</div>

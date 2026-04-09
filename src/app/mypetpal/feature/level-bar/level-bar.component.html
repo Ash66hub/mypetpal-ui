@@ -1,8 +1,8 @@
 <div
   class="level-bar-container"
-  (pointerdown)="$event.stopPropagation(); $event.preventDefault()"
-  (touchstart)="$event.stopPropagation(); $event.preventDefault()"
-  (mousedown)="$event.stopPropagation(); $event.preventDefault()">
+  (pointerdown)="$event.stopPropagation()"
+  (touchstart)="$event.stopPropagation()"
+  (mousedown)="$event.stopPropagation()">
   <div class="level-bar-content">
     <div class="level-info">
       <span class="level-badge">Level {{ level }}</span>
@@ -29,7 +29,7 @@
           <h4>How EXP Works</h4>
           <p>Stay active in the game to gain EXP over time.</p>
           <p>You gain an extra +10 EXP when adding a new pal.</p>
-          <p>At higher levels, more decor items are unlocked.</p>
+          <p>Play Mini Games to gain even more EXP!</p>
         </div>
       }
     </div>

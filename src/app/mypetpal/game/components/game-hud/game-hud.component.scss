@@ -108,6 +108,17 @@
                 }
             }
         }
+
+        &.minigame-btn {
+            background: linear-gradient(180deg, #ff9f43 0%, #ff6b6b 100%);
+            border-color: #5c1b1b;
+            font-size: 24px;
+            
+            &:hover {
+                filter: hue-rotate(15deg) brightness(1.1);
+            }
+        }
+
     }
 }
 

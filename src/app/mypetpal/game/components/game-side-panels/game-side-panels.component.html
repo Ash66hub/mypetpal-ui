@@ -1,5 +1,32 @@
-<app-decor-panel #decorPanel [isVisiting]="isVisiting"></app-decor-panel>
+<div class="left-panels-wrapper" [class.panel-open]="!!activeSidePanel">
+  <div class="tabs-container">
+    <app-left-panel-tabs
+      [activePanel]="activeSidePanel"
+      (tabClick)="onSideTabClick($event)">
+    </app-left-panel-tabs>
+  </div>
 
+  <div class="panes-container">
+    @if (activeSidePanel === 'decor' || activeSidePanel === 'leaderboard') {
+      <app-decor-panel 
+        #decorPanel 
+        [isVisiting]="isVisiting"
+        [isCollapsed]="false"
+        [activePanel]="activeSidePanel === 'leaderboard' ? 'leaderboard' : 'decor'">
+      </app-decor-panel>
+    }
+    
+    @if (activeSidePanel === 'minigames') {
+      <app-minigames-panel
+        [isVisiting]="isVisiting"
+        [isCollapsed]="false"
+        (launchMinigame)="onLaunchMinigame($event)">
+      </app-minigames-panel>
+    }
+  </div>
+</div>
+
+<!-- Social Panel is independent and on the right -->
 <app-social-panel
   #socialPanel
   [isVisiting]="isVisiting"

@@ -1,0 +1,12 @@
+<div class="left-panel-tabs-rail">
+  <button
+    *ngFor="let tab of tabs"
+    type="button"
+    class="drawer-handle"
+    [class]="tab.colorType + '-handle'"
+    [class.active]="activePanel === tab.id"
+    (click)="onTabClick(tab.id)"
+    [title]="tab.title">
+    <span class="handle-icon">{{ tab.icon }}</span>
+  </button>
+</div>

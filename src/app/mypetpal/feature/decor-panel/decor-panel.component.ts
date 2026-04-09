@@ -11,8 +11,8 @@ import { SharedModule } from '../../../shared/shared.module';
   imports: [SharedModule, LeaderboardPanelComponent]
 })
 export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
-  public isCollapsed: boolean = true;
-  public activePanel: 'decor' | 'leaderboard' = 'decor';
+  @Input() isCollapsed: boolean = true;
+  @Input() activePanel: 'decor' | 'leaderboard' = 'decor';
   public activeCategory: 'furniture' | 'plant' | 'wall' = 'furniture';
   public filteredItems: DecorItem[] = [];
   public touchDraggingItemId: string | null = null;
@@ -59,43 +59,14 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     this.clearLongPressTimer();
   }
 
-  public togglePanel(): void {
-    this.isCollapsed = !this.isCollapsed;
-  }
-
-  public onDecorHandleClick(): void {
-    if (this.isCollapsed) {
-      this.activePanel = 'decor';
-      this.isCollapsed = false;
-      return;
-    }
-
-    if (this.activePanel !== 'decor') {
-      this.activePanel = 'decor';
-      return;
-    }
-
-    this.togglePanel();
-  }
-
   @HostListener('window:decor-drag-validation', ['$event'])
   public onDragValidation(event: Event): void {
     const customEvent = event as CustomEvent<{ isValid: boolean }>;
     this.touchGhostIsValid = customEvent.detail.isValid;
   }
 
-  public onLeaderboardHandleClick(): void {
-    if (this.isCollapsed || this.activePanel !== 'leaderboard') {
-      this.activePanel = 'leaderboard';
-      this.isCollapsed = false;
-      return;
-    }
-
-    this.togglePanel();
-  }
-
-  public expandPanel(): void {
-    this.isCollapsed = false;
+  public setPanelMode(mode: 'decor' | 'leaderboard'): void {
+    this.activePanel = mode;
   }
 
   public setCategory(category: 'furniture' | 'plant' | 'wall'): void {

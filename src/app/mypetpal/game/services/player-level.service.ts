@@ -199,4 +199,23 @@ export class PlayerLevelService {
       onComplete: () => levelText.destroy()
     });
   }
+  public async awardMiniGameExperience(amount: number): Promise<void> {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    const apiUrl = (
+      localStorage.getItem('apiUrl') ||
+      environment.apiUrl ||
+      'http://localhost:5050/'
+    ).replace(/\/?$/, '/');
+
+    try {
+      await this.http
+        .post(`${apiUrl}Users/${userId}/experience?amount=${amount}`, {})
+        .toPromise();
+    } catch (error) {
+      console.warn('Could not update experience on server:', error);
+    }
+  }
 }
+

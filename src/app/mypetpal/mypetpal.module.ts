@@ -16,6 +16,8 @@ import { GameHudComponent } from './game/components/game-hud/game-hud.component'
 import { GameTutorialOverlayComponent } from './game/components/game-tutorial-overlay/game-tutorial-overlay.component';
 import { GameChatControlsComponent } from './game/components/game-chat-controls/game-chat-controls.component';
 import { GameSidePanelsComponent } from './game/components/game-side-panels/game-side-panels.component';
+import { AvoidTheJunkComponent } from './game/minigames/avoid-the-junk/avoid-the-junk.component';
+
 
 @NgModule({
   declarations: [
@@ -35,7 +37,9 @@ import { GameSidePanelsComponent } from './game/components/game-side-panels/game
     GameHudComponent,
     GameTutorialOverlayComponent,
     GameChatControlsComponent,
-    GameSidePanelsComponent
+    GameSidePanelsComponent,
+    AvoidTheJunkComponent
+
   ],
   exports: [TopBarComponent],
   schemas: [],

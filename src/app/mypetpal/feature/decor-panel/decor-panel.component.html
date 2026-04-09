@@ -1,24 +1,4 @@
 <div class="left-panel-container" [class.collapsed]="isCollapsed">
-  <div class="panel-handle-rail">
-    <button
-      type="button"
-      class="drawer-handle"
-      [class.active]="!isCollapsed && activePanel === 'decor'"
-      (click)="onDecorHandleClick()"
-      title="Decorate Room">
-      <span class="handle-icon">🔨</span>
-    </button>
-
-    <button
-      type="button"
-      class="drawer-handle leaderboard-handle"
-      [class.active]="!isCollapsed && activePanel === 'leaderboard'"
-      (click)="onLeaderboardHandleClick()"
-      title="Open Leaderboard">
-      <span class="handle-icon">🏆</span>
-    </button>
-  </div>
-
   <div class="panel-content">
     <div class="panel-header">
       <h3>{{ activePanel === 'decor' ? 'Decor' : 'Leaderboard' }}</h3>

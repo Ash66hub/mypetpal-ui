@@ -18,7 +18,7 @@ import { MobileJoystickComponent, JoystickEvent } from '../mobile-joystick/mobil
   templateUrl: './game-hud.component.html',
   styleUrls: ['./game-hud.component.scss']
 })
-export class GameHudComponent implements OnInit, OnChanges, OnDestroy {
+export class GameHudComponent implements OnInit, OnChanges {
   @Input() isGameLoading = true;
   @Input() isSavingRoom = false;
   @Input() toastMessage: string | null = null;
@@ -88,8 +88,6 @@ export class GameHudComponent implements OnInit, OnChanges, OnDestroy {
   public onJoystickUpdate(event: JoystickEvent): void {
     this.joystickUpdate.emit(event);
   }
-
-  ngOnDestroy(): void {}
 
   private pickLoadingTip(): void {
     const totalWeight = this.loadingTips.reduce(

@@ -23,6 +23,8 @@ import { GameComponentCore } from './game.component.base';
   standalone: false
 })
 export class GameComponent extends GameComponentCore {
+  public activeMinigame: string | null = null;
+
   constructor(
     petStreamService: PetStreamService,
     petService: PetService,
@@ -60,4 +62,41 @@ export class GameComponent extends GameComponentCore {
       ngZone
     );
   }
+
+
+  public handleLaunchMinigame(gameName: string): void {
+    this.activeMinigame = gameName;
+    this.backgroundMusicService.applyPreferences(false, 0); // Stop main music by force-disabling
+    if (this.game) {
+      this.game.scene.pause('GameScene');
+    }
+  }
+
+  public handleMinigameClosed(result: { score: number; exp: number }): void {
+    this.activeMinigame = null;
+    this.syncBackgroundMusic(); // Restore main music based on user settings
+    if (this.game) {
+      this.game.scene.resume('GameScene');
+    }
+
+    if (result && result.exp > 0) {
+      this.playerLevelService.awardMiniGameExperience(result.exp);
+      this.toastMessage = `Mini Game Over! Pet earned ${result.exp} EXP!`;
+      setTimeout(() => (this.toastMessage = null), 3000);
+    }
+
+  }
+
+  public isMusicEnabled(): boolean {
+    return !!this.settings?.musicEnabled && !this.settings?.isMuted;
+  }
+
+  public getMusicVolume(): number {
+    return this.settings?.musicVolume ?? 0.5;
+  }
+
+  public getPetSpriteAsset(): string {
+    return this.selectedPetAssetKey + '.png';
+  }
+
 }

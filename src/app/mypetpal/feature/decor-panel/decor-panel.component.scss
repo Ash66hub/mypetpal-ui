@@ -1,21 +1,8 @@
 .left-panel-container {
-    position: fixed;
-    top: 68px;
-    left: 0;
-    width: 350px;
-    height: calc(100vh - 68px);
-    background: linear-gradient(180deg, rgba(34, 41, 92, 0.96), rgba(20, 25, 61, 0.96));
-    border-right: 3px solid #0c102d;
-    //box-shadow: 6px 0 0 rgba(9, 11, 33, 0.9);
-    z-index: 1500;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-
-    &.collapsed {
-        transform: translateX(-100%);
-        box-shadow: none;
-    }
 
     .panel-handle-rail {
         position: absolute;

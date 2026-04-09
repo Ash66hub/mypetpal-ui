@@ -1,0 +1,48 @@
+.left-panels-wrapper {
+  position: fixed;
+  top: 68px;
+  left: 0;
+  height: calc(100vh - 68px);
+  width: 320px;
+  z-index: 2000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(34, 41, 92, 0.96), rgba(20, 25, 61, 0.96));
+  border-right: 3px solid #0c102d;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-100%);
+
+  &.panel-open {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .tabs-container {
+    position: absolute;
+    right: -58px; // Stick to the right edge
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: auto;
+    z-index: 2100;
+  }
+
+  .panes-container {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: auto;
+
+    ::ng-deep app-decor-panel,
+    ::ng-deep app-minigames-panel {
+      display: block;
+      height: 100%;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .left-panels-wrapper {
+    width: 70vw;
+  }
+}

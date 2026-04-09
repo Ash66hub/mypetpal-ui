@@ -38,9 +38,9 @@ import { JoystickEvent } from './components/mobile-joystick/mobile-joystick.comp
 export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('sidePanels') sidePanels?: GameSidePanelsComponent;
 
-  private game!: Phaser.Game;
+  protected game!: Phaser.Game;
   private dog: any;
-  private scene: Phaser.Scene | null = null;
+  protected scene: Phaser.Scene | null = null;
   private isMoving = false;
   private roomSubs: Subscription[] = [];
   private settingsSaveTimeout: any;
@@ -59,6 +59,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   public showTutorial = false;
   public tutorialStepIndex = 0;
   public readonly totalTutorialSteps: number;
+
   public tutorialSpotStyles: Record<string, Record<string, string>> = {
     welcome: { display: 'none' },
     pet: { display: 'none' },
@@ -67,9 +68,9 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private currentZoom = 1.0;
-  private settings: UserSettings | null = null;
+  protected settings: UserSettings | null = null;
   private currentPet: Pet | null = null;
-  private selectedPetAssetKey: string = 'GoldenRetriever_spritesheet';
+  protected selectedPetAssetKey: string = 'GoldenRetriever_spritesheet';
   private selectedRoomKey: RoomKey = 'room1';
 
   public roomOwnerId: string | null = null;
@@ -191,14 +192,14 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     private route: ActivatedRoute,
     private decorService: DecorService,
     private userSettingsService: UserSettingsService,
-    private playerLevelService: PlayerLevelService,
+    public playerLevelService: PlayerLevelService,
     private chatService: ChatService,
     private petMovementService: PetMovementService,
     private decorManagerService: DecorManagerService,
     private roomMultiplayer: RoomMultiplayerService,
     private gameScene: GameSceneService,
     private gameTutorialService: GameTutorialService,
-    private backgroundMusicService: BackgroundMusicService,
+    protected backgroundMusicService: BackgroundMusicService,
     private friendService: FriendService,
     private ngZone: NgZone
   ) {
@@ -664,11 +665,13 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public onInputBlur(): void {
+    // Focus lost from chat input
     const scene = this.game?.scene?.scenes[0];
     if (scene?.input.keyboard) {
       scene.input.keyboard.enabled = true;
     }
   }
+
 
   public onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -1563,8 +1566,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private collapsePanelsForTutorial(): void {
-    this.sidePanels?.collapseDecorIfExpanded();
-    this.sidePanels?.collapseSocialIfExpanded();
+    this.sidePanels?.closeAllPanels();
   }
 
   private completeTutorial(): void {
@@ -1580,8 +1582,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
     localStorage.removeItem('firstTimeTutorialPendingFor');
 
-    this.sidePanels?.collapseDecorIfExpanded();
-    this.sidePanels?.collapseSocialIfExpanded();
+    this.sidePanels?.closeAllPanels();
 
     this.showTutorial = false;
     this.tutorialSpotStyles = this.gameTutorialService.getHiddenSpotStyles();
@@ -1594,11 +1595,11 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (step.target === 'decor' && !this.isVisiting) {
-      this.sidePanels?.expandDecorPanel();
+      this.sidePanels?.openPanel('decor');
     }
-
+    
     if (step.target === 'friends') {
-      this.sidePanels?.expandSocialPanel();
+      this.sidePanels?.openPanel('neighborhood');
     }
 
     // Re-measure immediately and after panel animations for accurate responsive highlights.
@@ -1700,7 +1701,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onArrowHoverStart(scene: Phaser.Scene): void {
-    if (this.isHomeViewMode || window.innerWidth <= 1024) {
+    if (this.isHomeViewMode) {
       return;
     }
 
@@ -1709,6 +1710,28 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onArrowHoverEnd(): void {
+    const scene = this.scene as any;
+    if (scene && scene._isTouchingPet) {
+      const dx = scene.input.activePointer.x - scene._petTouchStartX;
+      const dy = scene.input.activePointer.y - scene._petTouchStartY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 30) {
+        // Swipe detected!
+        let direction = '';
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+        if (angle > -45 && angle <= 45) direction = 'right';
+        else if (angle > 45 && angle <= 135) direction = 'down';
+        else if (angle > 135 || angle <= -135) direction = 'left';
+        else direction = 'up';
+
+        if (direction) {
+          this.moveStep(direction);
+        }
+      }
+    }
+
     this.arrowHoverSources = Math.max(0, this.arrowHoverSources - 1);
     this.scheduleArrowHide();
   }
@@ -2072,7 +2095,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }, 5000);
   }
 
-  private syncBackgroundMusic(): void {
+  protected syncBackgroundMusic(): void {
     const shouldPlayMusic =
       !!this.settings?.musicEnabled && !this.settings?.isMuted;
     const volume = this.settings?.musicVolume ?? 0.5;

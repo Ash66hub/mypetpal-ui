@@ -219,13 +219,21 @@ export class GameSceneService {
     onHoverStart: () => void,
     onHoverEnd: () => void
   ): Phaser.GameObjects.Zone {
-    const hoverZone = scene.add.zone(0, 0, 56, 56).setDepth(9).setInteractive();
+    const hoverZone = scene.add.zone(0, 0, 70, 70).setDepth(9).setInteractive(); // Slightly larger for mobile ease
     (hoverZone as any).isHoverZone = true;
 
     hoverZone.on('pointerover', onHoverStart);
     hoverZone.on('pointerout', onHoverEnd);
+    
+    // Mobile support: Show arrows on tap and prevent camera panning
+    hoverZone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      (scene as any)._isTouchingPet = true;
+      (scene as any)._petTouchStartX = pointer.x;
+      (scene as any)._petTouchStartY = pointer.y;
+      onHoverStart();
+    });
 
-    scene.input.on('gameout', onHoverEnd);
+    hoverZone.on('pointerup', onHoverEnd);
 
     return hoverZone;
   }
@@ -248,7 +256,7 @@ export class GameSceneService {
     };
 
     scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (!pointer.isDown || !canPan()) return;
+      if (!pointer.isDown || !canPan() || (scene as any)._isTouchingPet) return;
 
       if (isTouchCapableDevice || this.isTouchPointer(pointer)) {
         const activeTouchPointers = getActiveTouchPointers();
@@ -298,12 +306,14 @@ export class GameSceneService {
     });
 
     scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      (scene as any)._isTouchingPet = false;
       if (this.isTouchPointer(pointer)) {
         resetTouchPan();
       }
     });
 
     scene.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => {
+      (scene as any)._isTouchingPet = false;
       if (this.isTouchPointer(pointer)) {
         resetTouchPan();
       }

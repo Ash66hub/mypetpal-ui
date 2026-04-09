@@ -1,0 +1,125 @@
+.minigames-panel-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .minigames-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .panel-header {
+      padding: 24px;
+      border-bottom: 2px solid rgba(12, 16, 45, 0.9);
+
+      h3 {
+        margin: 0;
+        font-family: var(--retro-font-display);
+        color: #ffe9b4;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 14px;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      p {
+        margin: 4px 0 0 0;
+        font-size: 13px;
+        color: rgba(167, 139, 250, 0.8);
+        font-weight: 500;
+      }
+    }
+
+    .games-list {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+
+      .game-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 2px solid rgba(12, 16, 45, 0.9);
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+
+        &:hover:not(.disabled):not(.coming-soon) {
+          background: rgba(255, 191, 82, 0.08);
+          transform: translateX(5px);
+          border-color: #ffbf52;
+        }
+
+        &.disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          filter: grayscale(1);
+        }
+
+        &.coming-soon {
+          cursor: default;
+          background: rgba(0, 0, 0, 0.2);
+          border-style: dashed;
+          opacity: 0.6;
+        }
+
+        .game-icon {
+          font-size: 2rem;
+          width: 50px;
+          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 10px;
+        }
+
+        .game-info {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+
+          .game-title {
+            color: #ffffff;
+            font-family: var(--retro-font-display);
+            font-size: 11px;
+            letter-spacing: 0.05em;
+          }
+
+          .game-desc {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.75rem;
+            line-height: 1.2;
+          }
+        }
+      }
+    }
+
+    .visit-warning {
+      padding: 12px;
+      margin: 15px;
+      background: rgba(255, 75, 43, 0.1);
+      border: 1px solid rgba(255, 75, 43, 0.3);
+      border-radius: 8px;
+      color: #ff4b2b;
+      font-size: 0.75rem;
+      text-align: center;
+      font-style: italic;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .minigames-panel-container {
+    width: 70vw;
+  }
+}
