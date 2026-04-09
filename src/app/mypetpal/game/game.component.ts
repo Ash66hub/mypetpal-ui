@@ -81,7 +81,7 @@ export class GameComponent extends GameComponentCore {
 
     if (result && result.exp > 0) {
       this.playerLevelService.awardMiniGameExperience(result.exp);
-      this.toastMessage = `Mini Game Over! Pet earned ${result.exp} EXP!`;
+      this.toastMessage = `Mini Game Over! You\'ve earned ${result.exp} EXP!`;
       setTimeout(() => (this.toastMessage = null), 3000);
     }
 
