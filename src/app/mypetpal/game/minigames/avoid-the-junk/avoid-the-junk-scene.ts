@@ -98,6 +98,14 @@ export class AvoidTheJunkScene extends Phaser.Scene {
       graphics.lineBetween(0, i, this.gameWidth, i);
     }
 
+    // Apply nearest neighbor filtering to all textures for pixel-perfect scaling
+    ['pet', ...this.junkItems, ...this.goodItems].forEach(key => {
+      const tex = this.textures.get(key);
+      if (tex) {
+        tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    });
+
     // Pet
     this.pet = this.physics.add.sprite(this.gameWidth / 2, this.gameHeight / 2, 'pet', 0);
     this.pet.setCollideWorldBounds(true);
