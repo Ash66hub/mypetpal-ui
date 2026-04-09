@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, DoCheck, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, Input, DoCheck, OnDestroy, HostListener, Output, EventEmitter } from '@angular/core';
 import { DecorService, DecorItem } from '../../../core/decor/decor.service';
 import { LeaderboardPanelComponent } from '../leaderboard-panel/leaderboard-panel.component';
 import { SharedModule } from '../../../shared/shared.module';
@@ -13,6 +13,7 @@ import { SharedModule } from '../../../shared/shared.module';
 export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
   @Input() isCollapsed: boolean = true;
   @Input() activePanel: 'decor' | 'leaderboard' = 'decor';
+  @Output() requestCollapse = new EventEmitter<boolean>();
   public activeCategory: 'furniture' | 'plant' | 'wall' = 'furniture';
   public filteredItems: DecorItem[] = [];
   public touchDraggingItemId: string | null = null;
@@ -278,6 +279,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
 
     this.shouldRestoreAfterMobileDrag = true;
     this.isCollapsed = true;
+    this.requestCollapse.emit(true);
   }
 
   private restorePanelAfterMobileDrag(): void {
@@ -288,6 +290,7 @@ export class DecorPanelComponent implements OnInit, DoCheck, OnDestroy {
     this.isCollapsed = false;
     this.activePanel = 'decor';
     this.shouldRestoreAfterMobileDrag = false;
+    this.requestCollapse.emit(false);
   }
 
   private isMobileViewport(): boolean {

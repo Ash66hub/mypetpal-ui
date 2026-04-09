@@ -16,6 +16,11 @@
   &.panel-open {
     transform: translateX(0);
     pointer-events: auto;
+
+    &.is-drag-collapsed {
+      transform: translateX(-100%);
+      pointer-events: none;
+    }
   }
 
   .tabs-container {

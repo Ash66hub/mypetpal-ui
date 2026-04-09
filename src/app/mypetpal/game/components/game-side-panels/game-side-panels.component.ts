@@ -33,6 +33,11 @@ export class GameSidePanelsComponent {
   @Output() launchMinigame = new EventEmitter<string>();
 
   public activeSidePanel: LeftPanelId | null = null;
+  public isManuallyCollapsed = false;
+
+  public onPanelCollapseRequest(collapsed: boolean): void {
+    this.isManuallyCollapsed = collapsed;
+  }
 
   public onSideTabClick(panelId: LeftPanelId): void {
     if (this.activeSidePanel === panelId) {

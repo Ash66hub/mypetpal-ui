@@ -102,21 +102,3 @@
   </div>
 </div>
 
-@if (touchGhostItem) {
-  <div
-    class="touch-drag-ghost"
-    [class.can-drop]="touchGhostCanDrop"
-    [class.invalid-drop]="touchGhostCanDrop && !touchGhostIsValid"
-    [style.left.px]="touchGhostX"
-    [style.top.px]="touchGhostY">
-    @if (!touchGhostCanDrop) {
-      <img
-        [src]="touchGhostItem.imagePath"
-        [alt]="touchGhostItem.name"
-        class="ghost-thumb" />
-    }
-    <span class="ghost-label">
-      {{ touchGhostCanDrop && !touchGhostIsValid ? '❌ Cannot overlap' : 'Drop in room' }}
-    </span>
-  </div>
-}

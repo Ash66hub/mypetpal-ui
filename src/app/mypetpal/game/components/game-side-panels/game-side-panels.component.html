@@ -1,4 +1,4 @@
-<div class="left-panels-wrapper" [class.panel-open]="!!activeSidePanel">
+<div class="left-panels-wrapper" [class.panel-open]="!!activeSidePanel" [class.is-drag-collapsed]="isManuallyCollapsed">
   <div class="tabs-container">
     <app-left-panel-tabs
       [activePanel]="activeSidePanel"
@@ -11,8 +11,9 @@
       <app-decor-panel 
         #decorPanel 
         [isVisiting]="isVisiting"
-        [isCollapsed]="false"
-        [activePanel]="activeSidePanel === 'leaderboard' ? 'leaderboard' : 'decor'">
+        [isCollapsed]="isManuallyCollapsed"
+        [activePanel]="activeSidePanel === 'leaderboard' ? 'leaderboard' : 'decor'"
+        (requestCollapse)="onPanelCollapseRequest($event)">
       </app-decor-panel>
     }
     

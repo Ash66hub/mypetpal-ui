@@ -66,6 +66,12 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     decor: { display: 'none' },
     friends: { display: 'none' }
   };
+  
+  public touchDraggingItemSelf: DecorItem | null = null;
+  public touchGhostX = 0;
+  public touchGhostY = 0;
+  public touchGhostCanDrop = false;
+  public touchGhostIsValid = true;
 
   private currentZoom = 1.0;
   protected settings: UserSettings | null = null;
@@ -798,6 +804,11 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }
     
     const isValid = isInside && !limitReached && !isOverlapping;
+    this.touchGhostIsValid = isValid;
+    this.touchDraggingItemSelf = item;
+    this.touchGhostX = clientX;
+    this.touchGhostY = clientY;
+    this.touchGhostCanDrop = true; // Drag move only happens when dragging in space
 
     if (!isValid) {
       this.touchDragGhost.setTint(0xff0000);
@@ -810,8 +821,12 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   }
 
   @HostListener('window:decor-drag-end', ['$event'])
-
   public onDecorDragEnd(event: Event): void {
+    this.touchDraggingItemSelf = null;
+    this.touchGhostX = 0;
+    this.touchGhostY = 0;
+    this.touchGhostCanDrop = false;
+    this.touchGhostIsValid = true;
     if (this.touchDragGhost) {
       this.touchDragGhost.setVisible(false);
     }

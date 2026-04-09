@@ -73,4 +73,17 @@
     (skip)="skipTutorial()"
     (next)="nextTutorialStep()">
   </app-game-tutorial-overlay>
+
+  @if (touchDraggingItemSelf) {
+    <div
+      class="touch-drag-ghost"
+      [class.can-drop]="touchGhostCanDrop"
+      [class.invalid-drop]="touchGhostCanDrop && !touchGhostIsValid"
+      [style.left.px]="touchGhostX"
+      [style.top.px]="touchGhostY">
+      <span class="ghost-label">
+        {{ touchGhostCanDrop && !touchGhostIsValid ? '❌ Can\'t drop here' : 'Drop in room' }}
+      </span>
+    </div>
+  }
 </div>

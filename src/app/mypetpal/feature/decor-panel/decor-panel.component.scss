@@ -334,59 +334,6 @@
     }
 }
 
-.touch-drag-ghost {
-    position: fixed;
-    left: 0;
-    top: 0;
-    transform: translate(-50%, -120%);
-    pointer-events: none;
-    z-index: 2600;
-    background: rgba(13, 18, 47, 0.9);
-    border: 2px solid #ffbf52;
-    border-radius: 10px;
-    padding: 6px 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
-    transition: border-color 0.15s ease, transform 0.15s ease;
-
-    &.can-drop {
-        border-color: #65ecda;
-        transform: translate(-50%, -120%) scale(1.03);
-
-        .ghost-label {
-            color: #65ecda;
-        }
-    }
-
-    &.invalid-drop {
-        border-color: #ef4444;
-        background: rgba(45, 15, 20, 0.95);
-
-        .ghost-label {
-            color: #fca5a5;
-            font-weight: bold;
-        }
-    }
-
-    .ghost-thumb {
-        width: 24px;
-        height: 24px;
-        object-fit: contain;
-        image-rendering: pixelated;
-    }
-
-    .ghost-label {
-        color: #ffe9b4;
-        font-size: 9px;
-        font-family: var(--retro-font-display);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        white-space: nowrap;
-    }
-}
-
 @media (max-width: 768px) {
     .left-panel-container {
         width: 70vw;
@@ -444,14 +391,5 @@
         font-size: 8px;
     }
 
-    .touch-drag-ghost {
-        .ghost-thumb {
-            width: 22px;
-            height: 22px;
-        }
 
-        .ghost-label {
-            font-size: 8px;
-        }
-    }
 }

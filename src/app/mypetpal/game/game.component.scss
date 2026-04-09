@@ -48,6 +48,41 @@
     }
 }
 
-@media (max-width: 640px) {
-}
+.touch-drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 3000;
+    background: rgba(13, 18, 47, 0.9);
+    border: 2px solid #ffbf52;
+    border-radius: 10px;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
+    transform: translate(-50%, -50px);
 
+    .ghost-label {
+        color: #ffe9b4;
+        font-size: 10px;
+        font-family: var(--retro-font-display, sans-serif);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+
+    &.can-drop {
+        border-color: #65ecda;
+        .ghost-label {
+            color: #65ecda;
+        }
+    }
+
+    &.invalid-drop {
+        border-color: #ef4444;
+        background: rgba(45, 15, 20, 0.95);
+        .ghost-label {
+            color: #fca5a5;
+        }
+    }
+}
