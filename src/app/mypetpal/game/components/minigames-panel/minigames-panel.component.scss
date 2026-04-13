@@ -36,6 +36,7 @@
     .games-list {
       flex: 1;
       padding: 16px;
+      padding-bottom: calc(16px + 5vh);
       display: flex;
       flex-direction: column;
       gap: 12px;

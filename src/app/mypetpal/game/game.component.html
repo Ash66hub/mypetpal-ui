@@ -8,7 +8,7 @@
     </app-avoid-the-junk>
   }
 
-  @if (!isGameLoading) {
+  @if (!isGameLoading && !isVisiting && !isHomeViewMode) {
 
     <app-level-bar
       [level]="currentPlayerLevel"
