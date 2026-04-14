@@ -124,16 +124,19 @@
 
 .save-status {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 80px;
+    right: 24px;
     z-index: 2500;
     background: linear-gradient(180deg, #2a3169 0%, #1b214f 100%);
-    padding: 12px;
-    border-radius: 10px;
+    padding: 8px;
+    border-radius: 50%;
     border: 2px solid #0c102d;
-    box-shadow: 0 4px 0 rgba(9, 11, 33, 0.9);
-    animation: fadeInCenter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 0 rgba(9, 11, 33, 0.9);
+    animation: saveIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
 }
 
 .toast-notification {
@@ -214,6 +217,17 @@
     to {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes saveIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 }
 

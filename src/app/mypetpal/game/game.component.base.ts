@@ -104,6 +104,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
   private pressedArrowKeys: Set<string> = new Set();
   private arrowHoverSources = 0;
   private arrowHideTimer: ReturnType<typeof setTimeout> | null = null;
+  private arrowAutoHideTimer: ReturnType<typeof setTimeout> | null = null;
   private currentJoystickDirection: string | null = null;
   private currentJoystickIntensity: number = 0;
 
@@ -371,6 +372,9 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (!this.dog || !this.scene || this.isMoving) return;
 
     this.markLocalActivity();
+    if (this.arrowsVisible) {
+      this.resetArrowAutoHide();
+    }
 
     let targetX = this.dog.x;
     let targetY = this.dog.y;
@@ -695,6 +699,14 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (this.touchDragGhost) {
       this.touchDragGhost.setVisible(false);
     }
+
+    // Clear the Angular-side ghost immediately on drop
+    this.touchDraggingItemSelf = null;
+    this.touchGhostX = 0;
+    this.touchGhostY = 0;
+    this.touchGhostCanDrop = false;
+    this.touchGhostIsValid = true;
+
     const data = event.dataTransfer?.getData('decorItem');
     if (!data || !this.scene) return;
 
@@ -740,6 +752,13 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (this.touchDragGhost) {
       this.touchDragGhost.setVisible(false);
     }
+
+    // Clear the Angular-side ghost so "Drop in room" hint disappears
+    this.touchDraggingItemSelf = null;
+    this.touchGhostX = 0;
+    this.touchGhostY = 0;
+    this.touchGhostCanDrop = false;
+    this.touchGhostIsValid = true;
   }
 
   @HostListener('window:decor-drag-move', ['$event'])
@@ -837,6 +856,13 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (this.touchDragGhost) {
       this.touchDragGhost.setVisible(false);
     }
+
+    // Always clear touch drag state on drop to prevent ghost from lingering
+    this.touchDraggingItemSelf = null;
+    this.touchGhostX = 0;
+    this.touchGhostY = 0;
+    this.touchGhostCanDrop = false;
+    this.touchGhostIsValid = true;
 
     const customEvent = event as CustomEvent<{
       item?: DecorItem;
@@ -1722,6 +1748,7 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
 
     this.arrowHoverSources += 1;
     this.setupArrows(scene);
+    this.resetArrowAutoHide();
   }
 
   private onArrowHoverEnd(): void {
@@ -1748,7 +1775,12 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.arrowHoverSources = Math.max(0, this.arrowHoverSources - 1);
-    this.scheduleArrowHide();
+    
+    if (this.arrowHoverSources === 0) {
+      this.scheduleArrowHide();
+    } else {
+      this.resetArrowAutoHide();
+    }
   }
 
   private scheduleArrowHide(): void {
@@ -1764,6 +1796,22 @@ export class GameComponentCore implements OnInit, AfterViewInit, OnDestroy {
     if (this.arrowHideTimer) {
       clearTimeout(this.arrowHideTimer);
       this.arrowHideTimer = null;
+    }
+    this.clearArrowAutoHide();
+  }
+
+  private resetArrowAutoHide(): void {
+    this.clearArrowAutoHide();
+    this.arrowAutoHideTimer = setTimeout(() => {
+      this.arrowHoverSources = 0;
+      this.hideArrows();
+    }, 4000);
+  }
+
+  private clearArrowAutoHide(): void {
+    if (this.arrowAutoHideTimer) {
+      clearTimeout(this.arrowAutoHideTimer);
+      this.arrowAutoHideTimer = null;
     }
   }
 
