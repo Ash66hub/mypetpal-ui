@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { LoginStreamService } from './core/login/login-service/login-stream.service';
-import { filter } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { HealthService } from './core/health/health.service';
 
 @Component({
@@ -14,6 +14,7 @@ export class AppComponent implements OnInit {
   isLoggedIn = false;
   isLoginPage = true;
   isServerDown = false;
+  isHealthChecking = true;
 
   constructor(
     private router: Router,
@@ -28,9 +29,12 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.healthService.checkServerHealth().subscribe(isHealthy => {
-      this.isServerDown = !isHealthy;
-    });
+    this.healthService
+      .checkServerHealth()
+      .pipe(finalize(() => (this.isHealthChecking = false)))
+      .subscribe(isHealthy => {
+        this.isServerDown = !isHealthy;
+      });
 
     // Check if we are on the login page
     this.router.events.pipe(

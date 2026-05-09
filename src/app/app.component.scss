@@ -6,6 +6,16 @@
     justify-content: center;
 }
 
+.app-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background:
+        radial-gradient(circle at 12% 10%, rgba(88, 225, 208, 0.18), transparent 40%),
+        radial-gradient(circle at 88% 8%, rgba(255, 127, 163, 0.16), transparent 36%),
+        linear-gradient(155deg, #15173c 0%, #10122a 100%);
+}
+
 :host {
     display: block;
     height: 100vh;

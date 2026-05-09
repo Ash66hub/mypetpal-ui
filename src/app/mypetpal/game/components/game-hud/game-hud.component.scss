@@ -1,3 +1,10 @@
+:host {
+    position: absolute;
+    inset: 0;
+    display: block;
+    z-index: 200;
+}
+
 .game-loading-overlay {
     position: absolute;
     inset: 0;

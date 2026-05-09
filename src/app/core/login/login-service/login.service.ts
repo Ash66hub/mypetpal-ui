@@ -56,15 +56,6 @@ export class LoginService {
     });
   }
 
-  public getUserById(id: string): Promise<User> {
-    const url = `${this.apiUrl}Users/id/${id}`;
-
-    return lastValueFrom(this.http.get<User>(url)).catch(error => {
-      console.error(`Error fetching user with ID: ${id}`, error);
-      throw error;
-    });
-  }
-
   public updateProfilePicture(userId: string, file: File): Promise<User> {
     const url = `${this.apiUrl}Users/${userId}/profile-picture`;
     const formData = new FormData();

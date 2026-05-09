@@ -137,11 +137,7 @@ export class LoginStreamService {
   }
 
   private async resolveAndFetchCurrentUser(userIdOrId: string) {
-    try {
-      return await this.loginService.getUserById(userIdOrId);
-    } catch {
-      return this.loginService.getUser(userIdOrId);
-    }
+    return this.loginService.getUser(userIdOrId);
   }
 
   public logout() {

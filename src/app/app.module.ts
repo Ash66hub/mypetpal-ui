@@ -9,6 +9,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { httpInterceptor } from './core/authentication/http-intercept.interceptor';
 import { ToastrModule } from 'ngx-toastr';
 import { SnackbarToastComponent } from './shared/snackbar/snackbar-toast.component';
+import { SharedModule } from './shared/shared.module';
 
 @NgModule({
   declarations: [AppComponent],
@@ -17,6 +18,7 @@ import { SnackbarToastComponent } from './shared/snackbar/snackbar-toast.compone
     AuthenticationModule,
     AppRoutingModule,
     MypetpalModule,
+    SharedModule,
     SnackbarToastComponent,
     ToastrModule.forRoot({
       positionClass: 'toast-top-right',
